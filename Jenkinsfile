@@ -1,13 +1,13 @@
 buildMvn {
   publishModDescriptor = 'no'
-  publishAPI = 'yes'
-  mvnDeploy = 'yes'
-  runLintRamlCop = 'yes'
+  publishAPI = 'no'
+  mvnDeploy = 'no'
+  runLintRamlCop = 'no'
 
   doDocker = {
     buildJavaDocker {
-      publishMaster = 'yes'
-      healthChk = 'yes'
+      publishMaster = 'no'
+      healthChk = 'no'
       healthChkCmd = 'curl -sS --fail -o /dev/null  http://localhost:8081/admin/health || exit 1'
     }
   }
