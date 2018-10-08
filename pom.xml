@@ -1,0 +1,189 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.folio</groupId>
+  <artifactId>edge-oai-pmh</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>Edge API - OAI-PMH</name>
+  <url>https://github.com/folio-org/edge-orders</url>
+  <description>Edge API to interface with FOLIO OAI-PMH</description>
+  <inceptionYear>2018</inceptionYear>
+  <organization>
+    <name>The Open Library Foundation</name>
+    <url>https://dev.folio.org/</url>
+  </organization>
+  <scm>
+    <url>https://github.com/folio-org/edge-oai-pmh.git</url>
+    <connection>scm:git:git://github.com/folio-org/edge-oai-pmh.git</connection>
+    <developerConnection>scm:git:git@github.com:folio-org/edge-oai-pmh.git</developerConnection>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://spdx.org/licenses/Apache-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+
+    <!-- the main class -->
+    <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
+  </properties>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- We specify the Maven compiler plugin as we need to set it to
+          Java 1.8 -->
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.1</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+
+    <!-- You only need the part below if you want to build your application
+      into a fat executable jar. This is a jar that contains all the dependencies
+      required to run it, so you can just run it with java -jar -->
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>2.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <manifestEntries>
+                    <Main-Class>io.vertx.core.Launcher</Main-Class>
+                    <Main-Verticle>${exec.mainClass}</Main-Verticle>
+                  </manifestEntries>
+                </transformer>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                  <file>log4j.properties</file>
+                </transformer>
+              </transformers>
+              <artifactSet />
+              <outputFile>${project.build.directory}/${project.artifactId}-fat.jar</outputFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.4.0</version>
+        <executions>
+          <execution>
+            <!-- run the application using the fat jar -->
+            <id>run-app</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>-jar</argument>
+                <argument>target/${project.artifactId}-${project.version}-fat.jar</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.1</version>
+        <executions>
+          <execution>
+            <id>filter-descriptor-inputs</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/descriptors</directory>
+                  <include>*Descriptor*-template.json</include>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.coderplus.maven.plugins</groupId>
+        <artifactId>copy-rename-maven-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <id>rename-descriptor-outputs</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>rename</goal>
+            </goals>
+            <configuration>
+              <fileSets>
+                <fileSet>
+                  <sourceFile>${project.build.directory}/ModuleDescriptor-template.json</sourceFile>
+                  <destinationFile>${project.build.directory}/ModuleDescriptor.json</destinationFile>
+                </fileSet>
+                <fileSet>
+                  <sourceFile>${project.build.directory}/DeploymentDescriptor-template.json</sourceFile>
+                  <destinationFile>${project.build.directory}/DeploymentDescriptor.json</destinationFile>
+                </fileSet>
+              </fileSets>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <repositories>
+    <repository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>folio-nexus</id>
+      <name>FOLIO Release Repository</name>
+      <url>https://repository.folio.org/repository/maven-releases/</url>
+      <uniqueVersion>false</uniqueVersion>
+      <layout>default</layout>
+    </repository>
+    <snapshotRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Snapshot Repository</name>
+      <uniqueVersion>true</uniqueVersion>
+      <url>https://repository.folio.org/repository/maven-snapshots/</url>
+      <layout>default</layout>
+    </snapshotRepository>
+  </distributionManagement>
+
+</project>
