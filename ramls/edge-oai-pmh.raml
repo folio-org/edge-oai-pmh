@@ -12,55 +12,67 @@ traits:
   resps:
     responses:
       '200':
-        description: Success
+        description: 'Success'
+        body:
+          text/xml:
+            schema: OAI-PMH
       '400':
         description: 'Bad Request'
         body:
-          application/xml:
+          text/xml:
             schema: OAI-PMH
       '401':
         description: 'Access Denied'
         body:
-          application/xml:
+          text/xml:
             schema: OAI-PMH
-      '408':
-        description: 'Request Timeout'
+      '404':
+        description: 'Not found'
         body:
-          application/xml:
+          text/xml:
+            schema: OAI-PMH
+      '422':
+        description: 'Unprocessable Entity'
+        body:
+          text/xml:
             schema: OAI-PMH
       '500':
         description: 'Internal Server Error'
         body:
-          application/xml:
+          text/plain:
+      '501':
+        description: 'Not Implemented'
+        body:
+          text/xml:
             schema: OAI-PMH
   params:
     queryParameters:
       verb:
         description: 'Verb'
         type: string
-        required: false
+        required: true
       identifier:
-        description: 'Identifier'
+        description: 'The unique identifier of the item in the repository from which the record must be disseminated'
         type: string
         required: false
       metadataPrefix:
-        description: 'MetadataPrefix'
+        description: 'The metadataPrefix of the format that should be included in the metadata part of the returned record'
         type: string
         required: false
       from:
-        description: 'From'
+        description: 'UTC datetime value, which specifies a lower bound for datestamp-based selective harvesting'
         type: date-only
         required: false
       until:
-        description: 'Until'
-        type: string
+        description: 'UTC datetime value, which specifies a upper bound for datestamp-based selective harvesting'
+        type: date-only
         required: false
       set:
-        description: 'Set'
+        description: 'SetSpec value, which specifies set criteria for selective harvesting'
         type: string
         required: false
       resumptionToken:
-        description: 'ResumptionToken'
+        description: 'The flow control token returned by a ListIdentifiers request that issued an incomplete list'
         type: string
         required: false
       apiKey:
@@ -82,4 +94,4 @@ traits:
       '200':
         description: Success
         body:
-          text/plain: null
+          text/plain:
