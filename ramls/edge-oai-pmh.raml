@@ -1,0 +1,85 @@
+#%RAML 1.0
+title: 'Edge API - OAI-PMH'
+baseUri: 'https://github.com/folio-org/edge-oai-pmh'
+version: 1
+documentation:
+  -
+    title: 'Edge API - OAI-PMH'
+    content: 'Edge API to interface with FOLIO for OAI-PMH'
+types:
+    OAI-PMH: !include OAI-PMH.xsd
+traits:
+  resps:
+    responses:
+      '200':
+        description: Success
+      '400':
+        description: 'Bad Request'
+        body:
+          application/xml:
+            schema: OAI-PMH
+      '401':
+        description: 'Access Denied'
+        body:
+          application/xml:
+            schema: OAI-PMH
+      '408':
+        description: 'Request Timeout'
+        body:
+          application/xml:
+            schema: OAI-PMH
+      '500':
+        description: 'Internal Server Error'
+        body:
+          application/xml:
+            schema: OAI-PMH
+  params:
+    queryParameters:
+      verb:
+        description: 'Verb'
+        type: string
+        required: false
+      identifier:
+        description: 'Identifier'
+        type: string
+        required: false
+      metadataPrefix:
+        description: 'MetadataPrefix'
+        type: string
+        required: false
+      from:
+        description: 'From'
+        type: date-only
+        required: false
+      until:
+        description: 'Until'
+        type: string
+        required: false
+      set:
+        description: 'Set'
+        type: string
+        required: false
+      resumptionToken:
+        description: 'ResumptionToken'
+        type: string
+        required: false
+      apiKey:
+        description: 'API Key'
+        type: string
+/oai:
+  displayName: OAI-PMH
+  get:
+    description: 'OAI-PMH API'
+    is: [params, resps]
+  post:
+    description: 'OAI-PMH API'
+    is: [params, resps]
+/admin/health:
+  displayName: 'Health Check'
+  get:
+    description: 'Health Check'
+    responses:
+      '200':
+        description: Success
+        body:
+          text/plain: null
