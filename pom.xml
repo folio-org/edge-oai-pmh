@@ -72,7 +72,7 @@
         </executions>
         <configuration>
           <sources>
-            <source>ramls/OAI-PMH.xsd</source>
+            <source>ramls/schemas/OAI-PMH.xsd</source>
           </sources>
           <packageName>org.openarchives.oai</packageName>
         </configuration>
