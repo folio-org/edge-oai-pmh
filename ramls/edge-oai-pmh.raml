@@ -1,11 +1,11 @@
 #%RAML 1.0
 title: 'Edge API - OAI-PMH'
 baseUri: 'https://github.com/folio-org/edge-oai-pmh'
-version: 1
+version: v1
 documentation:
   -
     title: 'Edge API - OAI-PMH'
-    content: 'Edge API to interface with FOLIO for OAI-PMH'
+    content: 'Edge API to interface with FOLIO for 3rd party harvesters to harvest metadta via OAI-PMH'
 types:
     OAI-PMH: !include OAI-PMH.xsd
 traits:
@@ -48,7 +48,7 @@ traits:
   params:
     queryParameters:
       verb:
-        description: 'Verb'
+        description: 'One of the defined OAI-PMH verbs'
         type: string
         required: true
       identifier:
@@ -81,10 +81,10 @@ traits:
 /oai:
   displayName: OAI-PMH
   get:
-    description: 'OAI-PMH API'
+    description: 'Run OAI-PMH request'
     is: [params, resps]
   post:
-    description: 'OAI-PMH API'
+    description: 'Run OAI-PMH request'
     is: [params, resps]
 /admin/health:
   displayName: 'Health Check'
