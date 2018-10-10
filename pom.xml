@@ -31,6 +31,7 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <jaxb2.maven.plugin.ver>2.4</jaxb2.maven.plugin.ver>
 
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
@@ -56,6 +57,26 @@
       into a fat executable jar. This is a jar that contains all the dependencies
       required to run it, so you can just run it with java -jar -->
     <plugins>
+      <!-- JAXB Maven Plugin-->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>jaxb2-maven-plugin</artifactId>
+        <version>${jaxb2.maven.plugin.ver}</version>
+        <executions>
+          <execution>
+            <id>xjc</id>
+            <goals>
+              <goal>xjc</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <sources>
+            <source>ramls/OAI-PMH.xsd</source>
+          </sources>
+          <packageName>org.openarchives.oai</packageName>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
