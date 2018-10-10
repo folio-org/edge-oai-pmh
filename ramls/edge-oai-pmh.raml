@@ -7,77 +7,10 @@ documentation:
     title: 'Edge API - OAI-PMH'
     content: 'Edge API to interface with FOLIO for 3rd party harvesters to harvest metadta via OAI-PMH'
 types:
-    OAI-PMH: !include OAI-PMH.xsd
+  OAI-PMH: !include schemas/OAI-PMH.xsd
 traits:
-  resps:
-    responses:
-      '200':
-        description: 'Success'
-        body:
-          text/xml:
-            schema: OAI-PMH
-      '400':
-        description: 'Bad Request'
-        body:
-          text/xml:
-            schema: OAI-PMH
-      '401':
-        description: 'Access Denied'
-        body:
-          text/xml:
-            schema: OAI-PMH
-      '404':
-        description: 'Not found'
-        body:
-          text/xml:
-            schema: OAI-PMH
-      '422':
-        description: 'Unprocessable Entity'
-        body:
-          text/xml:
-            schema: OAI-PMH
-      '500':
-        description: 'Internal Server Error'
-        body:
-          text/plain:
-      '501':
-        description: 'Not Implemented'
-        body:
-          text/xml:
-            schema: OAI-PMH
-  params:
-    queryParameters:
-      verb:
-        description: 'One of the defined OAI-PMH verbs'
-        type: string
-        required: true
-      identifier:
-        description: 'The unique identifier of the item in the repository from which the record must be disseminated'
-        type: string
-        required: false
-      metadataPrefix:
-        description: 'The metadataPrefix of the format that should be included in the metadata part of the returned record'
-        type: string
-        required: false
-      from:
-        description: 'UTC datetime value, which specifies a lower bound for datestamp-based selective harvesting'
-        type: date-only
-        required: false
-      until:
-        description: 'UTC datetime value, which specifies a upper bound for datestamp-based selective harvesting'
-        type: date-only
-        required: false
-      set:
-        description: 'SetSpec value, which specifies set criteria for selective harvesting'
-        type: string
-        required: false
-      resumptionToken:
-        description: 'The flow control token returned by a ListIdentifiers request that issued an incomplete list'
-        type: string
-        required: false
-      apiKey:
-        description: 'API Key'
-        type: string
+  resps: !include traits/resps.raml
+  params: !include traits/params.raml
 /oai:
   displayName: OAI-PMH
   get:
