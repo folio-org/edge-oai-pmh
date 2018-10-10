@@ -1,0 +1,30 @@
+#%RAML 1.0
+title: 'Edge API - OAI-PMH'
+baseUri: 'https://github.com/folio-org/edge-oai-pmh'
+version: v1
+documentation:
+  -
+    title: 'Edge API - OAI-PMH'
+    content: 'Edge API to interface with FOLIO for 3rd party harvesters to harvest metadta via OAI-PMH'
+types:
+  OAI-PMH: !include schemas/OAI-PMH.xsd
+traits:
+  resps: !include traits/resps.raml
+  params: !include traits/params.raml
+/oai:
+  displayName: OAI-PMH
+  get:
+    description: 'Run OAI-PMH request'
+    is: [params, resps]
+  post:
+    description: 'Run OAI-PMH request'
+    is: [params, resps]
+/admin/health:
+  displayName: 'Health Check'
+  get:
+    description: 'Health Check'
+    responses:
+      '200':
+        description: Success
+        body:
+          text/plain:
