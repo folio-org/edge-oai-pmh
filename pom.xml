@@ -31,10 +31,21 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
+    <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
+    <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
 
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>edge-common</artifactId>
+      <version>0.3.4-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
 
   <build>
     <pluginManagement>
@@ -56,6 +67,48 @@
       into a fat executable jar. This is a jar that contains all the dependencies
       required to run it, so you can just run it with java -jar -->
     <plugins>
+      <!-- JAXB Maven Plugin-->
+      <plugin>
+        <groupId>org.jvnet.jaxb2.maven2</groupId>
+        <artifactId>maven-jaxb2-plugin</artifactId>
+        <version>${maven.jaxb2.plugin.ver}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <extension>true</extension>
+          <schemaDirectory>ramls/schemas</schemaDirectory>
+          <schemaIncludes>
+            <include>OAI-PMH.xsd</include>
+          </schemaIncludes>
+          <bindingDirectory>ramls/schemas</bindingDirectory>
+          <bindingIncludes>
+            <include>bindings.xjb</include>
+          </bindingIncludes>
+          <generateDirectory>target/generated-sources/jaxb</generateDirectory>
+          <args>
+            <arg>-Xfluent-api</arg>
+            <arg>-Xannotate</arg>
+          </args>
+          <plugins>
+            <plugin>
+              <groupId>org.jvnet.jaxb2_commons</groupId>
+              <artifactId>jaxb2-fluent-api</artifactId>
+              <version>${jaxb2.fluent.api.plugin.ver}</version>
+            </plugin>
+            <plugin>
+              <groupId>org.jvnet.jaxb2_commons</groupId>
+              <artifactId>jaxb2-basics-annotate</artifactId>
+              <version>${jaxb2.basics.annotate.plugin.ver}</version>
+            </plugin>
+          </plugins>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
