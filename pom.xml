@@ -39,6 +39,14 @@
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>edge-common</artifactId>
+      <version>0.3.4-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
