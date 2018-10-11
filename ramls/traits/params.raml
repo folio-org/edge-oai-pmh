@@ -1,0 +1,32 @@
+    queryParameters:
+      verb:
+        description: 'One of the defined OAI-PMH verbs'
+        type: string
+        required: true
+      identifier:
+        description: 'The unique identifier of the item in the repository from which the record must be disseminated'
+        type: string
+        required: false
+      metadataPrefix:
+        description: 'The metadataPrefix of the format that should be included in the metadata part of the returned record'
+        type: string
+        required: false
+      from:
+        description: 'UTC datetime value, which specifies a lower bound for datestamp-based selective harvesting'
+        type: date-only
+        required: false
+      until:
+        description: 'UTC datetime value, which specifies a upper bound for datestamp-based selective harvesting'
+        type: date-only
+        required: false
+      set:
+        description: 'SetSpec value, which specifies set criteria for selective harvesting'
+        type: string
+        required: false
+      resumptionToken:
+        description: 'The flow control token returned by a ListIdentifiers request that issued an incomplete list'
+        type: string
+        required: false
+      apiKey:
+        description: 'API Key'
+        type: string
