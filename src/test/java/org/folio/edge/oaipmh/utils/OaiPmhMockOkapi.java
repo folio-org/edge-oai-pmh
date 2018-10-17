@@ -42,12 +42,12 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
     if (VerbType.GET_RECORD.value().equals(verb) && path.endsWith("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
       ctx.response()
-        .setStatusCode(404)
+        .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
     } else if(VerbType.GET_RECORD.value().equals(verb) && path.endsWith("oai%3AarXiv.org%3Acs%2F0112017")) {
       ctx.response()
-        .setStatusCode(200)
+        .setStatusCode(404)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if(VerbType.IDENTIFY.value().equals(verb)) {
