@@ -112,11 +112,10 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return string representation of GET request parameters
    */
   private String getParametersAsString(MultiMap parameters) {
-    String query = "?" + parameters.entries().stream()
+    return parameters.entries().stream()
       .filter(e -> !EXCLUDED_PARAMS.contains(e.getKey()))
       .map(e -> e.getKey() + "=" + e.getValue())
       .collect(joining("&"));
-    return query;
   }
 
   /**
@@ -129,6 +128,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return URL for corresponding 'verb'
    */
   private String getUrlByVerb(MultiMap parameters) {
-    return okapiURL + getEndpoint(parameters) + getParametersAsString(parameters);
+    return okapiURL + getEndpoint(parameters) + "?" + getParametersAsString(parameters);
   }
 }
