@@ -16,8 +16,8 @@ import org.openarchives.oai._2.VerbType;
 
 public class OaiPmhOkapiClient extends OkapiClient {
 
-  private static final Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
-  private static final String urlEncodingType = "UTF-8";
+  private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
+  private static final String URL_ENCODING_TYPE = "UTF-8";
 
   public OaiPmhOkapiClient(OkapiClient client) {
     super(client);
@@ -91,7 +91,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     if (VerbType.GET_RECORD.value().equals(verb)) {
       try {
         String identifier = parameters.get(Constants.IDENTIFIER);
-        endpoint = endpoint + "/" + URLEncoder.encode(identifier, urlEncodingType);
+        endpoint = endpoint + "/" + URLEncoder.encode(identifier, URL_ENCODING_TYPE);
         parameters.remove(Constants.IDENTIFIER);
       } catch (UnsupportedEncodingException e) {
         logger.error("Error in identifier encoding " + e.getMessage());
