@@ -1,13 +1,17 @@
 package org.folio.edge.oaipmh.utils;
 
+import static com.google.common.collect.ImmutableSet.of;
+import static java.util.stream.Collectors.joining;
+import static org.folio.edge.core.Constants.PARAM_API_KEY;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
+
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import me.escoffier.vertx.completablefuture.VertxCompletableFuture;
 import org.apache.log4j.Logger;
@@ -18,6 +22,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static final String URL_ENCODING_TYPE = "UTF-8";
+  private static final Set<String> EXCLUDED_PARAMS = of(VERB, PARAM_API_KEY);
 
   public OaiPmhOkapiClient(OkapiClient client) {
     super(client);
@@ -57,7 +62,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
         if (httpStatusCode == 200) {
           String responseBody = body.toString();
           logger.info(String.format(
-            "Successfully retrieved title info from oai-pmh: (%s) %s",
+            "Successfully retrieved info from oai-pmh: (%s) %s",
             httpStatusCode,
             responseBody));
           future.complete(responseBody);
@@ -85,7 +90,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return endpoint for corresponding 'verb'
    */
   private String getEndpoint(MultiMap parameters) {
-    String verb = parameters.get(Constants.VERB);
+    String verb = parameters.get(VERB);
     String endpoint = endpointsMap.get(verb);
     // Special processing of GetRecord request with {id} to provide REST-styled call of mod-oai-pmh
     if (VerbType.GET_RECORD.value().equals(verb)) {
@@ -107,16 +112,11 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return string representation of GET request parameters
    */
   private String getParametersAsString(MultiMap parameters) {
-    StringBuilder sb = new StringBuilder("?");
-    Iterator<Entry<String, String>> it = parameters.iterator();
-    while (it.hasNext()) {
-      Entry<String, String> e = it.next();
-      sb.append(e.getKey()).append("=").append(e.getValue());
-      if (it.hasNext()) {
-        sb.append("&");
-      }
-    }
-    return sb.toString();
+    String query = "?" + parameters.entries().stream()
+      .filter(e -> !EXCLUDED_PARAMS.contains(e.getKey()))
+      .map(e -> e.getKey() + "=" + e.getValue())
+      .collect(joining("&"));
+    return query;
   }
 
   /**

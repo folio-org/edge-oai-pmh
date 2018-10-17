@@ -12,17 +12,16 @@ import java.nio.file.Paths;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.test.MockOkapi;
-import org.openarchives.oai._2.VerbType;
 
 public class OaiPmhMockOkapi extends MockOkapi {
 
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
-  static final String PATH_TO_GET_RECORDS_MOCK
+  public static final String PATH_TO_GET_RECORDS_MOCK
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
-  static final String PATH_TO_GET_RECORDS_ERROR_MOCK
+  public static final String PATH_TO_GET_RECORDS_ERROR_MOCK
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
-  static final String PATH_TO_IDENTIFY_MOCK
+  public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
@@ -40,20 +39,21 @@ public class OaiPmhMockOkapi extends MockOkapi {
   private void oaiPmhHandler(RoutingContext ctx) {
 
     HttpServerRequest request = ctx.request();
-    String verb = request.getParam(Constants.VERB);
     String path = request.path();
 
-    if (VerbType.GET_RECORD.value().equals(verb) && path.endsWith("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
+    if (path.startsWith("/oai/records/") && path
+      .contains("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
-    } else if(VerbType.GET_RECORD.value().equals(verb) && path.endsWith("oai%3AarXiv.org%3Acs%2F0112017")) {
+    } else if (path.startsWith("/oai/records/") && path
+      .endsWith("oai%3AarXiv.org%3Acs%2F0112017")) {
       ctx.response()
         .setStatusCode(404)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
-    } else if(VerbType.IDENTIFY.value().equals(verb)) {
+    } else if (path.startsWith("/oai/repository_info")) {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
@@ -61,7 +61,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     }
   }
 
-  static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
+  public static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
     String xml = null;
     try {
       xml = new String(Files.readAllBytes(pathToXmlFile));
