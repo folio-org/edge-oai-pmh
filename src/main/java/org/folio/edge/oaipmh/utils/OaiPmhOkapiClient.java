@@ -128,6 +128,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return URL for corresponding 'verb'
    */
   private String getUrlByVerb(MultiMap parameters) {
-    return okapiURL + getEndpoint(parameters) + "?" + getParametersAsString(parameters);
+    return String.format("%s %s ? %s", okapiURL, getEndpoint(parameters), getParametersAsString(parameters));
   }
 }
