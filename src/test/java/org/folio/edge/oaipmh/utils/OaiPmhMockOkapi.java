@@ -10,10 +10,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.test.MockOkapi;
 import org.openarchives.oai._2.VerbType;
 
 public class OaiPmhMockOkapi extends MockOkapi {
+
+  private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
   static final String PATH_TO_GET_RECORDS_MOCK
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
@@ -63,7 +66,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     try {
       xml = new String(Files.readAllBytes(pathToXmlFile));
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error("Error in file reading: " + e.getMessage());
     }
     return xml;
   }

@@ -34,7 +34,7 @@
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
-    <vertx.ver>3.4.0</vertx.ver>
+    <vertx.ver>3.5.4</vertx.ver>
 
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>

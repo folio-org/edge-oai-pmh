@@ -2,6 +2,7 @@ package org.folio.edge.oaipmh.utils;
 
 import static org.folio.edge.core.utils.test.MockOkapi.X_DURATION;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import io.vertx.core.MultiMap;
@@ -132,7 +133,7 @@ public class OaiPmhOkapiClientTest {
       future.get();
       fail("Expected a TimeoutException to be thrown");
     } catch (Exception e) {
-      assertEquals(TimeoutException.class, e.getCause().getClass());
+      assertTrue(e.getCause() instanceof TimeoutException);
     }
   }
 
