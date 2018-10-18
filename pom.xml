@@ -35,12 +35,28 @@
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
     <jaxb2-basics.ver>0.12.0</jaxb2-basics.ver>
+    <vertx.ver>3.5.4</vertx.ver>
 
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-core</artifactId>
+      <version>${vertx.ver}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-web</artifactId>
+      <version>${vertx.ver}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-auth-oauth2</artifactId>
+      <version>${vertx.ver}</version>
+    </dependency>
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>edge-common</artifactId>
@@ -72,6 +88,24 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>3.0.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <version>2.4.6</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-unit</artifactId>
+      <version>3.2.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
