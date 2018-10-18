@@ -2,6 +2,7 @@ package org.folio.edge.oaipmh;
 
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
@@ -9,9 +10,14 @@ import org.folio.edge.core.utils.OkapiClientFactory;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
 import org.openarchives.oai._2.OAIPMHerrorcodeType;
+import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.VerbType;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.folio.edge.oaipmh.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
@@ -29,13 +35,13 @@ public class OaiPmhHandler extends Handler {
     Verb verb = Verb.fromName(ctx.request().getParam(VERB));
     if (verb == null) {
       badRequest(ctx,
-        "Bad verb. Verb '" + ctx.request().getParam(VERB) + "' is not implemented", BAD_VERB);
+        "Bad verb. Verb '" + ctx.request().getParam(VERB) + "' is not implemented", null, BAD_VERB);
       return;
     }
 
     List<OAIPMHerrorType> errors = verb.validate(ctx);
     if (!errors.isEmpty()) {
-      badRequest(ctx, errors);
+      badRequest(ctx, verb.toString(), errors);
       return;
     }
 
@@ -75,16 +81,28 @@ public class OaiPmhHandler extends Handler {
 
   @Override
   protected void badRequest(RoutingContext ctx, String body) {
-    badRequest(ctx, body, BAD_ARGUMENT);
+    String verb = ctx.request().getParam(VERB);
+    badRequest(ctx, body, verb, BAD_ARGUMENT);
   }
 
-  private void badRequest(RoutingContext ctx, String body, OAIPMHerrorcodeType type) {
-    OAIPMH resp = new OAIPMH().withErrors(new OAIPMHerrorType().withCode(type).withValue(body));
+  private void badRequest(RoutingContext ctx, String body, String verb, OAIPMHerrorcodeType type) {
+    OAIPMH resp = buildBaseResponse(ctx, verb)
+      .withErrors(new OAIPMHerrorType().withCode(type).withValue(body));
     handleError(ctx, 400, resp);
   }
 
-  private void badRequest(RoutingContext ctx, List<OAIPMHerrorType> errors) {
-    OAIPMH resp = new OAIPMH().withErrors(errors);
+  private void badRequest(RoutingContext ctx, String verb, List<OAIPMHerrorType> errors) {
+    OAIPMH resp = buildBaseResponse(ctx, verb)
+      .withErrors(errors);
     handleError(ctx, 400, resp);
+  }
+
+  private OAIPMH buildBaseResponse(RoutingContext ctx, String verb) {
+    String baseUrl = StringUtils.substringBefore(ctx.request().absoluteURI(), "?");
+    return new OAIPMH()
+      .withResponseDate(Instant.now().truncatedTo(ChronoUnit.SECONDS))
+      .withRequest(new RequestType()
+        .withVerb(isEmpty(verb) ? null : VerbType.fromValue(verb))
+        .withValue(baseUrl));
   }
 }

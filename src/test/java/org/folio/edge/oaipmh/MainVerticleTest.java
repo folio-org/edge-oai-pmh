@@ -14,6 +14,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
+import org.openarchives.oai._2.OAIPMHerrorcodeType;
+import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.VerbType;
 
 import javax.xml.bind.JAXBException;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
+import static org.openarchives.oai._2.VerbType.LIST_IDENTIFIERS;
 
 @RunWith(VertxUnitRunner.class)
 public class MainVerticleTest {
@@ -76,12 +80,11 @@ public class MainVerticleTest {
       .extract()
       .response();
 
-    OAIPMH expectedResp = new OAIPMH()
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_VERB)
-        .withValue("Bad verb. Verb 'nastyVerb' is not implemented"));
+    OAIPMH expectedResp =
+      buildOAIPMHErrorResponse(null, BAD_VERB, "Bad verb. Verb 'nastyVerb' is not implemented");
+    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
-    assertEquals(ResponseHelper.getInstance().writeToString(expectedResp), resp.body().asString());
+    verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
@@ -96,12 +99,11 @@ public class MainVerticleTest {
       .extract()
       .response();
 
-    OAIPMH expectedResp = new OAIPMH()
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Verb 'ListIdentifiers', illegal argument: extraParam"));
+    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
+        "Verb 'ListIdentifiers', illegal argument: extraParam");
+    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
-    assertEquals(ResponseHelper.getInstance().writeToString(expectedResp), resp.body().asString());
+    verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
@@ -116,13 +118,11 @@ public class MainVerticleTest {
       .extract()
       .response();
 
-    OAIPMH expectedResp = new OAIPMH()
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Verb 'ListIdentifiers', argument 'resumptionToken' is exclusive, " +
-          "no others maybe specified with it."));
+    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
+      "Verb 'ListIdentifiers', argument 'resumptionToken' is exclusive, no others maybe specified with it.");
+    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
-    assertEquals(ResponseHelper.getInstance().writeToString(expectedResp), resp.body().asString());
+    verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
@@ -137,15 +137,14 @@ public class MainVerticleTest {
       .extract()
       .response();
 
-    OAIPMH expectedResp = new OAIPMH()
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Bad datestamp format for 'from' argument."))
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Bad datestamp format for 'until' argument."));
+    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
+      "Bad datestamp format for 'from' argument.")
+        .withErrors(new OAIPMHerrorType()
+          .withCode(BAD_ARGUMENT)
+          .withValue("Bad datestamp format for 'until' argument."));
+    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
-    assertEquals(ResponseHelper.getInstance().writeToString(expectedResp), resp.body().asString());
+    verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
@@ -160,11 +159,31 @@ public class MainVerticleTest {
       .extract()
       .response();
 
-    OAIPMH expectedResp = new OAIPMH()
-      .withErrors(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Missing required parameter: metadataPrefix"));
+    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
+      "Missing required parameter: metadataPrefix");
+    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
-    assertEquals(ResponseHelper.getInstance().writeToString(expectedResp), resp.body().asString());
+    verifyResponse(expectedRespStr, resp.body().asString());
+  }
+
+  private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
+    return new OAIPMH()
+      .withRequest(new RequestType()
+        .withVerb(verb)
+        .withValue(RestAssured.baseURI + "/oai"))
+      .withErrors(new OAIPMHerrorType()
+        .withCode(errorCode)
+        .withValue(message));
+  }
+
+  private void verifyResponse(String expectedResponse, String actualResponse)
+    throws JAXBException, UnsupportedEncodingException {
+    // Unmarshal string to OAIPMH to remove volatile fields such as ResponseDate
+    OAIPMH actualOaiResp = ResponseHelper.getInstance().stringToOaiPmh(actualResponse);
+    actualOaiResp.setResponseDate(null);
+
+    actualResponse = ResponseHelper.getInstance().writeToString(actualOaiResp);
+
+    assertEquals(expectedResponse, actualResponse);
   }
 }

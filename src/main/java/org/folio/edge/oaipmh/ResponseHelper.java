@@ -7,8 +7,10 @@ import io.vertx.core.logging.LoggerFactory;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 import java.io.ByteArrayOutputStream;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -22,6 +24,7 @@ public class ResponseHelper {
   private static ResponseHelper ourInstance = new ResponseHelper();
 
   private Marshaller jaxbMarshaller;
+  private Unmarshaller jaxbUnmarshaller;
 
   public static ResponseHelper getInstance() {
     return ourInstance;
@@ -31,6 +34,7 @@ public class ResponseHelper {
     try {
       JAXBContext jaxbContext = JAXBContext.newInstance(OAIPMH.class);
       jaxbMarshaller = jaxbContext.createMarshaller();
+      jaxbUnmarshaller = jaxbContext.createUnmarshaller();
 
       // Specifying xsi:schemaLocation (which will trigger xmlns:xsi being added to RS as well)
       jaxbMarshaller.setProperty(Marshaller.JAXB_SCHEMA_LOCATION,
@@ -61,5 +65,15 @@ public class ResponseHelper {
     jaxbMarshaller.marshal(response, baos);
 
     return baos.toString(UTF_8.toString());
+  }
+
+  /**
+   * Unmarshals {@link OAIPMH} object based on passed string
+   * @param oaipmhResponse the {@link OAIPMH} response in string representation
+   * @return the {@link OAIPMH} object based on passed string
+   * @throws JAXBException in case passed string is not valid OAIPMH representation
+   */
+  public OAIPMH stringToOaiPmh(String oaipmhResponse) throws JAXBException {
+    return (OAIPMH) jaxbUnmarshaller.unmarshal(new StringReader(oaipmhResponse));
   }
 }
