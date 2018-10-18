@@ -18,7 +18,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
   public static final String PATH_TO_GET_RECORDS_MOCK
-    = "src/test/resources/mocks/GetRecordErrorResponse.xml";
+    = "src/test/resources/mocks/GetRecordResponse.xml";
   public static final String PATH_TO_GET_RECORDS_ERROR_MOCK
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
@@ -41,14 +41,14 @@ public class OaiPmhMockOkapi extends MockOkapi {
     HttpServerRequest request = ctx.request();
     String path = request.path();
 
-    if (path.startsWith("/oai/records/") && path
-      .contains("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
+    if (path.startsWith("/oai/records/")
+      && path.contains("oai%3AarXiv.org%3Acs%2F0112017")) {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
-    } else if (path.startsWith("/oai/records/") && path
-      .endsWith("oai%3AarXiv.org%3Acs%2F0112017")) {
+    } else if (path.startsWith("/oai/records/")
+      && path.contains("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
       ctx.response()
         .setStatusCode(404)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
