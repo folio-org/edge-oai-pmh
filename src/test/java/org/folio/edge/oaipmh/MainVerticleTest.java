@@ -316,22 +316,6 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordOkapiTimeoutHttpGet(TestContext context) {
-    logger.info("=== Test timeout GetRecord OAI-PMH (HTTP GET) ===");
-
-    int expectedHttpStatusCode = 408;
-    RestAssured
-      .get(String.format("/oai?verb=GetRecord"
-        + "&identifier=timeout&metadataPrefix=oai_dc&apikey=%s", apiKey))
-      .then()
-      .contentType(TEXT_PLAIN)
-      .statusCode(expectedHttpStatusCode)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
-      .extract()
-      .response();
-  }
-
-  @Test
   public void testValidateBadVerb(TestContext context) throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ invalid verb ===");
 

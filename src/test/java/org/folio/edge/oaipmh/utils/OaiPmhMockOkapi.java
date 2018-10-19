@@ -71,15 +71,6 @@ public class OaiPmhMockOkapi extends MockOkapi {
       && path.contains("exception")) {
       logger.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
-    } else if (path.startsWith("/oai/records/")
-      && path.contains("timeout")) {
-      try {
-        logger.debug("Starting OKAPI timeout emulation...");
-        long timeout = 3000L;
-        Thread.sleep(timeout);
-      } catch (InterruptedException e) {
-        logger.error("Sleeping interrupted: " + e.getMessage());
-      }
     }
   }
 }
