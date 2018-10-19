@@ -75,7 +75,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
       && path.contains("timeout")) {
       try {
         logger.debug("Starting OKAPI timeout emulation...");
-        long timeout = Long.parseLong(System.getProperty("request_timeout_ms"));
+        long timeout = 3000L;
         Thread.sleep(timeout);
       } catch (InterruptedException e) {
         logger.error("Sleeping interrupted: " + e.getMessage());

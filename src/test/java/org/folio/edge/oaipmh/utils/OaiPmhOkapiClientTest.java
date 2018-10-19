@@ -24,6 +24,7 @@ public class OaiPmhOkapiClientTest {
   private static final Logger logger = Logger.getLogger(OaiPmhOkapiClientTest.class);
 
   private static final String tenant = "diku";
+  private static final long reqTimeout = 3000L;
 
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
@@ -38,7 +39,7 @@ public class OaiPmhOkapiClientTest {
     mockOkapi = new OaiPmhMockOkapi(okapiPort, knownTenants);
     mockOkapi.start(context);
 
-    long reqTimeout = Long.parseLong(System.getProperty("request_timeout_ms"));
+
     client = new OaiPmhOkapiClientFactory(Vertx.vertx(),
       "http://localhost:" + okapiPort, reqTimeout)
       .getOaiPmhOkapiClient(tenant);
