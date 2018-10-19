@@ -23,8 +23,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.folio.edge.oaipmh.Constants.TEXT_XML;
-import static org.folio.edge.oaipmh.Constants.VERB;
+import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import org.folio.edge.oaipmh.utils.Constants;

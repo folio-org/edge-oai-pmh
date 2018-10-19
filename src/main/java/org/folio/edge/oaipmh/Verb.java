@@ -18,13 +18,13 @@ import static java.util.Collections.EMPTY_SET;
 import static java.util.stream.Collectors.toSet;
 import static java.util.stream.Stream.concat;
 import static org.folio.edge.core.Constants.PARAM_API_KEY;
-import static org.folio.edge.oaipmh.Constants.FROM;
-import static org.folio.edge.oaipmh.Constants.IDENTIFIER;
-import static org.folio.edge.oaipmh.Constants.METADATA_PREFIX;
-import static org.folio.edge.oaipmh.Constants.RESUMPTION_TOKEN;
-import static org.folio.edge.oaipmh.Constants.SET;
-import static org.folio.edge.oaipmh.Constants.UNTIL;
-import static org.folio.edge.oaipmh.Constants.VERB;
+import static org.folio.edge.oaipmh.utils.Constants.FROM;
+import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
+import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
+import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
+import static org.folio.edge.oaipmh.utils.Constants.SET;
+import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 
 /**
