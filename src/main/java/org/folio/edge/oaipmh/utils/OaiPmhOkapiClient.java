@@ -22,6 +22,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
   private static final Set<String> EXCLUDED_PARAMS = of(VERB, PARAM_API_KEY);
+  public static final String CONTENT_LENGTH_HEADER = "Content-Length";
   private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();
 
@@ -43,17 +44,18 @@ public class OaiPmhOkapiClient extends OkapiClient {
   }
 
   /**
-   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from nod-oai-pmh
+   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from mod-oai-pmh
    *
    * @param parameters multimap of HTTP GET parameters
    * @param headers multimap of HTTP GET headers
-   * @return future with response body
    */
   public void call(MultiMap parameters, MultiMap headers,
     Handler<HttpClientResponse> responseHandler,
     Handler<Throwable> exceptionHandler) {
     String url = getUrlByVerb(parameters);
-    headers.remove("Content-Length");
+    // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
+    // for GET request to mod-oai-pmh
+    headers.remove(CONTENT_LENGTH_HEADER);
     get(
       url,
       tenant,
