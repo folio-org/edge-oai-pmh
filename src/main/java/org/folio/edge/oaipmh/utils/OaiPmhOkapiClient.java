@@ -5,29 +5,25 @@ import static java.util.stream.Collectors.joining;
 import static org.folio.edge.core.Constants.PARAM_API_KEY;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
+import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClientResponse;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import me.escoffier.vertx.completablefuture.VertxCompletableFuture;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.OkapiClient;
 import org.openarchives.oai._2.VerbType;
 
 public class OaiPmhOkapiClient extends OkapiClient {
 
-  private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static final String URL_ENCODING_TYPE = "UTF-8";
   private static final Set<String> EXCLUDED_PARAMS = of(VERB, PARAM_API_KEY);
-
-  public OaiPmhOkapiClient(OkapiClient client) {
-    super(client);
-  }
-
+  public static final String CONTENT_LENGTH_HEADER = "Content-Length";
+  private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();
 
   static {
@@ -39,47 +35,33 @@ public class OaiPmhOkapiClient extends OkapiClient {
     endpointsMap.put("ListSets", "/oai/sets");
   }
 
-  protected OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, long timeout) {
+  public OaiPmhOkapiClient(OkapiClient client) {
+    super(client);
+  }
+
+  OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, long timeout) {
     super(vertx, okapiURL, tenant, timeout);
   }
 
   /**
-   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from nod-oai-pmh
+   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from mod-oai-pmh
    *
    * @param parameters multimap of HTTP GET parameters
    * @param headers multimap of HTTP GET headers
-   * @return future with response body
    */
-  public CompletableFuture<String> call(MultiMap parameters, MultiMap headers) {
-    VertxCompletableFuture<String> future = new VertxCompletableFuture<>(vertx);
+  public void call(MultiMap parameters, MultiMap headers,
+    Handler<HttpClientResponse> responseHandler,
+    Handler<Throwable> exceptionHandler) {
     String url = getUrlByVerb(parameters);
+    // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
+    // for GET request to mod-oai-pmh
+    headers.remove(CONTENT_LENGTH_HEADER);
     get(
       url,
       tenant,
       combineHeadersWithDefaults(headers),
-      response -> response.bodyHandler(body -> {
-        int httpStatusCode = response.statusCode();
-        if (httpStatusCode == 200) {
-          String responseBody = body.toString();
-          logger.info(String.format(
-            "Successfully retrieved info from oai-pmh: (%s) %s",
-            httpStatusCode,
-            responseBody));
-          future.complete(responseBody);
-        } else {
-          String err = String.format(
-            "Failed to get info from oai-pmh: (%s) %s",
-            response.statusCode(),
-            body.toString());
-          logger.error(err);
-          future.complete(body.toString());
-        }
-      }),
-      tr -> {
-        logger.error("Exception in oai-pmh: " + tr.getMessage());
-        future.completeExceptionally(tr);
-      });
-    return future;
+      responseHandler,
+      exceptionHandler);
   }
 
   /**
@@ -99,7 +81,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
         endpoint = endpoint + "/" + URLEncoder.encode(identifier, URL_ENCODING_TYPE);
         parameters.remove(Constants.IDENTIFIER);
       } catch (UnsupportedEncodingException e) {
-        logger.error("Error in identifier encoding " + e.getMessage());
+        logger.error(String.format("Error in identifier encoding: %s", e.getMessage()));
       }
     }
     return endpoint;
@@ -128,6 +110,11 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return URL for corresponding 'verb'
    */
   private String getUrlByVerb(MultiMap parameters) {
-    return String.format("%s%s?%s", okapiURL, getEndpoint(parameters), getParametersAsString(parameters));
+    String params = getParametersAsString(parameters);
+    if(params.length() > 0) {
+      return String.format("%s%s?%s", okapiURL, getEndpoint(parameters), params);
+    } else {
+      return String.format("%s%s", okapiURL, getEndpoint(parameters));
+    }
   }
 }
