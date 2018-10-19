@@ -1,6 +1,5 @@
 package org.folio.edge.oaipmh.utils;
 
-import com.sun.javafx.runtime.SystemProperties;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
