@@ -1,5 +1,6 @@
 package org.folio.edge.oaipmh.utils;
 
+import com.sun.javafx.runtime.SystemProperties;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -15,17 +16,26 @@ import org.folio.edge.core.utils.test.MockOkapi;
 
 public class OaiPmhMockOkapi extends MockOkapi {
 
-  private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
-
   public static final String PATH_TO_GET_RECORDS_MOCK
     = "src/test/resources/mocks/GetRecordResponse.xml";
   public static final String PATH_TO_GET_RECORDS_ERROR_MOCK
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
+  private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
     super(port, knownTenants);
+  }
+
+  public static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
+    String xml = null;
+    try {
+      xml = new String(Files.readAllBytes(pathToXmlFile));
+    } catch (IOException e) {
+      logger.error("Error in file reading: " + e.getMessage());
+    }
+    return xml;
   }
 
   @Override
@@ -58,17 +68,20 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
+    } else if (path.startsWith("/oai/records/")
+      && path.contains("exception")) {
+      logger.debug("Starting OKAPI exception...");
+      throw new NullPointerException("NPE OKAPI mock emulation");
+    } else if (path.startsWith("/oai/records/")
+      && path.contains("timeout")) {
+      try {
+        logger.debug("Starting OKAPI timeout emulation...");
+        long timeout = Long.parseLong(System.getProperty("request_timeout_ms"));
+        Thread.sleep(timeout);
+      } catch (InterruptedException e) {
+        logger.error("Sleeping interrupted: " + e.getMessage());
+      }
     }
-  }
-
-  public static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
-    String xml = null;
-    try {
-      xml = new String(Files.readAllBytes(pathToXmlFile));
-    } catch (IOException e) {
-      logger.error("Error in file reading: " + e.getMessage());
-    }
-    return xml;
   }
 }
 
