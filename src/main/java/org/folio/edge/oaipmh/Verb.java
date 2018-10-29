@@ -36,7 +36,7 @@ public enum Verb {
   LIST_IDENTIFIERS("ListIdentifiers", of(METADATA_PREFIX), of(FROM, UNTIL, SET), RESUMPTION_TOKEN),
   LIST_METADATA_FORMATS("ListMetadataFormats", EMPTY_SET, of(IDENTIFIER), null),
   LIST_RECORDS("ListRecords", of(METADATA_PREFIX), of(FROM, UNTIL, SET), RESUMPTION_TOKEN),
-  LIST_SETS("ListRecords", of(METADATA_PREFIX), of(FROM, UNTIL, SET), RESUMPTION_TOKEN);
+  LIST_SETS("ListSets", EMPTY_SET, EMPTY_SET, RESUMPTION_TOKEN);
 
 
   /** String name of the verb. */
