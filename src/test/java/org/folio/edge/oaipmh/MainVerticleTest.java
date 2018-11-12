@@ -41,8 +41,10 @@ import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 import static org.folio.edge.core.Constants.SYS_RESPONSE_COMPRESSION;
 import static org.folio.edge.core.Constants.SYS_SECURE_STORE_PROP_FILE;
 import static org.folio.edge.core.Constants.TEXT_PLAIN;
+import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
@@ -55,9 +57,10 @@ public class MainVerticleTest {
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
   private static final String apiKey = "Z1luMHVGdjNMZl90ZW5hbnRfdXNlcg==";
+  private static final String apiKeyForDikuUser = "Z1luMHVGdjNMZl9kaWt1X2Rpa3U=";
   private static final String badApiKey = "ZnMwMDAwMDAwMA==0000";
 
-  private static final long requestTimeoutMs = 3000L;
+  private static final long requestTimeoutMs = REQUEST_TIMEOUT_MS;
 
   private static final String invalidApiKeyExpectedResponseBody
     = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
@@ -94,7 +97,7 @@ public class MainVerticleTest {
   }
 
   @AfterClass
-  public static void tearDownOnce(TestContext context) {
+  public static void tearDownOnce() {
     logger.info("Shutting down server");
     vertx.close(res -> {
       if (res.failed()) {
@@ -111,7 +114,7 @@ public class MainVerticleTest {
 
 
   @Test
-  public void testAdminHealth(TestContext context) {
+  public void testAdminHealth() {
     logger.info("=== Test the health check endpoint ===");
 
     final Response resp = RestAssured
@@ -127,7 +130,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordNotFoundHttpGet(TestContext context) {
+  public void testGetRecordNotFoundHttpGet() {
     logger.info("=== Test GetRecord OAI-PMH error - not found (HTTP GET)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
@@ -149,7 +152,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordNotFoundHttpPost(TestContext context) {
+  public void testGetRecordNotFoundHttpPost() {
     logger.info("=== Test GetRecord OAI-PMH error - not found (HTTP POST)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
@@ -174,7 +177,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordSuccessfulHttpGet(TestContext context) {
+  public void testGetRecordSuccessfulHttpGet() {
     logger.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -195,7 +198,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordSuccessfulHttpPost(TestContext context) {
+  public void testGetRecordSuccessfulHttpPost() {
     logger.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -219,7 +222,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testIdentifySuccessfulHttpGet(TestContext context) {
+  public void testIdentifySuccessfulHttpGet() {
     logger.info("=== Test successful Identify OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
@@ -239,7 +242,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testIdentifySuccessfulHttpPost(TestContext context) {
+  public void testIdentifySuccessfulHttpPost() {
     logger.info("=== Test successful Identify OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
@@ -260,9 +263,8 @@ public class MainVerticleTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-
   @Test
-  public void testIdentifyBadApiKeyHttpGet(TestContext context) {
+  public void testIdentifyBadApiKeyHttpGet() {
     logger.info("=== Test bad apikey Identify OAI-PMH (HTTP GET) ===");
 
     int expectedHttpStatusCode = 401;
@@ -280,7 +282,24 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordInvalidApiKeyHttpPost(TestContext context) {
+  public void testIdentifyAccessDeniedApiKeyHttpGet() {
+    logger.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
+
+    final Response resp = RestAssured
+      .post(String.format("/oai?verb=Identify&apikey=%s", apiKeyForDikuUser))
+      .then()
+      .contentType(TEXT_PLAIN)
+      .statusCode(403)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertNotNull(actualBody);
+  }
+
+  @Test
+  public void testGetRecordInvalidApiKeyHttpPost() {
     logger.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
 
     int expectedHttpStatusCode = 401;
@@ -302,7 +321,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testGetRecordOkapiExceptionHttpGet(TestContext context) {
+  public void testGetRecordOkapiExceptionHttpGet() {
     logger.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
 
     String expectedMockBody = "Internal Server Error";
@@ -322,7 +341,25 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testValidateBadVerb(TestContext context) throws UnsupportedEncodingException, JAXBException {
+  public void testGetRecordOkapiTimeoutExceptionHttpGet() {
+    logger.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=TimeoutException&metadataPrefix=oai_dc&apikey=%s", apiKey))
+      .then()
+      .contentType(TEXT_PLAIN)
+      .statusCode(408)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertNotNull(actualBody);
+  }
+
+  @Test
+  public void testValidateBadVerb() throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ invalid verb ===");
 
     final Response resp = RestAssured
@@ -341,7 +378,7 @@ public class MainVerticleTest {
   }
 
   @Test
-  public void testValidateIllegalParams(TestContext context) throws UnsupportedEncodingException, JAXBException {
+  public void testValidateIllegalParams() throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ illegal params ===");
 
     final Response resp = RestAssured
@@ -354,13 +391,15 @@ public class MainVerticleTest {
 
     OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
         "Verb 'ListIdentifiers', illegal argument: extraParam");
+    expectedResp.getRequest()
+                .withMetadataPrefix("oai_dc");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
-  public void testValidateExclusiveParam(TestContext context) throws UnsupportedEncodingException, JAXBException {
+  public void testValidateExclusiveParam() throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ exclusive and other params ===");
 
     final Response resp = RestAssured
@@ -373,13 +412,16 @@ public class MainVerticleTest {
 
     OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
       "Verb 'ListIdentifiers', argument 'resumptionToken' is exclusive, no others maybe specified with it.");
+    expectedResp.getRequest()
+                .withResumptionToken("123456789")
+                .withMetadataPrefix("oai_dc");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
-  public void testValidateBadFromUntilParams(TestContext context) throws UnsupportedEncodingException, JAXBException {
+  public void testValidateBadFromUntilParams() throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ bad 'from' and 'until' params ===");
 
     final Response resp = RestAssured
@@ -395,13 +437,17 @@ public class MainVerticleTest {
         .withErrors(new OAIPMHerrorType()
           .withCode(BAD_ARGUMENT)
           .withValue("Bad datestamp format for 'until' argument."));
+    expectedResp.getRequest()
+                .withMetadataPrefix("oai_dc")
+                .withFrom("2002-05-01T14:15:00")
+                .withUntil("2002-05-02T14:15:00.000Z");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
   }
 
   @Test
-  public void testValidateMissingRequiredParams(TestContext context) throws UnsupportedEncodingException, JAXBException {
+  public void testValidateMissingRequiredParams() throws UnsupportedEncodingException, JAXBException {
     logger.info("=== Test validate w/ missing required params ===");
 
     final Response resp = RestAssured
@@ -414,6 +460,8 @@ public class MainVerticleTest {
 
     OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
       "Missing required parameter: metadataPrefix");
+    expectedResp.getRequest()
+                .withFrom("2002-05-01T14:15:00Z");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
@@ -479,8 +527,10 @@ public class MainVerticleTest {
 
   private void verifyResponse(String expectedResponse, String actualResponse)
     throws JAXBException, UnsupportedEncodingException {
-    // Unmarshal string to OAIPMH to remove volatile fields such as ResponseDate
+    // Unmarshal string to OAIPMH, verify presence of volatile ResponseDate and then remove it to verify the rest of the data
     OAIPMH actualOaiResp = ResponseHelper.getInstance().stringToOaiPmh(actualResponse);
+
+    assertNotNull(actualOaiResp.getResponseDate());
     actualOaiResp.setResponseDate(null);
 
     actualResponse = ResponseHelper.getInstance().writeToString(actualOaiResp);
