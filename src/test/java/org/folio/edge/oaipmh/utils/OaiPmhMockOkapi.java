@@ -2,16 +2,21 @@ package org.folio.edge.oaipmh.utils;
 
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.ext.unit.Async;
+import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.test.MockOkapi;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.test.MockOkapi;
 
 public class OaiPmhMockOkapi extends MockOkapi {
 
@@ -21,6 +26,9 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
+
+  public static final long REQUEST_TIMEOUT_MS = 1000L;
+
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
@@ -35,6 +43,23 @@ public class OaiPmhMockOkapi extends MockOkapi {
       logger.error("Error in file reading: " + e.getMessage());
     }
     return xml;
+  }
+
+  @Override
+  public void start(TestContext context) {
+
+    // Setup Mock Okapi and enable compression
+    HttpServer server = vertx.createHttpServer(new HttpServerOptions()
+      .setCompressionSupported(true));
+
+    final Async async = context.async();
+    server.requestHandler(defineRoutes()::accept).listen(okapiPort, result -> {
+      if (result.failed()) {
+        logger.warn(result.cause());
+      }
+      context.assertTrue(result.succeeded());
+      async.complete();
+    });
   }
 
   @Override
@@ -71,6 +96,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
       && path.contains("exception")) {
       logger.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
+    } else if (path.contains("TimeoutException")) {
+      vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> logger.debug("OKAPI client should throw TimeoutException"));
     }
   }
 }
