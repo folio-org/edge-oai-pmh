@@ -55,7 +55,8 @@ public enum Verb {
   /** ISO Date and Time with UTC offset. */
   private static final DateTimeFormatter ISO_UTC_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
   /** Parameters which must be excluded from validation if present in http request. */
-  private final Set<String> excludeParams = of(VERB, PARAM_API_KEY, PATH_API_KEY);
+  /** convert the api-key params to lowercase so we can lowercase those on the request to ignore case later on" */
+  private final Set<String> excludeParams = of(VERB, PARAM_API_KEY.toLowerCase(), PATH_API_KEY.toLowerCase());
 
   private static final Map<String, Verb> CONSTANTS = new HashMap<>();
   static {
@@ -123,6 +124,7 @@ public enum Verb {
     ctx.request().params().entries().stream()
       .map(Entry::getKey)
       .filter(param -> !allParams.contains(param))
+      .filter(param -> !excludeParams.contains(param.toLowerCase())) //support case-insensitive api-key params
       .forEach(param -> errors.add(new OAIPMHerrorType()
         .withCode(BAD_ARGUMENT)
         .withValue("Verb '" + name + "', illegal argument: " + param)));
@@ -132,7 +134,7 @@ public enum Verb {
     if (exclusiveParam != null && ctx.request().getParam(exclusiveParam) != null) {
       ctx.request().params().entries().stream()
         .map(Entry::getKey)
-        .filter(p -> !excludeParams.contains(p))
+        .filter(p -> !excludeParams.contains(p.toLowerCase())) //support case-insensitive api-key params
         .filter(p -> !exclusiveParam.equals(p))
         .findAny()
         .ifPresent(param -> errors.add(new OAIPMHerrorType()

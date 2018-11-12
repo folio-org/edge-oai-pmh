@@ -282,6 +282,26 @@ public class MainVerticleTest {
   }
 
   @Test
+  public void testApiKeyOnPath() {
+    logger.info("=== Test ability to provide the api key on the path ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+    int expectedHttpStatusCode = 200;
+    final Response resp = RestAssured
+      .get(String.format("/oai/%s?verb=Identify", apiKey))
+      .then()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(expectedHttpStatusCode)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
   public void testIdentifyAccessDeniedApiKeyHttpGet() {
     logger.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
