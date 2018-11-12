@@ -42,7 +42,7 @@
     <junit.ver>4.12</junit.ver>
     <mockito.ver>1.9.5</mockito.ver>
     <rest.assured.ver>2.9.0</rest.assured.ver>
-    <edge.common.ver>0.3.4-SNAPSHOT</edge.common.ver>
+    <edge.common.ver>0.3.8-SNAPSHOT</edge.common.ver>
 
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
