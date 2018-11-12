@@ -1,9 +1,12 @@
 package org.folio.edge.oaipmh;
 
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.config.DecoderConfig;
+import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpHeaders;
@@ -28,15 +31,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static com.jayway.restassured.config.DecoderConfig.decoderConfig;
 import static org.folio.edge.core.Constants.SYS_LOG_LEVEL;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_PORT;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
+import static org.folio.edge.core.Constants.SYS_RESPONSE_COMPRESSION;
 import static org.folio.edge.core.Constants.SYS_SECURE_STORE_PROP_FILE;
 import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
@@ -49,7 +56,8 @@ public class MainVerticleTest {
 
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
-  private static final String apiKey = "Z1luMHVGdjNMZl9kaWt1X2Rpa3U=";
+  private static final String apiKey = "Z1luMHVGdjNMZl90ZW5hbnRfdXNlcg==";
+  private static final String apiKeyForDikuUser = "Z1luMHVGdjNMZl9kaWt1X2Rpa3U=";
   private static final String badApiKey = "ZnMwMDAwMDAwMA==0000";
 
   private static final long requestTimeoutMs = REQUEST_TIMEOUT_MS;
@@ -76,8 +84,9 @@ public class MainVerticleTest {
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
     System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
     System.setProperty(SYS_SECURE_STORE_PROP_FILE, "src/main/resources/ephemeral.properties");
-    System.setProperty(SYS_LOG_LEVEL, "DEBUG");
+    System.setProperty(SYS_LOG_LEVEL, "TRACE");
     System.setProperty(SYS_REQUEST_TIMEOUT_MS, String.valueOf(requestTimeoutMs));
+    System.setProperty(SYS_RESPONSE_COMPRESSION, Boolean.toString(true));
 
     final DeploymentOptions opt = new DeploymentOptions();
     vertx.deployVerticle(MainVerticle.class.getName(), opt, context.asyncAssertSuccess());
@@ -277,7 +286,7 @@ public class MainVerticleTest {
     logger.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured
-      .post(String.format("/oai?verb=Identify&apikey=%s", apiKey.substring(0, apiKey.length() - 2)))
+      .post(String.format("/oai?verb=Identify&apikey=%s", apiKeyForDikuUser))
       .then()
       .contentType(TEXT_PLAIN)
       .statusCode(403)
@@ -456,6 +465,54 @@ public class MainVerticleTest {
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
+  }
+
+  @Test
+  public void testCompressionAlgorithms() {
+    logger.info("=== Test response compression ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+    int expectedHttpStatusCode = 200;
+
+    for (DecoderConfig.ContentDecoder type : DecoderConfig.ContentDecoder.values()) {
+      final Response resp = RestAssured.given()
+        .config(RestAssured.config().decoderConfig(decoderConfig().contentDecoders(type)))
+        .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", apiKey))
+        .then()
+        .contentType(Constants.TEXT_XML_TYPE)
+        .statusCode(expectedHttpStatusCode)
+        .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .header(HttpHeaders.CONTENT_ENCODING, type.name().toLowerCase())
+        .extract()
+        .response();
+      assertEquals(expectedMockBody, resp.body().asString());
+    }
+  }
+
+  @Test
+  public void testNoCompression() {
+    logger.info("=== Test no response compression  ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+    int expectedHttpStatusCode = 200;
+    final Response resp = RestAssured.given()
+      .config(RestAssured.config().decoderConfig(decoderConfig().noContentDecoders()))
+      .header(new Header(HttpHeaders.ACCEPT_ENCODING, "instance"))
+      .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", apiKey))
+      .then()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(expectedHttpStatusCode)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    assertFalse(resp.headers().asList().stream()
+      .collect(Collectors.toMap(Header::getName, Header::getValue)).containsKey(HttpHeaders.ACCEPT_ENCODING));
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
