@@ -1,7 +1,19 @@
 package org.folio.edge.oaipmh;
 
-import io.vertx.ext.web.RoutingContext;
-import org.openarchives.oai._2.OAIPMHerrorType;
+import static com.google.common.collect.ImmutableSet.of;
+import static java.util.Collections.EMPTY_SET;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.concat;
+import static org.folio.edge.core.Constants.PARAM_API_KEY;
+import static org.folio.edge.core.Constants.PATH_API_KEY;
+import static org.folio.edge.oaipmh.utils.Constants.FROM;
+import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
+import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
+import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
+import static org.folio.edge.oaipmh.utils.Constants.SET;
+import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
+import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,19 +25,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import static com.google.common.collect.ImmutableSet.of;
-import static java.util.Collections.EMPTY_SET;
-import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.concat;
-import static org.folio.edge.core.Constants.PARAM_API_KEY;
-import static org.folio.edge.oaipmh.utils.Constants.FROM;
-import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
-import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
-import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
-import static org.folio.edge.oaipmh.utils.Constants.SET;
-import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
-import static org.folio.edge.oaipmh.utils.Constants.VERB;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
+import org.openarchives.oai._2.OAIPMHerrorType;
+
+import io.vertx.ext.web.RoutingContext;
 
 /**
  * Enum that represents OAI-PMH verbs with associated http parameters and validation logic.
@@ -53,7 +55,7 @@ public enum Verb {
   /** ISO Date and Time with UTC offset. */
   private static final DateTimeFormatter ISO_UTC_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
   /** Parameters which must be excluded from validation if present in http request. */
-  private final Set<String> excludeParams = of(VERB, PARAM_API_KEY);
+  private final Set<String> excludeParams = of(VERB, PARAM_API_KEY, PATH_API_KEY);
 
   private static final Map<String, Verb> CONSTANTS = new HashMap<>();
   static {
