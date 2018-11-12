@@ -54,7 +54,7 @@ public class MainVerticleTest {
 
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
-  private static final String apiKey = "Z1luMHVGdjNMZl9kaWt1X2Rpa3U=";
+  private static final String apiKey = "Z1luMHVGdjNMZl90ZW5hbnRfdXNlcg==";
   private static final String badApiKey = "ZnMwMDAwMDAwMA==0000";
 
   private static final long requestTimeoutMs = 3000L;
@@ -78,15 +78,14 @@ public class MainVerticleTest {
 
     vertx = Vertx.vertx();
 
-    JsonObject jo = new JsonObject()
-      .put(SYS_PORT, serverPort)
-      .put(SYS_OKAPI_URL, "http://localhost:" + okapiPort)
-      .put(SYS_SECURE_STORE_PROP_FILE, "src/main/resources/ephemeral.properties")
-      .put(SYS_LOG_LEVEL, "TRACE")
-      .put(SYS_REQUEST_TIMEOUT_MS, requestTimeoutMs)
-      .put(SYS_RESPONSE_COMPRESSION, true);
+    System.setProperty(SYS_PORT, String.valueOf(serverPort));
+    System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
+    System.setProperty(SYS_SECURE_STORE_PROP_FILE, "src/main/resources/ephemeral.properties");
+    System.setProperty(SYS_LOG_LEVEL, "TRACE");
+    System.setProperty(SYS_REQUEST_TIMEOUT_MS, String.valueOf(requestTimeoutMs));
+    System.setProperty(SYS_RESPONSE_COMPRESSION, Boolean.toString(true));
 
-    final DeploymentOptions opt = new DeploymentOptions().setConfig(jo);
+    final DeploymentOptions opt = new DeploymentOptions();
     vertx.deployVerticle(MainVerticle.class.getName(), opt, context.asyncAssertSuccess());
 
     RestAssured.baseURI = "http://localhost:" + serverPort;
