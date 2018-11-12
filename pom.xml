@@ -31,6 +31,8 @@
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>

@@ -11,8 +11,8 @@
     <xjc:simple/>
     <xjc:javaType name="java.time.Instant" xmlType="xs:dateTime"
                   adapter="com.migesok.jaxb.adapter.javatime.InstantXmlAdapter"/>
-    <xjc:javaType name="java.time.Instant" xmlType="oai:UTCdatetimeType"
-                  adapter="com.migesok.jaxb.adapter.javatime.InstantXmlAdapter"/>
+    <xjc:javaType name="java.lang.String" xmlType="oai:UTCdatetimeType"
+                  adapter="javax.xml.bind.annotation.adapters.NormalizedStringAdapter"/>
   </jaxb:globalBindings>
 
   <jaxb:bindings schemaLocation="OAI-PMH.xsd" node="//xs:schema">
