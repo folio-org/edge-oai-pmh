@@ -56,10 +56,10 @@ public class OaiPmhHandler extends Handler {
       logger.debug(request.method() + " " + request.absoluteURI());
       logger.debug("Client request parameters:");
       request.params()
-             .forEach(param -> logger.debug(param.getKey() + ": " + param.getValue()));
+             .forEach(param -> logger.debug(String.format("> %s: %s", param.getKey(), param.getValue())));
       logger.debug("Client request headers:");
       request.headers()
-             .forEach(header -> logger.debug(header.getKey() + ": " + header.getValue()));
+             .forEach(header -> logger.debug(String.format("> %s: %s", header.getKey(), header.getValue())));
     }
 
     Verb verb = Verb.fromName(request.getParam(VERB));
@@ -119,10 +119,15 @@ public class OaiPmhHandler extends Handler {
        * that all harvesters support such responses.
        */
       response.bodyHandler(buffer -> {
-        if (!encodingHeader.isPresent() && logger.isDebugEnabled()) {
-          logger.debug("Repository response body: " + buffer);
-        }
         edgeResponse.end(buffer);
+        if (logger.isDebugEnabled()) {
+          if (!encodingHeader.isPresent()) {
+            logger.debug("Repository response body: " + buffer);
+          }
+          logger.debug("Edge response headers:");
+          edgeResponse.headers()
+                      .forEach(header -> logger.debug(String.format("< %s: %s", header.getKey(), header.getValue())));
+        }
       });
     } else {
       logger.error(String.format("Error in the response from repository: (%d)", httpStatusCode));

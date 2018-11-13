@@ -13,11 +13,13 @@
         required: false
       from:
         description: 'UTC datetime value, which specifies a lower bound for datestamp-based selective harvesting'
-        type: date-only
+        type: datetime
+        example: 2018-11-25T16:17:18Z
         required: false
       until:
         description: 'UTC datetime value, which specifies a upper bound for datestamp-based selective harvesting'
-        type: date-only
+        type: datetime
+        example: 2018-11-28T14:15:16Z
         required: false
       set:
         description: 'SetSpec value, which specifies set criteria for selective harvesting'
@@ -27,6 +29,3 @@
         description: 'The flow control token returned by a ListIdentifiers request that issued an incomplete list'
         type: string
         required: false
-      apiKey:
-        description: 'API Key'
-        type: string

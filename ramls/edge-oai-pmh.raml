@@ -11,14 +11,23 @@ types:
 traits:
   resps: !include traits/resps.raml
   params: !include traits/params.raml
+  apiKeyParam: !include traits/apiKeyParam.raml
 /oai:
   displayName: OAI-PMH
   get:
     description: 'Run OAI-PMH request'
-    is: [params, resps]
+    is: [params, apiKeyParam, resps]
   post:
     description: 'Run OAI-PMH request'
-    is: [params, resps]
+    is: [params, apiKeyParam, resps]
+  /{apiKeyPath}:
+    displayName: OAI-PMH
+    get:
+      description: 'Run OAI-PMH request'
+      is: [params, resps]
+    post:
+      description: 'Run OAI-PMH request'
+      is: [params, resps]
 /admin/health:
   displayName: 'Health Check'
   get:
