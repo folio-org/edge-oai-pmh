@@ -6,7 +6,6 @@ import com.jayway.restassured.response.Header;
 import com.jayway.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.apache.http.HttpHeaders;
@@ -57,7 +56,7 @@ public class MainVerticleTest {
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
   private static final String apiKey = "Z1luMHVGdjNMZl90ZW5hbnRfdXNlcg==";
-  private static final String apiKeyForDikuUser = "Z1luMHVGdjNMZl9kaWt1X2Rpa3U=";
+  private static final String apiKeyForTestUser = "Z1luMHVGdjNMZl90ZXN0X3Rlc3Q=";
   private static final String badApiKey = "ZnMwMDAwMDAwMA==0000";
 
   private static final long requestTimeoutMs = REQUEST_TIMEOUT_MS;
@@ -306,7 +305,7 @@ public class MainVerticleTest {
     logger.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured
-      .post(String.format("/oai?verb=Identify&apikey=%s", apiKeyForDikuUser))
+      .post(String.format("/oai?verb=Identify&apikey=%s", apiKeyForTestUser))
       .then()
       .contentType(TEXT_PLAIN)
       .statusCode(403)

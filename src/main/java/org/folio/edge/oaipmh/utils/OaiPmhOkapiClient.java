@@ -1,28 +1,28 @@
 package org.folio.edge.oaipmh.utils;
 
-import static com.google.common.collect.ImmutableSet.of;
-import static java.util.stream.Collectors.joining;
-import static org.folio.edge.core.Constants.PARAM_API_KEY;
-import static org.folio.edge.oaipmh.utils.Constants.VERB;
-
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientResponse;
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.OkapiClient;
+import org.folio.edge.oaipmh.Verb;
+import org.openarchives.oai._2.VerbType;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.OkapiClient;
-import org.openarchives.oai._2.VerbType;
+
+import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
+import static java.util.stream.Collectors.joining;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
 public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
-  private static final Set<String> EXCLUDED_PARAMS = of(VERB, PARAM_API_KEY);
-  public static final String CONTENT_LENGTH_HEADER = "Content-Length";
+
   private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();
 
@@ -55,7 +55,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     String url = getUrlByVerb(parameters);
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
     // for GET request to mod-oai-pmh
-    headers.remove(CONTENT_LENGTH_HEADER);
+    headers.remove(CONTENT_LENGTH);
     get(
       url,
       tenant,
@@ -94,8 +94,9 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @return string representation of GET request parameters
    */
   private String getParametersAsString(MultiMap parameters) {
+    Set<String> excludedParams = Verb.fromName(parameters.get(VERB)).getExcludedParams();
     return parameters.entries().stream()
-      .filter(e -> !EXCLUDED_PARAMS.contains(e.getKey()))
+      .filter(e -> !excludedParams.contains(e.getKey()))
       .map(e -> e.getKey() + "=" + e.getValue())
       .collect(joining("&"));
   }

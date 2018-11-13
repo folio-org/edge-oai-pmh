@@ -109,6 +109,10 @@ public enum Verb {
     return optionalParams;
   }
 
+  public Set<String> getExcludedParams() {
+    return excludeParams;
+  }
+
   public String getExclusiveParam() {
     return exclusiveParam;
   }
@@ -123,7 +127,6 @@ public enum Verb {
     ctx.request().params().entries().stream()
       .map(Entry::getKey)
       .filter(param -> !allParams.contains(param))
-      .filter(param -> !excludeParams.contains(param))
       .forEach(param -> errors.add(new OAIPMHerrorType()
         .withCode(BAD_ARGUMENT)
         .withValue("Verb '" + name + "', illegal argument: " + param)));

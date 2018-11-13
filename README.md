@@ -11,6 +11,10 @@ Edge API for Metadata Harvesting ([OAI-PMH Version 2.0](http://www.openarchives.
 ### Schemas
 The following schemas used:
  + OAI-PMH Schema: [OAI-PMH.xsd](http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd) (please refer to [OAI-PMH specification](http://www.openarchives.org/OAI/openarchivesprotocol.html#OAIPMHschema) for more details)
+### Configuration
+Please refer to the [Configuration](https://github.com/folio-org/edge-common/blob/master/README.md#configuration) section in the [edge-common](https://github.com/folio-org/edge-common/blob/master/README.md) documentation to see all available system properties and their default values.
+
+For example, to enable HTTP compression based on `Accept-Encoding` header the `-Dresponse_compression=true` should be specified as VM option.
 
 ### Issue tracker
 See project [EDGOAIPMH](https://issues.folio.org/browse/EDGOAIPMH)
