@@ -15,6 +15,7 @@ import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -150,9 +151,14 @@ public enum Verb {
     try {
       LocalDateTime.parse(paramValue, ISO_UTC_DATE_TIME);
     } catch (DateTimeParseException e) {
-      errors.add(new OAIPMHerrorType()
-        .withCode(BAD_ARGUMENT)
-        .withValue("Bad datestamp format for '" + paramName + "' argument."));
+      // The repository must support YYYY-MM-DD granularity so try to parse date only
+      try {
+        LocalDate.parse(paramValue);
+      } catch (DateTimeParseException ex) {
+        errors.add(new OAIPMHerrorType()
+          .withCode(BAD_ARGUMENT)
+          .withValue("Bad datestamp format for '" + paramName + "' argument."));
+      }
     }
   }
 }

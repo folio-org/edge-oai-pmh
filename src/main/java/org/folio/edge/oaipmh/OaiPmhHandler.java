@@ -172,6 +172,7 @@ public class OaiPmhHandler extends Handler {
     ctx.response().setStatusCode(status);
 
     if (xml != null) {
+      logger.warn("The request was invalid. The response returned with errors: " + xml);
       ctx.response()
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(xml);
