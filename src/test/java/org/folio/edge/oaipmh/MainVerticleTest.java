@@ -401,7 +401,7 @@ public class MainVerticleTest {
     logger.info("=== Test validate w/ illegal params ===");
 
     final Response resp = RestAssured
-      .get("/oai?verb=ListIdentifiers&metadataPrefix=oai_dc&extraParam=Test&apikey=" + apiKey)
+      .get("/oai?verb=ListIdentifiers&metadataPrefix=oai_dc&from=2002-05-21&extraParam=Test&apikey=" + apiKey)
       .then()
       .contentType("text/xml")
       .statusCode(400)
@@ -411,7 +411,8 @@ public class MainVerticleTest {
     OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
         "Verb 'ListIdentifiers', illegal argument: extraParam");
     expectedResp.getRequest()
-                .withMetadataPrefix("oai_dc");
+                .withMetadataPrefix("oai_dc")
+                .withFrom("2002-05-21");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
 
     verifyResponse(expectedRespStr, resp.body().asString());
