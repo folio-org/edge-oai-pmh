@@ -1,4 +1,4 @@
-## 1.0.0
+## 1.0.0 (released on 11/27/2018)
  * Initial commit ([EDGOAIPMH-2](https://issues.folio.org/projects/EDGOAIPMH/issues/EDGOAIPMH-2))
  * Module/Deployment Descriptors added in scope of [EDGOAIPMH-5](https://issues.folio.org/projects/EDGOAIPMH/issues/EDGOAIPMH-5)
  * In scope of [EDGOAIPMH-4](https://issues.folio.org/projects/EDGOAIPMH/issues/EDGOAIPMH-4) added:
