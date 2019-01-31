@@ -6,8 +6,8 @@ buildMvn {
 
   doDocker = {
     buildJavaDocker {
-      publishMaster = 'no'
-      healthChk = 'no'
+      publishMaster = 'yes'
+      healthChk = 'yes'
       healthChkCmd = 'curl -sS --fail -o /dev/null  http://localhost:8081/admin/health || exit 1'
     }
   }
