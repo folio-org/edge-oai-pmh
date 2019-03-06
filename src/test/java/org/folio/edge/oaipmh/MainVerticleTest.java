@@ -56,8 +56,8 @@ public class MainVerticleTest {
 
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
-  private static final String API_KEY = "eyJzIjoiYlNXMkZhRWpMaSIsInQiOiJkaWt1IiwidSI6ImRpa3VfYWRtaW4ifQ==";
-  private static final String API_KEY_FOR_TEST_USER = "Z1luMHVGdjNMZl90ZXN0X3Rlc3Q=";
+  private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "diku_admin");
+  private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
   private static final String INVALID_API_KEY_EXPECTED_RESPONSE_BODY = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
@@ -119,7 +119,7 @@ public class MainVerticleTest {
       .get("/admin/health")
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(200)
+      .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -133,14 +133,13 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 404;
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord" +
         "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_NOT_FOUND)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -155,7 +154,6 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 404;
 
     final Response resp = RestAssured.given()
       .parameters("verb", "GetRecord",
@@ -165,7 +163,7 @@ public class MainVerticleTest {
       .post("/oai")
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_NOT_FOUND)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -180,13 +178,13 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 200;
+
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -225,12 +223,12 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 200;
+
     final Response resp = RestAssured
       .get(String.format("/oai?verb=Identify&apikey=%s", API_KEY))
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -245,14 +243,14 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 200;
+
     final Response resp = RestAssured.given()
       .parameters("apikey", API_KEY,
         "verb", "Identify")
       .post("/oai")
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -265,12 +263,11 @@ public class MainVerticleTest {
   public void testIdentifyBadApiKeyHttpGet() {
     logger.info("=== Test bad apikey Identify OAI-PMH (HTTP GET) ===");
 
-    int expectedHttpStatusCode = 401;
     final Response resp = RestAssured
       .get(String.format("/oai?verb=Identify&apikey=%s", BAD_API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_UNAUTHORIZED)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -285,12 +282,12 @@ public class MainVerticleTest {
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
-    int expectedHttpStatusCode = 200;
+
     final Response resp = RestAssured
       .get(String.format("/oai/%s?verb=Identify", API_KEY))
       .then()
       .contentType(Constants.TEXT_XML_TYPE)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
@@ -304,10 +301,10 @@ public class MainVerticleTest {
     logger.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured
-      .post(String.format("/oai?verb=Identify&apikey=%s", API_KEY_FOR_TEST_USER))
+      .post(String.format("/oai?verb=Identify&apikey=%s", ILLEGAL_API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(401)
+      .statusCode(HttpStatus.SC_FORBIDDEN)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -318,9 +315,8 @@ public class MainVerticleTest {
 
   @Test
   public void testGetRecordInvalidApiKeyHttpPost() {
-    logger.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
+    logger.info("=== Test bad apikey GetRecord OAI-PMH (HTTP POST) ===");
 
-    int expectedHttpStatusCode = 401;
     final Response resp = RestAssured.given()
       .parameters("apikey", BAD_API_KEY,
         "verb", "GetRecord",
@@ -329,7 +325,7 @@ public class MainVerticleTest {
       .post("/oai")
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_UNAUTHORIZED)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -343,13 +339,12 @@ public class MainVerticleTest {
     logger.info("=== Test exceptional GetRecord OAI-PMH (HTTP GET) ===");
 
     String expectedMockBody = "Internal Server Error";
-    int expectedHttpStatusCode = 500;
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=exception&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(expectedHttpStatusCode)
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -367,7 +362,7 @@ public class MainVerticleTest {
         + "&identifier=TimeoutException&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(408)
+      .statusCode(HttpStatus.SC_REQUEST_TIMEOUT)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
       .extract()
       .response();
@@ -384,7 +379,7 @@ public class MainVerticleTest {
       .get("/oai?verb=nastyVerb&apikey=" + API_KEY)
       .then()
       .contentType(TEXT_XML)
-      .statusCode(400)
+      .statusCode(HttpStatus.SC_BAD_REQUEST)
       .extract()
       .response();
 
@@ -403,7 +398,7 @@ public class MainVerticleTest {
       .get("/oai?verb=ListIdentifiers&metadataPrefix=oai_dc&from=2002-05-21&extraParam=Test&apikey=" + API_KEY)
       .then()
       .contentType(TEXT_XML)
-      .statusCode(400)
+      .statusCode(HttpStatus.SC_BAD_REQUEST)
       .extract()
       .response();
 
