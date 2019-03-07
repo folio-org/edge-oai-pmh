@@ -10,6 +10,8 @@ import io.vertx.ext.unit.junit.VertxUnitRunner;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.test.TestUtils;
 import org.junit.After;
@@ -23,8 +25,8 @@ public class OaiPmhOkapiClientTest {
 
   private static final Logger logger = Logger.getLogger(OaiPmhOkapiClientTest.class);
 
-  private static final String tenant = "diku";
-  private static final long reqTimeout = 3000L;
+  private static final String TENANT = "diku";
+  private static final long REQUEST_TIMEOUT = 3000L;
 
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
@@ -34,28 +36,26 @@ public class OaiPmhOkapiClientTest {
     int okapiPort = TestUtils.getPort();
 
     List<String> knownTenants = new ArrayList<>();
-    knownTenants.add(tenant);
+    knownTenants.add(TENANT);
 
     mockOkapi = new OaiPmhMockOkapi(okapiPort, knownTenants);
     mockOkapi.start(context);
 
 
     client = new OaiPmhOkapiClientFactory(Vertx.vertx(),
-      "http://localhost:" + okapiPort, reqTimeout)
-      .getOaiPmhOkapiClient(tenant);
+      "http://localhost:" + okapiPort, REQUEST_TIMEOUT)
+      .getOaiPmhOkapiClient(TENANT);
   }
 
   @After
   public void tearDown(TestContext context) {
     client.close();
-    mockOkapi.close();
+    mockOkapi.close(context);
   }
 
   @Test
   public void testGetRecord(TestContext context) {
     logger.info("=== Test successful OAI-PMH Request ===");
-
-    int expectedCode = 200;
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -71,14 +71,12 @@ public class OaiPmhOkapiClientTest {
     // Request headers - empty
     MultiMap headers = MultiMap.caseInsensitiveMultiMap();
 
-    processRequest(context, parameters, headers, expectedCode, expectedBody);
+    processRequest(context, parameters, headers, HttpStatus.SC_OK, expectedBody);
   }
 
   @Test
   public void testGetRecordError(TestContext context) {
     logger.info("=== Test error GetRecord OAI-PMH request ===");
-
-    int expectedCode = 404;
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -94,14 +92,12 @@ public class OaiPmhOkapiClientTest {
     // Request headers - empty
     MultiMap headers = MultiMap.caseInsensitiveMultiMap();
 
-    processRequest(context, parameters, headers, expectedCode, expectedBody);
+    processRequest(context, parameters, headers, HttpStatus.SC_NOT_FOUND, expectedBody);
   }
 
   @Test
   public void testIdentify(TestContext context) {
     logger.info("=== Test Identify OAI-PMH request ===");
-
-    int expectedCode = 200;
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -115,7 +111,7 @@ public class OaiPmhOkapiClientTest {
     // Request headers - empty
     MultiMap headers = MultiMap.caseInsensitiveMultiMap();
 
-    processRequest(context, parameters, headers, expectedCode, expectedBody);
+    processRequest(context, parameters, headers, HttpStatus.SC_OK, expectedBody);
   }
 
   private void processRequest(TestContext context, MultiMap parameters, MultiMap headers,
