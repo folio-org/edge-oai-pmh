@@ -56,7 +56,7 @@ public class MainVerticleTest {
 
   private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
 
-  private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "diku_admin");
+  private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
