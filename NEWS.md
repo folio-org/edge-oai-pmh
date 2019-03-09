@@ -1,3 +1,13 @@
+## 2.0.0 (Released on 03/09/2019)
+
+The main focus of this release was to upgrade login interface and edge-common dependency to actual versions.
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v1.0.0...v2.0.0)
+
+### Stories
+ * [EDGOAIPMH-26](https://issues.folio.org/browse/EDGOAIPMH-26): login 5.0 interface has been added to the required interfaces in the module descriptor.
+ * [EDGOAIPMH-28](https://issues.folio.org/browse/EDGOAIPMH-28): the edge-common dependency upgraded to version 2.0.0 in order to leverage the new API key structure.
+
 ## 1.0.0 (Released on 11/27/2018)
  * Initial commit ([EDGOAIPMH-2](https://issues.folio.org/projects/EDGOAIPMH/issues/EDGOAIPMH-2))
  * Module/Deployment Descriptors added in scope of [EDGOAIPMH-5](https://issues.folio.org/projects/EDGOAIPMH/issues/EDGOAIPMH-5)
