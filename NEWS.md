@@ -1,4 +1,4 @@
-## 2.0.1 Released
+## 2.0.1 (Released on 07/23/2019)
 
 The only change in this release was to upgrade to latest login interface 6.0
 
