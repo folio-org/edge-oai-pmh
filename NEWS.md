@@ -1,3 +1,9 @@
+## 2.0.1 Released
+
+The only change in this release was to upgrade to latest login interface 6.0
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.0.0...v2.0.1)
+
 ## 2.0.0 (Released on 03/09/2019)
 
 The main focus of this release was to upgrade login interface and edge-common dependency to actual versions.
