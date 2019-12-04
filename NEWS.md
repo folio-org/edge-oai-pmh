@@ -1,3 +1,15 @@
+## 2.2.0 - Unreleased
+
+## 2.1.0 - Released
+
+This release includes tuning environment settings
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.0.1...v2.1.0)
+
+### Stories
+* [EDGOAIPMH-34](https://issues.folio.org/browse/EDGOAIPMH-34) - Use JVM features to manage container memory
+* [FOLIO-2235](https://issues.folio.org/browse/FOLIO-2235) - Add LaunchDescriptor settings to each backend non-core module repository
+
 ## 2.0.1 (Released on 07/23/2019)
 
 The only change in this release was to upgrade to latest login interface 6.0
