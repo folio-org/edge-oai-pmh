@@ -2,9 +2,12 @@
 
 ## 2.1.2 - Released
 
-This is a bugfix release for inclusion in Edelweiss (Q4/2019).  The only change is to update the dependency version of the 'oai-pmh' interface
+This is a bugfix release for inclusion in Edelweiss (Q4/2019). 
 
 [Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.1.1...v2.1.2)
+
+### Stories
+* [EDGOAIPMH-39](https://issues.folio.org/browse/EDGOAIPMH-39) - Don't pass the Accept header when proxying requests to mod-oai-pmh
 
 ## 2.1.1 - Released
 
