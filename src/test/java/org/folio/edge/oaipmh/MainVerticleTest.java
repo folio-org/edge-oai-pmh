@@ -536,7 +536,7 @@ public class MainVerticleTest {
 
     final Response resp = RestAssured
       .given()
-      .header(ACCEPT.toString(), "bogus")
+      .header(HttpHeaders.ACCEPT.toString(), "bogus")
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
