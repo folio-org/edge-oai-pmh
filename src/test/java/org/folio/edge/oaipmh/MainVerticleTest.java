@@ -527,6 +527,52 @@ public class MainVerticleTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
+  @Test
+  public void testAcceptHeader() {
+    logger.info("=== Test handling of the Accept header ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT.toString(), "bogus")
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testNoAcceptHeader() {
+    logger.info("=== Test handling of the Accept header ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
     return new OAIPMH()
       .withRequest(new RequestType()

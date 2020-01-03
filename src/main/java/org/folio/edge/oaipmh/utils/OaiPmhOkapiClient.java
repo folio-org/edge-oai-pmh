@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
+import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static java.util.stream.Collectors.joining;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
@@ -37,10 +38,19 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   public OaiPmhOkapiClient(OkapiClient client) {
     super(client);
+    fixDefaultHeaders();
   }
 
   OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, long timeout) {
     super(vertx, okapiURL, tenant, timeout);
+    fixDefaultHeaders();
+  }
+
+  // EDGOAIPMH-39 - the defaultHeaders map from OkapiClient (edge-common) contains
+  // Accept: application/json, text/plain
+  // so we need to strip that out too...
+  private void fixDefaultHeaders() {
+    defaultHeaders.remove(ACCEPT);
   }
 
   /**
@@ -56,6 +66,8 @@ public class OaiPmhOkapiClient extends OkapiClient {
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
     // for GET request to mod-oai-pmh
     headers.remove(CONTENT_LENGTH);
+    // EDGOAIPMH-39
+    headers.remove(ACCEPT);
     get(
       url,
       tenant,
