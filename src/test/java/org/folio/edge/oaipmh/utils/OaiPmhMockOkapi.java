@@ -74,8 +74,17 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
     HttpServerRequest request = ctx.request();
     String path = request.path();
+    String accept = request.getHeader(HttpHeaders.ACCEPT);
 
-    if (path.startsWith("/oai/records/")
+    if(accept != null && (
+        !accept.equals(Constants.TEXT_XML_TYPE) ||
+        !accept.equals("*/*"))) {
+      logger.debug("Unsupported MIME type requested: " + accept);
+      ctx.response()
+        .setStatusCode(400)
+        .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
+        .end("Accept header must be [\"application/xml\",\"text/plain\"] for this request, but it is \"text/xml\", cannot send */*");
+    } else if (path.startsWith("/oai/records/")
       && path.contains("oai%3AarXiv.org%3Acs%2F0112017")) {
       ctx.response()
         .setStatusCode(200)
