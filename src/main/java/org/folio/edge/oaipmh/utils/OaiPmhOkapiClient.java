@@ -46,6 +46,9 @@ public class OaiPmhOkapiClient extends OkapiClient {
     fixDefaultHeaders();
   }
 
+  // EDGOAIPMH-39 - the defaultHeaders map from OkapiClient (edge-common) contains
+  // Accept: application/json, text/plain
+  // so we need to strip that out too...
   private void fixDefaultHeaders() {
     defaultHeaders.remove(ACCEPT);
   }
