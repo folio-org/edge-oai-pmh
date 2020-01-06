@@ -18,12 +18,12 @@ import java.util.Set;
 import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static java.util.stream.Collectors.joining;
+import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
 public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
-  private static final String MOD_OAI_PMH_ACCEPTED_TYPES = "application/xml, text/xml";
 
   private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();

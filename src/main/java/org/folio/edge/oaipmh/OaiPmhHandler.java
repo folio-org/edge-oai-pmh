@@ -33,7 +33,7 @@ import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
 import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
 import static org.folio.edge.oaipmh.utils.Constants.SET;
-import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
@@ -174,7 +174,7 @@ public class OaiPmhHandler extends Handler {
     if (xml != null) {
       logger.warn("The request was invalid. The response returned with errors: " + xml);
       ctx.response()
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML_TYPE)
         .end(xml);
     } else {
       ctx.response().end();
