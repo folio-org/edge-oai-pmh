@@ -23,6 +23,7 @@ import static org.folio.edge.oaipmh.utils.Constants.VERB;
 public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
+  private static final String MOD_OAI_PMH_ACCEPTED_TYPES = "application/xml, text/xml";
 
   private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();
@@ -48,9 +49,10 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   // EDGOAIPMH-39 - the defaultHeaders map from OkapiClient (edge-common) contains
   // Accept: application/json, text/plain
-  // so we need to strip that out too...
+  // so we need to replace it to "application/xml, text/xml"
   private void fixDefaultHeaders() {
     defaultHeaders.remove(ACCEPT);
+    defaultHeaders.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
   }
 
   /**
@@ -68,6 +70,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     headers.remove(CONTENT_LENGTH);
     // EDGOAIPMH-39
     headers.remove(ACCEPT);
+    headers.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
     get(
       url,
       tenant,
