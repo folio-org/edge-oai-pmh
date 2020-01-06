@@ -18,6 +18,7 @@ import java.util.Set;
 import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static java.util.stream.Collectors.joining;
+import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
 public class OaiPmhOkapiClient extends OkapiClient {
@@ -48,9 +49,10 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   // EDGOAIPMH-39 - the defaultHeaders map from OkapiClient (edge-common) contains
   // Accept: application/json, text/plain
-  // so we need to strip that out too...
+  // so we need to replace it to "application/xml, text/xml"
   private void fixDefaultHeaders() {
     defaultHeaders.remove(ACCEPT);
+    defaultHeaders.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
   }
 
   /**
@@ -68,6 +70,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     headers.remove(CONTENT_LENGTH);
     // EDGOAIPMH-39
     headers.remove(ACCEPT);
+    headers.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
     get(
       url,
       tenant,
