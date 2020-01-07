@@ -18,6 +18,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
+
 public class OaiPmhMockOkapi extends MockOkapi {
 
   public static final String PATH_TO_GET_RECORDS_MOCK
@@ -76,9 +78,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
     String path = request.path();
     String accept = request.getHeader(HttpHeaders.ACCEPT);
 
-    if(accept != null && (
-        !accept.equals(Constants.TEXT_XML_TYPE) ||
-        !accept.equals("*/*"))) {
+    if(accept != null &&
+        !accept.equals(MOD_OAI_PMH_ACCEPTED_TYPES)) {
       logger.debug("Unsupported MIME type requested: " + accept);
       ctx.response()
         .setStatusCode(400)
