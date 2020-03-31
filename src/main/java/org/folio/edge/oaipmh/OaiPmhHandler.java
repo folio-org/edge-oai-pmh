@@ -36,8 +36,10 @@ import static org.folio.edge.oaipmh.utils.Constants.SET;
 import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
+import static org.folio.edge.oaipmh.utils.Constants.EMPTY_ACCEPT_HEADER;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
+import static io.vertx.core.http.HttpHeaders.ACCEPT;
 
 public class OaiPmhHandler extends Handler {
 
@@ -60,6 +62,13 @@ public class OaiPmhHandler extends Handler {
       logger.debug("Client request headers:");
       request.headers()
              .forEach(header -> logger.debug(String.format("> %s: %s", header.getKey(), header.getValue())));
+    }
+
+    if (request.headers().contains(ACCEPT)
+              && !request.headers().getAll(ACCEPT).stream().allMatch(value -> value.equals(EMPTY_ACCEPT_HEADER))
+              && !request.headers().getAll(ACCEPT).stream().allMatch(val -> val.equals(TEXT_XML_TYPE))) {
+      handleNotAcceptableError(ctx, request);
+      return;
     }
 
     Verb verb = Verb.fromName(request.getParam(VERB));
@@ -213,5 +222,16 @@ public class OaiPmhHandler extends Handler {
     OAIPMH resp = buildBaseResponse(ctx, verb)
       .withErrors(errors);
     handleError(ctx, 400, resp);
+  }
+
+  private void handleNotAcceptableError(RoutingContext ctx, HttpServerRequest request) {
+    String unsupportedType = request.headers()
+      .getAll(ACCEPT)
+      .stream()
+      .filter(value -> (!value.equals(TEXT_XML_TYPE)))
+      .findFirst()
+      .orElse(null);
+    notAcceptable(ctx,
+        "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
   }
 }

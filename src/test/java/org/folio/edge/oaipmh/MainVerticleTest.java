@@ -536,7 +536,7 @@ public class MainVerticleTest {
 
     final Response resp = RestAssured
       .given()
-      .header(HttpHeaders.ACCEPT.toString(), "bogus")
+      .header(HttpHeaders.ACCEPT, TEXT_XML)
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
@@ -571,6 +571,31 @@ public class MainVerticleTest {
 
     String actualBody = resp.body().asString();
     assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasUnsupportedType() {
+    logger.info("=== Test handling of unsupported type in Accept header ===");
+
+    String unsupportedAcceptType = "application/json";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, unsupportedAcceptType)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " +"\""+ unsupportedAcceptType
+      +"\""+", can not send */*";
+    assertEquals(expectedBody, actualBody);
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
