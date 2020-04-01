@@ -65,7 +65,8 @@ public class OaiPmhHandler extends Handler {
     }
 
     if (!request.headers().isEmpty() && request.headers().contains(ACCEPT)
-              && request.headers().getAll(ACCEPT).stream().noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER) || value.equals(TEXT_XML_TYPE))) {
+              && request.headers().getAll(ACCEPT).stream().noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER)
+              || value.equals(TEXT_XML_TYPE))) {
       handleNotAcceptableError(ctx, request);
       return;
     }
@@ -229,7 +230,7 @@ public class OaiPmhHandler extends Handler {
       .stream()
       .filter(value -> (!value.equals(TEXT_XML_TYPE)))
       .findFirst()
-      .orElse(null);
+      .orElse("");
     notAcceptable(ctx,
         "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
   }
