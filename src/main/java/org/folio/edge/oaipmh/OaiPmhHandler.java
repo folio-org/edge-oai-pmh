@@ -65,7 +65,7 @@ public class OaiPmhHandler extends Handler {
     }
 
     if (!request.headers().isEmpty() && request.headers().contains(ACCEPT)
-          && !request.headers().get(ACCEPT).equals(EMPTY_ACCEPT_HEADER) && !request.headers().get(ACCEPT).equals(TEXT_XML_TYPE)) {
+              && request.headers().getAll(ACCEPT).stream().noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER) || value.equals(TEXT_XML_TYPE))) {
       handleNotAcceptableError(ctx, request);
       return;
     }
