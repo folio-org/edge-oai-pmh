@@ -646,6 +646,159 @@ public class MainVerticleTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
+  @Test
+  public void testAcceptHeaderHasAllTextSybtypesSymbol() {
+    logger.info("=== Test Accept header has all text sybtypes symbol ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, "text/*")
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasAllTextSybtypesSymbolWithParameterAndWithUnsupportedTypes() {
+    logger.info("=== Test Accept header has all text sybtypes symbol with parameter and with unsupported types ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    String acceptHeader = "text/*; q=0.2, application/xml, application/xhtml+xml";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, acceptHeader)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasTextTypeXMLAndSomeUnsupportedTypes() {
+    logger.info("=== Test Accept header has text type XML and some unsupported types ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    String acceptHeader = "text/html, application/xml, text/xml";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, acceptHeader)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndSomeUnsupportedTypes() {
+    logger.info("=== Test Accept header has all types and all subtypes symbol and some unsupported types ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    String acceptHeader = "text/html, text/html;level=1, */*";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, acceptHeader)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndAllTextSubtypesSymbolAndSomeUnsupportedTypes() {
+    logger.info("=== Test Accept header has all types and all subtypes symbol and all text subtypes symbol and some unsupported types ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    String acceptHeader = "text/*;q=0.3, text/html;level=1, */*;q=0.5";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, acceptHeader)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void testAcceptHeaderHasOnlyUnsupportedTypesWithParameter() {
+    logger.info("=== Accept header has only unsupported types with parameter ===");
+
+    String acceptHeader = "text/plain; q=0.5, text/html";
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, acceptHeader)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(Constants.TEXT_XML_TYPE)
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " +"\""+ acceptHeader
+      +"\""+", can not send */*";
+    assertEquals(expectedBody, actualBody);
+  }
+
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
     return new OAIPMH()
       .withRequest(new RequestType()

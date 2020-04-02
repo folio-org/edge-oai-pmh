@@ -12,6 +12,7 @@ import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.utils.Constants;
+import org.folio.edge.oaipmh.utils.HeaderHelper;
 import org.folio.edge.oaipmh.utils.OaiPmhOkapiClient;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
@@ -37,6 +38,7 @@ import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.folio.edge.oaipmh.utils.Constants.EMPTY_ACCEPT_HEADER;
+import static org.folio.edge.oaipmh.utils.Constants.ALL_TEXT_SUBTYPES;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
@@ -65,8 +67,9 @@ public class OaiPmhHandler extends Handler {
     }
 
     if (!request.headers().isEmpty() && request.headers().contains(ACCEPT)
-              && request.headers().getAll(ACCEPT).stream().noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER)
-              || value.equals(TEXT_XML_TYPE))) {
+              && HeaderHelper.getInstance().parseHeaders(request.headers().getAll(ACCEPT)).stream()
+                  .noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER)
+                    || value.equals(TEXT_XML_TYPE) || value.equals(ALL_TEXT_SUBTYPES))) {
       handleNotAcceptableError(ctx, request);
       return;
     }
