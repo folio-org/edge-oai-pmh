@@ -12,7 +12,6 @@ import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.utils.Constants;
-import org.folio.edge.oaipmh.utils.HeaderHelper;
 import org.folio.edge.oaipmh.utils.OaiPmhOkapiClient;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
@@ -26,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -37,8 +37,6 @@ import static org.folio.edge.oaipmh.utils.Constants.SET;
 import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
-import static org.folio.edge.oaipmh.utils.Constants.EMPTY_ACCEPT_HEADER;
-import static org.folio.edge.oaipmh.utils.Constants.ALL_TEXT_SUBTYPES;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
@@ -66,12 +64,9 @@ public class OaiPmhHandler extends Handler {
              .forEach(header -> logger.debug(String.format("> %s: %s", header.getKey(), header.getValue())));
     }
 
-    if (!request.headers().isEmpty() && request.headers().contains(ACCEPT)
-              && HeaderHelper.getInstance().parseHeaders(request.headers().getAll(ACCEPT)).stream()
-                  .noneMatch(value -> value.equals(EMPTY_ACCEPT_HEADER)
-                    || value.equals(TEXT_XML_TYPE) || value.equals(ALL_TEXT_SUBTYPES))) {
-      handleNotAcceptableError(ctx, request);
-      return;
+    if (!supportedAcceptHeaders(request)){
+        handleNotAcceptableError(ctx, request);
+        return;
     }
 
     Verb verb = Verb.fromName(request.getParam(VERB));
@@ -104,6 +99,25 @@ public class OaiPmhHandler extends Handler {
             response -> handleProxyResponse(ctx, response),
             t -> handleException(ctx, t));
       });
+  }
+
+  /**
+   * EDGE-OAI-PMH supports only text/xml and all its derivatives in Accept header.
+   * Empty Accept header implies any MIME type is accepted, same as Accept: *//*
+   *
+   * Valid examples: text/xml, text/*, *//*, *\xml
+   * NOT Valid examples: application/xml, application/*, test/json
+   *
+   * @param request - http request to the module
+   * @return - true if accept headers are supported
+   */
+  private boolean supportedAcceptHeaders(HttpServerRequest request) {
+    if (request.headers().contains(ACCEPT)) {
+      final String supportedHeadersRegexp = "(text|\\*)\\s*/\\s*(xml|\\*)";
+      final Pattern pattern = Pattern.compile(supportedHeadersRegexp);
+      return request.headers().getAll(ACCEPT).stream().anyMatch(h -> pattern.matcher(h).find());
+    }
+    return true;
   }
 
   /**
