@@ -36,7 +36,6 @@ import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.folio.edge.core.Constants.X_OKAPI_TENANT;
 import static org.folio.edge.core.Constants.X_OKAPI_TOKEN;
-import static org.folio.edge.oaipmh.utils.Constants.X_OKAPI_URL;
 import static org.folio.edge.oaipmh.utils.Constants.FROM;
 import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
@@ -57,9 +56,11 @@ public class OaiPmhHandler extends Handler {
   private static final Set<Integer> EXPECTED_CODES = of(200, 400, 404, 422);
 
   private String errorsProcessingConfigSetting;
+  private String okapiURL;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
+    okapiURL = ocf.okapiURL;
   }
 
   protected void handle(RoutingContext ctx) {
@@ -113,6 +114,8 @@ public class OaiPmhHandler extends Handler {
             response -> handleProxyResponse(ctx, response),
             t -> handleException(ctx, t));
       });
+    }).exceptionally(exc -> {handleException(ctx, exc);
+        return null;
     });
   }
 
@@ -146,13 +149,8 @@ public class OaiPmhHandler extends Handler {
     HttpServerResponse edgeResponse = ctx.response();
 
     int httpStatusCode = response.statusCode();
-    if (getErrorsProcessingConfigSetting().equals("200")) {
-      edgeResponse.setStatusCode(200);
-    } else if (getErrorsProcessingConfigSetting().equals("500")) {
-      edgeResponse.setStatusCode(httpStatusCode);
-    } else {
-      edgeResponse.setStatusCode(httpStatusCode);
-    }
+
+    setStatusCodeToResponse(edgeResponse, httpStatusCode);
 
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE);
@@ -218,16 +216,7 @@ public class OaiPmhHandler extends Handler {
       logger.error("Exception marshalling XML", e);
     }
 
-    if (getErrorsProcessingConfigSetting().equals("200")) {
-      ctx.response()
-        .setStatusCode(200);
-    } else if (getErrorsProcessingConfigSetting().equals("500")) {
-      ctx.response()
-        .setStatusCode(status);
-    } else {
-      ctx.response()
-        .setStatusCode(status);
-    }
+    setStatusCodeToResponse(ctx.response(), status);
 
     if (xml != null) {
       logger.warn("The request was invalid. The response returned with errors: " + xml);
@@ -291,23 +280,24 @@ public class OaiPmhHandler extends Handler {
    * @return value of field errorsProcessing
    */
   private CompletableFuture<String> getErrorsProcessingConfigSetting(RoutingContext ctx) {
-    String QUERY = "module==OAIPMH and configName==behavior";
+    final String query = "module==OAIPMH and configName==behavior";
+    final int configNumber = 0;
     CompletableFuture<String> future = new VertxCompletableFuture<>();
     String tenantId = ctx.request().headers().get(X_OKAPI_TENANT);
     String token = ctx.request().headers().get(X_OKAPI_TOKEN);
-    String okapiURL = ctx.request().headers().get(X_OKAPI_URL);
     try {
-      new ConfigurationsClient(okapiURL, tenantId, token).getConfigurationsEntries(QUERY, 0, 100, null, null,
+      new ConfigurationsClient(getOkapiURL(), tenantId, token).getConfigurationsEntries(query, 0, 100, null, null,
           responseConfig -> responseConfig.bodyHandler(body -> {
             try {
               if (responseConfig.statusCode() != 200) {
-                logger.error("Error getting configuration. Expected status code 200 but was: " + responseConfig.statusCode());
+                logger.error("Error getting configuration " + responseConfig.statusMessage());
+                future.complete(String.valueOf(responseConfig.statusCode()));
                 return;
               }
               future.complete(new JsonObject(body.toJsonObject()
                 .mapTo(Configs.class)
                 .getConfigs()
-                .get(0)
+                .get(configNumber)
                 .getValue()).getString("errorsProcessing"));
             } catch (Exception exc) {
               logger.error("Error when get configuration value from mod-configurations client response ", exc);
@@ -319,6 +309,18 @@ public class OaiPmhHandler extends Handler {
       future.completeExceptionally(e);
     }
     return future;
+  }
+
+  private void setStatusCodeToResponse(HttpServerResponse response, int status){
+    if (getErrorsProcessingConfigSetting().equals("200")) {
+      response.setStatusCode(200);
+    } else {
+      response.setStatusCode(status);
+    }
+  }
+
+  public String getOkapiURL() {
+    return okapiURL;
   }
 
   public String getErrorsProcessingConfigSetting() {
