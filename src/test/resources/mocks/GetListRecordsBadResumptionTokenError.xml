@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OAI-PMH xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"
+         xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+         xmlns:marc="http://www.loc.gov/MARC21/slim"
+         xmlns:oai-identifier="http://www.openarchives.org/OAI/2.0/oai-identifier"
+         xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <responseDate>2020-04-15T09:42:11Z</responseDate>
+  <request
+    resumptionToken="bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjowMFomdW50aWw9MjAyMC0wNC0xMFQxM
+    ToyNTo0NlomdG90YWxSZWNvcmRzPTE5MTQzJm9mZnNldD0yMDAmbmV4dFJlY29yZElkPWM5NjRlZmVjLWMxYzAtNDMwZC1iMzE5LTk1OWIyNjE
+    5NGM0ZiZsaW1pdD0xMDAw"
+    verb="ListRecords">http://folio.org/oai
+  </request>
+  <error code="badResumptionToken">There were substantial changes to the repository and continuing may result in missing
+    records.
+  </error>
+</OAI-PMH>
+

@@ -28,10 +28,22 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_BAD_RESUMPTION_TOKEN_ERROR
+    = "src/test/resources/mocks/GetListRecordsBadResumptionTokenError.xml";
+  public static final String PATH_TO_LIST_RECORDS_CANNOT_DISSEMINATE_FORMAT_ERROR
+    = "src/test/resources/mocks/GetListRecordsCannotDisseminateFormatError.xml";
+  public static final String PATH_TO_LIST_NO_RECORDS_MATCH
+    = "src/test/resources/mocks/GetListRecordsNoRecordsMatchError.xml";
+  public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_200
+    = "src/test/resources/mocks/GetErrorsProcessingConfigSetting200.json";
+  public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500
+    = "src/test/resources/mocks/GetErrorsProcessingConfigSetting500.json";
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
+
+  private String errorsProcessing;
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
     super(port, knownTenants);
@@ -69,6 +81,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     Router router = super.defineRoutes();
     router.route(HttpMethod.GET, "/oai/records/*").handler(this::oaiPmhHandler);
     router.route(HttpMethod.GET, "/oai/repository_info").handler(this::oaiPmhHandler);
+    router.route(HttpMethod.GET, "/configurations/entries").handler(this::handleConfigurationModuleResponse);
     return router;
   }
 
@@ -102,6 +115,21 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
+    }else if (request.absoluteURI().contains("resumptionToken")) {
+      ctx.response()
+        .setStatusCode(400)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_BAD_RESUMPTION_TOKEN_ERROR)));
+    }else if (path.startsWith("/oai/records/") && path.contains("oai%3AarXiv.org%3Atest-env%2F98765400")){
+      ctx.response()
+        .setStatusCode(422)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CANNOT_DISSEMINATE_FORMAT_ERROR)));
+    }else if (request.absoluteURI().contains("metadataPrefix") && request.absoluteURI().contains("from")) {
+      ctx.response()
+        .setStatusCode(404)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_NO_RECORDS_MATCH)));
     } else if (path.startsWith("/oai/records/")
       && path.contains("exception")) {
       logger.debug("Starting OKAPI exception...");
@@ -109,6 +137,39 @@ public class OaiPmhMockOkapi extends MockOkapi {
     } else if (path.contains("TimeoutException")) {
       vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> logger.debug("OKAPI client should throw TimeoutException"));
     }
+  }
+
+  private void handleConfigurationModuleResponse(RoutingContext ctx){
+    if (errorsProcessing.equals("200")){
+      ctx.response()
+        .setStatusCode(200)
+        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_200)));
+    } else if (errorsProcessing.equals("500")) {
+      ctx.response()
+        .setStatusCode(200)
+        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
+    } else {
+      ctx.response()
+        .setStatusCode(200)
+        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
+    }
+  }
+
+  private String getJsonObjectFromFile(Path path) {
+    String json = null;
+    try {
+      json = new String(Files.readAllBytes(path));
+    } catch (IOException e) {
+      logger.error("Unexpected error", e);
+    }
+    return json;
+  }
+
+  public void setErrorsProcessing(String errorsProcessing) {
+    this.errorsProcessing = errorsProcessing;
   }
 }
 
