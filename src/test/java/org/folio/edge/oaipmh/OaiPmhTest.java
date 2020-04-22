@@ -44,6 +44,7 @@ import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
@@ -812,14 +813,19 @@ public class OaiPmhTest {
       "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
     };
 
+    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
+
     for (int i=0; i < invalidURLs.length; ++i) {
-      RestAssured
+      final Response resp = RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(HttpStatus.SC_OK)
         .extract()
         .response();
+
+      String actualBody = resp.body().asString();
+      assertTrue(actualBody.contains(errors[i]));
     }
     mockOkapi.setErrorsProcessing("500");
   }
@@ -838,14 +844,19 @@ public class OaiPmhTest {
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
+    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
+
     for (int i=0; i < invalidURLs.length; ++i) {
-      RestAssured
+      final Response resp = RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(httpStatuses[i])
         .extract()
         .response();
+
+      String actualBody = resp.body().asString();
+      assertTrue(actualBody.contains(errors[i]));
     }
   }
 
@@ -865,14 +876,19 @@ public class OaiPmhTest {
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
+    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
+
     for (int i=0; i < invalidURLs.length; ++i) {
-      RestAssured
+      final Response resp = RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(httpStatuses[i])
         .extract()
         .response();
+
+      String actualBody = resp.body().asString();
+      assertTrue(actualBody.contains(errors[i]));
     }
     mockOkapi.setErrorsProcessing("500");
   }
@@ -881,7 +897,7 @@ public class OaiPmhTest {
   public void testMakeRequestWithInvalidTenant(){
     logger.info("=== Test make request with invalid tenant ===");
 
-    RestAssured
+    final Response resp = RestAssured
       .given()
       .header("x-okapi-tenant","tenant")
       .get("/oai/" + API_KEY + "?verb=ListRecords")
@@ -890,6 +906,9 @@ public class OaiPmhTest {
       .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
       .extract()
       .response();
+
+    String actualBody = resp.body().asString();
+    assertTrue(actualBody.contains("Exception"));
   }
 
   @Test
@@ -898,13 +917,16 @@ public class OaiPmhTest {
 
     mockOkapi.setErrorsProcessing("emptyBody");
 
-     RestAssured
+    final Response resp = RestAssured
       .get("/oai/" + API_KEY + "?verb=ListRecords")
       .then()
       .log().all()
       .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
       .extract()
       .response();
+
+    String actualBody = resp.body().asString();
+    assertTrue(actualBody.contains("Exception"));
 
     mockOkapi.setErrorsProcessing("500");
   }
