@@ -28,14 +28,6 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
-  public static final String PATH_TO_LIST_RECORDS_BAD_RESUMPTION_TOKEN_ERROR
-    = "src/test/resources/mocks/GetListRecordsBadResumptionTokenError.xml";
-  public static final String PATH_TO_LIST_RECORDS_CANNOT_DISSEMINATE_FORMAT_ERROR
-    = "src/test/resources/mocks/GetListRecordsCannotDisseminateFormatError.xml";
-  public static final String PATH_TO_LIST_NO_RECORDS_MATCH
-    = "src/test/resources/mocks/GetListRecordsNoRecordsMatchError.xml";
-  public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_200
-    = "src/test/resources/mocks/GetErrorsProcessingConfigSetting200.json";
   public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500
     = "src/test/resources/mocks/GetErrorsProcessingConfigSetting500.json";
 
@@ -119,17 +111,17 @@ public class OaiPmhMockOkapi extends MockOkapi {
       ctx.response()
         .setStatusCode(400)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_BAD_RESUMPTION_TOKEN_ERROR)));
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     }else if (path.startsWith("/oai/records/") && path.contains("oai%3AarXiv.org%3Atest-env%2F98765400")){
       ctx.response()
         .setStatusCode(422)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CANNOT_DISSEMINATE_FORMAT_ERROR)));
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     }else if (request.absoluteURI().contains("metadataPrefix") && request.absoluteURI().contains("from")) {
       ctx.response()
         .setStatusCode(404)
         .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_NO_RECORDS_MATCH)));
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (path.startsWith("/oai/records/")
       && path.contains("exception")) {
       logger.debug("Starting OKAPI exception...");
@@ -144,7 +136,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_200)));
+        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
     } else if (errorsProcessing.equals("500")) {
       ctx.response()
         .setStatusCode(200)

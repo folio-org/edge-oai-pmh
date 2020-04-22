@@ -44,7 +44,6 @@ import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
@@ -53,9 +52,9 @@ import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import static org.openarchives.oai._2.VerbType.LIST_IDENTIFIERS;
 
 @RunWith(VertxUnitRunner.class)
-public class MainVerticleTest {
+public class OaiPmhTest {
 
-  private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
+  private static final Logger logger = Logger.getLogger(OaiPmhTest.class);
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
@@ -812,21 +811,15 @@ public class MainVerticleTest {
       "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
       "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
     };
-    String[] errorCodes = {"<error code=\"badArgument\">", "<error code=\"badVerb\">", "<error code=\"badResumptionToken\">",
-      "<error code=\"cannotDisseminateFormat\">", "<error code=\"noRecordsMatch\">", "<error code=\"idDoesNotExist\">"
-    };
 
     for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
+      RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(HttpStatus.SC_OK)
         .extract()
         .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errorCodes[i]));
     }
     mockOkapi.setErrorsProcessing("500");
   }
@@ -842,24 +835,17 @@ public class MainVerticleTest {
       "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
     };
 
-    String[] errorCodes = {"<error code=\"badArgument\">", "<error code=\"badVerb\">", "<error code=\"badResumptionToken\">",
-      "<error code=\"cannotDisseminateFormat\">", "<error code=\"noRecordsMatch\">", "<error code=\"idDoesNotExist\">"
-    };
-
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
     for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
+      RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(httpStatuses[i])
         .extract()
         .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errorCodes[i]));
     }
   }
 
@@ -876,32 +862,26 @@ public class MainVerticleTest {
       "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
     };
 
-    String[] errorCodes = {"<error code=\"badArgument\">", "<error code=\"badVerb\">", "<error code=\"badResumptionToken\">",
-      "<error code=\"cannotDisseminateFormat\">", "<error code=\"noRecordsMatch\">", "<error code=\"idDoesNotExist\">"
-    };
-
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
     for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
+      RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
         .statusCode(httpStatuses[i])
         .extract()
         .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errorCodes[i]));
     }
+    mockOkapi.setErrorsProcessing("500");
   }
 
   @Test
   public void testMakeRequestWithInvalidTenant(){
     logger.info("=== Test make request with invalid tenant ===");
 
-    final Response resp = RestAssured
+    RestAssured
       .given()
       .header("x-okapi-tenant","tenant")
       .get("/oai/" + API_KEY + "?verb=ListRecords")
@@ -918,13 +898,15 @@ public class MainVerticleTest {
 
     mockOkapi.setErrorsProcessing("emptyBody");
 
-    final Response resp = RestAssured
+     RestAssured
       .get("/oai/" + API_KEY + "?verb=ListRecords")
       .then()
       .log().all()
       .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
       .extract()
       .response();
+
+    mockOkapi.setErrorsProcessing("500");
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
