@@ -114,9 +114,11 @@ public class OaiPmhHandler extends Handler {
             response -> handleProxyResponse(ctx, response),
             t -> handleException(ctx, t));
       });
-    }).exceptionally(exc -> {handleException(ctx, exc);
+    })
+      .exceptionally(exc -> {
+        handleException(ctx, exc);
         return null;
-    });
+      });
   }
 
   /**
@@ -311,7 +313,7 @@ public class OaiPmhHandler extends Handler {
     return future;
   }
 
-  private void setStatusCodeToResponse(HttpServerResponse response, int status){
+  private void setStatusCodeToResponse(HttpServerResponse response, int status) {
     if (getErrorsProcessingConfigSetting().equals("200")) {
       response.setStatusCode(200);
     } else {
