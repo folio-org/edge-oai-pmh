@@ -1,38 +1,5 @@
 package org.folio.edge.oaipmh;
 
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.DecoderConfig;
-import com.jayway.restassured.response.Header;
-import com.jayway.restassured.response.Response;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.ApiKeyUtils;
-import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.utils.Constants;
-import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.OAIPMHerrorType;
-import org.openarchives.oai._2.OAIPMHerrorcodeType;
-import org.openarchives.oai._2.RequestType;
-import org.openarchives.oai._2.VerbType;
-
-import javax.xml.bind.JAXBException;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static com.jayway.restassured.config.DecoderConfig.decoderConfig;
 import static org.folio.edge.core.Constants.SYS_LOG_LEVEL;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
@@ -45,16 +12,54 @@ import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import static org.openarchives.oai._2.VerbType.LIST_IDENTIFIERS;
 
-@RunWith(VertxUnitRunner.class)
-public class MainVerticleTest {
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-  private static final Logger logger = Logger.getLogger(MainVerticleTest.class);
+import javax.xml.bind.JAXBException;
+
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.ApiKeyUtils;
+import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.utils.Constants;
+import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openarchives.oai._2.OAIPMH;
+import org.openarchives.oai._2.OAIPMHerrorType;
+import org.openarchives.oai._2.OAIPMHerrorcodeType;
+import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.VerbType;
+
+import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.config.DecoderConfig;
+import com.jayway.restassured.response.Header;
+import com.jayway.restassured.response.Response;
+
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
+
+@RunWith(VertxUnitRunner.class)
+public class OaiPmhTest {
+
+  private static final Logger logger = Logger.getLogger(OaiPmhTest.class);
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
@@ -76,7 +81,7 @@ public class MainVerticleTest {
 
     mockOkapi = spy(new OaiPmhMockOkapi(okapiPort, knownTenants));
     mockOkapi.start(context);
-
+    mockOkapi.setModConfigurationErrosProcessingValue("500");
     vertx = Vertx.vertx();
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
@@ -94,6 +99,11 @@ public class MainVerticleTest {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
   }
 
+  @After
+  public void tearDown(){
+    mockOkapi.setModConfigurationErrosProcessingValue("500");
+  }
+
   @AfterClass
   public static void tearDownOnce(TestContext context) {
     logger.info("Shutting down server");
@@ -109,7 +119,6 @@ public class MainVerticleTest {
       mockOkapi.close(context);
     });
   }
-
 
   @Test
   public void testAdminHealth() {
@@ -797,6 +806,135 @@ public class MainVerticleTest {
     String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " +"\""+ acceptHeader
       +"\""+", can not send */*";
     assertEquals(expectedBody, actualBody);
+  }
+
+  @Test
+  public void testAllRequestsReturnErrorsWith200HttpCode() {
+    logger.info("=== Test case when all errors return 200 Http code ===");
+
+    mockOkapi.setModConfigurationErrosProcessingValue("200");
+
+    String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
+      "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:test-env/98765400&metadataPrefix=oai&apikey=" + API_KEY,
+      "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
+    };
+
+    for (String invalidURL : invalidURLs) {
+      RestAssured
+        .get(invalidURL)
+        .then()
+        .log().all()
+        .statusCode(HttpStatus.SC_OK);
+    }
+    //fix jenkins code smells
+    assert true;
+  }
+
+  @Test
+  public void testAllRequestsReturnErrorsWithTheirOriginalHttpCode() {
+    logger.info("=== Test case when all errors return 4xx Http code ===");
+
+    String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
+      "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:test-env/98765400&metadataPrefix=oai&apikey=" + API_KEY,
+      "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
+    };
+
+    int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
+
+    for (int i=0; i < invalidURLs.length; ++i) {
+      RestAssured
+        .get(invalidURLs[i])
+        .then()
+        .log().all()
+        .statusCode(httpStatuses[i]);
+    }
+    //fix jenkins code smells
+    assert true;
+  }
+
+  @Test
+  public void testInvalidAcceptHeaderReturns406IrrespectiveOfErrorsProcessingSetting() {
+    mockOkapi.setModConfigurationErrosProcessingValue("200");
+
+    String url = "/oai/" + API_KEY + "?verb=ListRecords";
+    RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, "text/json")
+      .get(url)
+      .then()
+      .log().all()
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
+    //fix jenkins code smells
+    assert true;
+  }
+
+  @Test
+  public void testStatusCodeInResponseNotEquals200() {
+    logger.info("=== Test status code in mod-configuration response not equals 200 ===");
+
+    mockOkapi.setModConfigurationErrosProcessingValue("");
+
+    String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
+      "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:test-env/98765400&metadataPrefix=oai&apikey=" + API_KEY,
+      "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
+      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
+    };
+
+    int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
+      HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
+
+    for (int i=0; i < invalidURLs.length; ++i) {
+      RestAssured
+        .get(invalidURLs[i])
+        .then()
+        .log().all()
+        .statusCode(httpStatuses[i]);
+    }
+    //fix jenkins code smells
+    assert true;
+}
+
+  @Test
+  public void testMakeRequestWithInvalidTenant(){
+    logger.info("=== Test make request with invalid tenant ===");
+
+    final Response resp = RestAssured
+      .given()
+      .header("x-okapi-tenant","tenant")
+      .get("/oai/" + API_KEY + "?verb=ListRecords")
+      .then()
+      .log().all()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertTrue(actualBody.contains("Exception"));
+  }
+
+  @Test
+  public void testMakeRequestAndGetResponseWithEmptyBody(){
+    logger.info("=== Test make request and give response with empty body ===");
+
+    mockOkapi.setModConfigurationErrosProcessingValue("emptyBody");
+
+    final Response resp = RestAssured
+      .get("/oai/" + API_KEY + "?verb=ListRecords")
+      .then()
+      .log().all()
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertTrue(actualBody.contains("Exception"));
+
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {

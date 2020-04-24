@@ -5,7 +5,9 @@ import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import me.escoffier.vertx.completablefuture.VertxCompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.Handler;
@@ -13,6 +15,8 @@ import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.utils.Constants;
 import org.folio.edge.oaipmh.utils.OaiPmhOkapiClient;
+import org.folio.rest.client.ConfigurationsClient;
+import org.folio.rest.jaxrs.model.Configs;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
 import org.openarchives.oai._2.OAIPMHerrorcodeType;
@@ -24,11 +28,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.folio.edge.core.Constants.X_OKAPI_TENANT;
+import static org.folio.edge.core.Constants.X_OKAPI_TOKEN;
 import static org.folio.edge.oaipmh.utils.Constants.FROM;
 import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
@@ -48,8 +55,12 @@ public class OaiPmhHandler extends Handler {
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = of(200, 400, 404, 422);
 
+  private String errorsProcessingConfigSetting;
+  private String okapiURL;
+
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
+    okapiURL = ocf.okapiURL;
   }
 
   protected void handle(RoutingContext ctx) {
@@ -68,6 +79,10 @@ public class OaiPmhHandler extends Handler {
         handleNotAcceptableError(ctx, request);
         return;
     }
+
+    getErrorsProcessingConfigSetting(ctx).thenAccept(result -> {
+
+    errorsProcessingConfigSetting = result;
 
     Verb verb = Verb.fromName(request.getParam(VERB));
     if (verb == null) {
@@ -98,6 +113,11 @@ public class OaiPmhHandler extends Handler {
             request.headers(),
             response -> handleProxyResponse(ctx, response),
             t -> handleException(ctx, t));
+      });
+    })
+      .exceptionally(exc -> {
+        handleException(ctx, exc);
+        return null;
       });
   }
 
@@ -131,7 +151,9 @@ public class OaiPmhHandler extends Handler {
     HttpServerResponse edgeResponse = ctx.response();
 
     int httpStatusCode = response.statusCode();
-    edgeResponse.setStatusCode(httpStatusCode);
+
+    setStatusCodeToResponse(edgeResponse, httpStatusCode);
+
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE);
 
@@ -195,7 +217,8 @@ public class OaiPmhHandler extends Handler {
     } catch (Exception e) {
       logger.error("Exception marshalling XML", e);
     }
-    ctx.response().setStatusCode(status);
+
+    setStatusCodeToResponse(ctx.response(), status);
 
     if (xml != null) {
       logger.warn("The request was invalid. The response returned with errors: " + xml);
@@ -250,5 +273,59 @@ public class OaiPmhHandler extends Handler {
       .orElse("");
     notAcceptable(ctx,
         "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
+  }
+
+  /**
+   * This method make request to mod-configuration module and receive config setting associate with name behavior
+   *
+   * @param ctx routing context
+   * @return value of field errorsProcessing
+   */
+  private CompletableFuture<String> getErrorsProcessingConfigSetting(RoutingContext ctx) {
+    final String query = "module==OAIPMH and configName==behavior";
+    final int configNumber = 0;
+    CompletableFuture<String> future = new VertxCompletableFuture<>();
+    String tenantId = ctx.request().headers().get(X_OKAPI_TENANT);
+    String token = ctx.request().headers().get(X_OKAPI_TOKEN);
+    try {
+      new ConfigurationsClient(getOkapiURL(), tenantId, token).getConfigurationsEntries(query, 0, 100, null, null,
+          responseConfig -> responseConfig.bodyHandler(body -> {
+            try {
+              if (responseConfig.statusCode() != 200) {
+                logger.error("Error getting configuration " + responseConfig.statusMessage());
+                future.complete(String.valueOf(responseConfig.statusCode()));
+                return;
+              }
+              future.complete(new JsonObject(body.toJsonObject()
+                .mapTo(Configs.class)
+                .getConfigs()
+                .get(configNumber)
+                .getValue()).getString("errorsProcessing"));
+            } catch (Exception exc) {
+              logger.error("Error when get configuration value from mod-configurations client response ", exc);
+              future.completeExceptionally(exc);
+            }
+          }));
+    } catch (Exception e) {
+      logger.error("Error happened initializing mod-configurations client ", e);
+      future.completeExceptionally(e);
+    }
+    return future;
+  }
+
+  private void setStatusCodeToResponse(HttpServerResponse response, int status) {
+    if (getErrorsProcessingConfigSetting().equals("200")) {
+      response.setStatusCode(200);
+    } else {
+      response.setStatusCode(status);
+    }
+  }
+
+  public String getOkapiURL() {
+    return okapiURL;
+  }
+
+  public String getErrorsProcessingConfigSetting() {
+    return errorsProcessingConfigSetting;
   }
 }
