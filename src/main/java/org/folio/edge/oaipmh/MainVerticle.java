@@ -17,7 +17,8 @@ public class MainVerticle extends EdgeVerticle2 {
     String okapiURL = config().getString(SYS_OKAPI_URL);
     int reqTimeoutMs = config().getInteger(SYS_REQUEST_TIMEOUT_MS);
     OaiPmhOkapiClientFactory ocf = new OaiPmhOkapiClientFactory(vertx, okapiURL, reqTimeoutMs);
-    OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf);
+    ModConfigurationService modConfigurationService = new ModConfigurationService(okapiURL);
+    OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf, modConfigurationService);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());

@@ -3,6 +3,9 @@ package org.folio.edge.oaipmh;
 import static com.google.common.collect.ImmutableSet.of;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.folio.edge.oaipmh.ModConfigurationService.ENABLE_OAI_SERVICE;
+import static org.folio.edge.oaipmh.ModConfigurationService.GENERAL_CONFIG;
+import static org.folio.edge.oaipmh.ModConfigurationService.MODULE_NAME;
 import static org.folio.edge.oaipmh.utils.Constants.FROM;
 import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
@@ -25,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.model.ClientInfo;
@@ -60,8 +64,11 @@ public class OaiPmhHandler extends Handler {
 
   private String errorsProcessingConfigSetting;
 
-  public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
+  private final ConfigurationService configurationService;
+
+  public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf, ConfigurationService configurationService) {
     super(secureStore, ocf);
+    this.configurationService = configurationService;
   }
 
   protected void handle(RoutingContext ctx) {
@@ -76,59 +83,66 @@ public class OaiPmhHandler extends Handler {
              .forEach(header -> logger.debug(String.format("> %s: %s", header.getKey(), header.getValue())));
     }
 
-    if (!supportedAcceptHeaders(request)){
-        handleNotAcceptableError(ctx, request);
-        return;
-    }
+    modConfigurationService.getConfigSettingValue(ctx, MODULE_NAME, GENERAL_CONFIG, ENABLE_OAI_SERVICE)
+      .thenAccept(enableOaiService -> {
 
-    handleCommon(ctx, null, null, (okapiClient, param) -> {
-
-      final ConfigurationsClient configurationsClient = new ConfigurationsClient(okapiClient.okapiURL, okapiClient.tenant,
-          okapiClient.getToken());
-
-      getErrorsProcessingConfigSetting(configurationsClient).thenAccept(result -> {
-
-        errorsProcessingConfigSetting = result;
-
-        Verb verb = Verb.fromName(request.getParam(VERB));
-        if (verb == null) {
-          badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
+        if (!Boolean.parseBoolean(enableOaiService)) {
+          failureResponse(ctx, 503, "OAI-PMH service is disabled");
           return;
         }
 
-        List<OAIPMHerrorType> errors = verb.validate(ctx);
-        if (!errors.isEmpty()) {
-          badRequest(ctx, verb.toString(), errors);
+        if (!supportedAcceptHeaders(request)) {
+          handleNotAcceptableError(ctx, request);
           return;
         }
+          handleCommon(ctx, null, null, (okapiClient, param) -> {
 
-        String[] requiredParams;
-        if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-          requiredParams = new String[] { verb.getExclusiveParam() };
-        } else {
-          requiredParams = verb.getRequiredParams()
-            .toArray(new String[0]);
-        }
+            final ConfigurationsClient configurationsClient = new ConfigurationsClient(okapiClient.okapiURL, okapiClient.tenant,
+              okapiClient.getToken());
 
-        super.handleCommon(ctx,
-          requiredParams,
-          verb.getOptionalParams().toArray(new String[0]),
-          (client, params) -> {
-            final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
-            oaiPmhClient
-              .call(request.params(),
-                request.headers(),
-                response -> handleProxyResponse(ctx, response),
-                t -> handleException(ctx, t));
+            getErrorsProcessingConfigSetting(configurationsClient).thenAccept(result -> {
+
+              errorsProcessingConfigSetting = result;
+
+              Verb verb = Verb.fromName(request.getParam(VERB));
+              if (verb == null) {
+                badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
+                return;
+              }
+
+              List<OAIPMHerrorType> errors = verb.validate(ctx);
+              if (!errors.isEmpty()) {
+                badRequest(ctx, verb.toString(), errors);
+                return;
+              }
+
+              String[] requiredParams;
+              if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+                requiredParams = new String[] { verb.getExclusiveParam() };
+              } else {
+                requiredParams = verb.getRequiredParams()
+                  .toArray(new String[0]);
+              }
+
+              super.handleCommon(ctx,
+                requiredParams,
+                verb.getOptionalParams().toArray(new String[0]),
+                (client, params) -> {
+                  final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
+                  oaiPmhClient
+                    .call(request.params(),
+                      request.headers(),
+                      response -> handleProxyResponse(ctx, response),
+                      t -> handleException(ctx, t));
+                });
+            })
+              .exceptionally(exc -> {
+                handleException(ctx, exc);
+                return null;
+              });
           });
-      })
-        .exceptionally(exc -> {
-          handleException(ctx, exc);
-          return null;
-        });
-    });
+        }
   }
-
   /**
    * EDGE-OAI-PMH supports only text/xml and all its derivatives in Accept header.
    * Empty Accept header implies any MIME type is accepted, same as Accept: *//*
@@ -315,32 +329,34 @@ public class OaiPmhHandler extends Handler {
   /**
    * This method make request to mod-configuration module and receive config setting associate with name behavior
    *
-   * @param client configuration client which make request to mod-congiguration
+   * @param ctx routing context
    * @return value of field errorsProcessing
    */
-  private CompletableFuture<String> getErrorsProcessingConfigSetting(ConfigurationsClient client) {
+  private CompletableFuture<String> getErrorsProcessingConfigSetting(RoutingContext ctx) {
     final String query = "module==OAIPMH and configName==behavior";
     final int configNumber = 0;
     CompletableFuture<String> future = new VertxCompletableFuture<>();
+    String tenantId = ctx.request().headers().get(X_OKAPI_TENANT);
+    String token = ctx.request().headers().get(X_OKAPI_TOKEN);
     try {
-      client.getConfigurationsEntries(query, 0, 100, null, null,
-        responseConfig -> responseConfig.bodyHandler(body -> {
-        try {
-          if (responseConfig.statusCode() != 200) {
-            logger.error("Error getting configuration " + responseConfig.statusMessage());
-            future.complete(String.valueOf(responseConfig.statusCode()));
-            return;
-          }
-          future.complete(new JsonObject(body.toJsonObject()
-            .mapTo(Configs.class)
-            .getConfigs()
-            .get(configNumber)
-            .getValue()).getString("errorsProcessing"));
-        } catch (Exception exc) {
-          logger.error("Error when get configuration value from mod-configurations client response ", exc);
-          future.completeExceptionally(exc);
-        }
-      }));
+      new ConfigurationsClient(getOkapiURL(), tenantId, token).getConfigurationsEntries(query, 0, 100, null, null,
+          responseConfig -> responseConfig.bodyHandler(body -> {
+            try {
+              if (responseConfig.statusCode() != 200) {
+                logger.error("Error getting configuration " + responseConfig.statusMessage());
+                future.complete(String.valueOf(responseConfig.statusCode()));
+                return;
+              }
+              future.complete(new JsonObject(body.toJsonObject()
+                .mapTo(Configs.class)
+                .getConfigs()
+                .get(configNumber)
+                .getValue()).getString("errorsProcessing"));
+            } catch (Exception exc) {
+              logger.error("Error when get configuration value from mod-configurations client response ", exc);
+              future.completeExceptionally(exc);
+            }
+          }));
     } catch (Exception e) {
       logger.error("Error happened initializing mod-configurations client ", e);
       future.completeExceptionally(e);
@@ -354,6 +370,13 @@ public class OaiPmhHandler extends Handler {
     } else {
       response.setStatusCode(status);
     }
+  }
+
+  private void failureResponse(RoutingContext ctx, int code, String body) {
+    ctx.response()
+      .setStatusCode(code)
+      .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
+      .end(body);
   }
 
   public String getErrorsProcessingConfigSetting() {
