@@ -1,38 +1,5 @@
 package org.folio.edge.oaipmh;
 
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.DecoderConfig;
-import com.jayway.restassured.response.Header;
-import com.jayway.restassured.response.Response;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.ApiKeyUtils;
-import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.utils.Constants;
-import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.OAIPMHerrorType;
-import org.openarchives.oai._2.OAIPMHerrorcodeType;
-import org.openarchives.oai._2.RequestType;
-import org.openarchives.oai._2.VerbType;
-
-import javax.xml.bind.JAXBException;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import static com.jayway.restassured.config.DecoderConfig.decoderConfig;
 import static org.folio.edge.core.Constants.SYS_LOG_LEVEL;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
@@ -44,13 +11,50 @@ import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 import static org.openarchives.oai._2.VerbType.LIST_IDENTIFIERS;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.xml.bind.JAXBException;
+
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.ApiKeyUtils;
+import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.utils.Constants;
+import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openarchives.oai._2.OAIPMH;
+import org.openarchives.oai._2.OAIPMHerrorType;
+import org.openarchives.oai._2.OAIPMHerrorcodeType;
+import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.VerbType;
+
+import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.config.DecoderConfig;
+import com.jayway.restassured.response.Header;
+import com.jayway.restassured.response.Response;
+
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
+import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
 public class OaiPmhTest {
@@ -77,7 +81,7 @@ public class OaiPmhTest {
 
     mockOkapi = spy(new OaiPmhMockOkapi(okapiPort, knownTenants));
     mockOkapi.start(context);
-    mockOkapi.setErrorsProcessing("500");
+    mockOkapi.setModConfigurationErrosProcessingValue("500");
     vertx = Vertx.vertx();
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
@@ -95,6 +99,11 @@ public class OaiPmhTest {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
   }
 
+  @After
+  public void tearDown(){
+    mockOkapi.setModConfigurationErrosProcessingValue("500");
+  }
+
   @AfterClass
   public static void tearDownOnce(TestContext context) {
     logger.info("Shutting down server");
@@ -110,7 +119,6 @@ public class OaiPmhTest {
       mockOkapi.close(context);
     });
   }
-
 
   @Test
   public void testAdminHealth() {
@@ -804,7 +812,7 @@ public class OaiPmhTest {
   public void testAllRequestsReturnErrorsWith200HttpCode() {
     logger.info("=== Test case when all errors return 200 Http code ===");
 
-    mockOkapi.setErrorsProcessing("200");
+    mockOkapi.setModConfigurationErrosProcessingValue("200");
 
     String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
       "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
@@ -813,21 +821,13 @@ public class OaiPmhTest {
       "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
     };
 
-    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
-
-    for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
-        .get(invalidURLs[i])
+    for (String invalidURL : invalidURLs) {
+      RestAssured
+        .get(invalidURL)
         .then()
         .log().all()
-        .statusCode(HttpStatus.SC_OK)
-        .extract()
-        .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errors[i]));
+        .statusCode(HttpStatus.SC_OK);
     }
-    mockOkapi.setErrorsProcessing("500");
   }
 
   @Test
@@ -844,27 +844,34 @@ public class OaiPmhTest {
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
-    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
-
     for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
+      RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
-        .statusCode(httpStatuses[i])
-        .extract()
-        .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errors[i]));
+        .statusCode(httpStatuses[i]);
     }
+  }
+
+  @Test
+  public void testInvalidAcceptHeaderReturns406IrrespectiveOfErrorsProcessingSetting() {
+    mockOkapi.setModConfigurationErrosProcessingValue("200");
+
+    String url = "/oai/" + API_KEY + "?verb=ListRecords";
+    RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, "text/json")
+      .get(url)
+      .then()
+      .log().all()
+      .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
   }
 
   @Test
   public void testStatusCodeInResponseNotEquals200() {
     logger.info("=== Test status code in mod-configuration response not equals 200 ===");
 
-    mockOkapi.setErrorsProcessing("");
+    mockOkapi.setModConfigurationErrosProcessingValue("");
 
     String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
       "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
@@ -876,22 +883,14 @@ public class OaiPmhTest {
     int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
       HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
 
-    String[] errors = {"badArgument", "badVerb", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist", "idDoesNotExist"};
-
     for (int i=0; i < invalidURLs.length; ++i) {
-      final Response resp = RestAssured
+      RestAssured
         .get(invalidURLs[i])
         .then()
         .log().all()
-        .statusCode(httpStatuses[i])
-        .extract()
-        .response();
-
-      String actualBody = resp.body().asString();
-      assertTrue(actualBody.contains(errors[i]));
+        .statusCode(httpStatuses[i]);
     }
-    mockOkapi.setErrorsProcessing("500");
-  }
+}
 
   @Test
   public void testMakeRequestWithInvalidTenant(){
@@ -915,7 +914,7 @@ public class OaiPmhTest {
   public void testMakeRequestAndGetResponseWithEmptyBody(){
     logger.info("=== Test make request and give response with empty body ===");
 
-    mockOkapi.setErrorsProcessing("emptyBody");
+    mockOkapi.setModConfigurationErrosProcessingValue("emptyBody");
 
     final Response resp = RestAssured
       .get("/oai/" + API_KEY + "?verb=ListRecords")
@@ -928,7 +927,6 @@ public class OaiPmhTest {
     String actualBody = resp.body().asString();
     assertTrue(actualBody.contains("Exception"));
 
-    mockOkapi.setErrorsProcessing("500");
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {

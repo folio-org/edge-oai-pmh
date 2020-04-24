@@ -165,7 +165,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     return json;
   }
 
-  public void setErrorsProcessing(String errorsProcessing) {
+  public void setModConfigurationErrosProcessingValue(String errorsProcessing) {
     this.errorsProcessing = errorsProcessing;
   }
 }
