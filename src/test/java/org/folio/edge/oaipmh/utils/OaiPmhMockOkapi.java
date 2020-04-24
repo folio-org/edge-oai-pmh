@@ -35,7 +35,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
-  private String errorsProcessing;
+  private String modConfigurationErrosProcessing;
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
     super(port, knownTenants);
@@ -132,17 +132,17 @@ public class OaiPmhMockOkapi extends MockOkapi {
   }
 
   private void handleConfigurationModuleResponse(RoutingContext ctx){
-    if (errorsProcessing.equals("200")){
+    if (modConfigurationErrosProcessing.equals("200")){
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
         .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
-    } else if (errorsProcessing.equals("500")) {
+    } else if (modConfigurationErrosProcessing.equals("500")) {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
         .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
-    } else if (errorsProcessing.equals("emptyBody")){
+    } else if (modConfigurationErrosProcessing.equals("emptyBody")){
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
@@ -166,7 +166,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   }
 
   public void setModConfigurationErrosProcessingValue(String errorsProcessing) {
-    this.errorsProcessing = errorsProcessing;
+    this.modConfigurationErrosProcessing = errorsProcessing;
   }
 }
 
