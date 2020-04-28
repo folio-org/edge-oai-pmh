@@ -901,24 +901,6 @@ public class OaiPmhTest {
 }
 
   @Test
-  public void testMakeRequestWithInvalidTenant(){
-    logger.info("=== Test make request with invalid tenant ===");
-
-    final Response resp = RestAssured
-      .given()
-      .header("x-okapi-tenant","tenant")
-      .get("/oai/" + API_KEY + "?verb=ListRecords")
-      .then()
-      .log().all()
-      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-      .extract()
-      .response();
-
-    String actualBody = resp.body().asString();
-    assertTrue(actualBody.contains("Exception"));
-  }
-
-  @Test
   public void testMakeRequestAndGetResponseWithEmptyBody(){
     logger.info("=== Test make request and give response with empty body ===");
 

@@ -1,17 +1,36 @@
 package org.folio.edge.oaipmh;
 
-import io.vertx.core.MultiMap;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpHeaders;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.RoutingContext;
-import me.escoffier.vertx.completablefuture.VertxCompletableFuture;
+import static com.google.common.collect.ImmutableSet.of;
+import static io.vertx.core.http.HttpHeaders.ACCEPT;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.folio.edge.oaipmh.utils.Constants.FROM;
+import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
+import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
+import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
+import static org.folio.edge.oaipmh.utils.Constants.SET;
+import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
+import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
+import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
+import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.Handler;
+import org.folio.edge.core.model.ClientInfo;
 import org.folio.edge.core.security.SecureStore;
+import org.folio.edge.core.utils.ApiKeyUtils;
+import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.utils.Constants;
 import org.folio.edge.oaipmh.utils.OaiPmhOkapiClient;
@@ -23,30 +42,14 @@ import org.openarchives.oai._2.OAIPMHerrorcodeType;
 import org.openarchives.oai._2.RequestType;
 import org.openarchives.oai._2.VerbType;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeoutException;
-import java.util.regex.Pattern;
-
-import static com.google.common.collect.ImmutableSet.of;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.folio.edge.core.Constants.X_OKAPI_TENANT;
-import static org.folio.edge.core.Constants.X_OKAPI_TOKEN;
-import static org.folio.edge.oaipmh.utils.Constants.FROM;
-import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
-import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
-import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
-import static org.folio.edge.oaipmh.utils.Constants.SET;
-import static org.folio.edge.oaipmh.utils.Constants.TEXT_XML_TYPE;
-import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
-import static org.folio.edge.oaipmh.utils.Constants.VERB;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
-import static io.vertx.core.http.HttpHeaders.ACCEPT;
+import io.vertx.core.MultiMap;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.RoutingContext;
+import me.escoffier.vertx.completablefuture.VertxCompletableFuture;
 
 public class OaiPmhHandler extends Handler {
 
@@ -56,11 +59,9 @@ public class OaiPmhHandler extends Handler {
   private static final Set<Integer> EXPECTED_CODES = of(200, 400, 404, 422);
 
   private String errorsProcessingConfigSetting;
-  private String okapiURL;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
-    okapiURL = ocf.okapiURL;
   }
 
   protected void handle(RoutingContext ctx) {
@@ -80,45 +81,52 @@ public class OaiPmhHandler extends Handler {
         return;
     }
 
-    getErrorsProcessingConfigSetting(ctx).thenAccept(result -> {
+    handleCommon(ctx, null, null, (okapiClient, param) -> {
 
-    errorsProcessingConfigSetting = result;
+      final ConfigurationsClient configurationsClient = new ConfigurationsClient(okapiClient.okapiURL, okapiClient.tenant,
+          okapiClient.getToken());
 
-    Verb verb = Verb.fromName(request.getParam(VERB));
-    if (verb == null) {
-      badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
-      return;
-    }
+      getErrorsProcessingConfigSetting(configurationsClient).thenAccept(result -> {
 
-    List<OAIPMHerrorType> errors = verb.validate(ctx);
-    if (!errors.isEmpty()) {
-      badRequest(ctx, verb.toString(), errors);
-      return;
-    }
+        errorsProcessingConfigSetting = result;
 
-    String[] requiredParams;
-    if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-      requiredParams = new String[]{verb.getExclusiveParam()};
-    } else {
-      requiredParams = verb.getRequiredParams().toArray(new String[0]);
-    }
+        Verb verb = Verb.fromName(request.getParam(VERB));
+        if (verb == null) {
+          badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
+          return;
+        }
 
-    super.handleCommon(ctx,
-      requiredParams,
-      verb.getOptionalParams().toArray(new String[0]),
-      (client, params) -> {
-        final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
-        oaiPmhClient
-          .call(request.params(),
-            request.headers(),
-            response -> handleProxyResponse(ctx, response),
-            t -> handleException(ctx, t));
-      });
-    })
-      .exceptionally(exc -> {
-        handleException(ctx, exc);
-        return null;
-      });
+        List<OAIPMHerrorType> errors = verb.validate(ctx);
+        if (!errors.isEmpty()) {
+          badRequest(ctx, verb.toString(), errors);
+          return;
+        }
+
+        String[] requiredParams;
+        if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+          requiredParams = new String[] { verb.getExclusiveParam() };
+        } else {
+          requiredParams = verb.getRequiredParams()
+            .toArray(new String[0]);
+        }
+
+        super.handleCommon(ctx,
+          requiredParams,
+          verb.getOptionalParams().toArray(new String[0]),
+          (client, params) -> {
+            final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
+            oaiPmhClient
+              .call(request.params(),
+                request.headers(),
+                response -> handleProxyResponse(ctx, response),
+                t -> handleException(ctx, t));
+          });
+      })
+        .exceptionally(exc -> {
+          handleException(ctx, exc);
+          return null;
+        });
+    });
   }
 
   /**
@@ -193,6 +201,35 @@ public class OaiPmhHandler extends Handler {
   protected void requestTimeout(RoutingContext ctx, String msg) {
     logger.error("requestTimeout: " + msg);
     super.requestTimeout(ctx, "The repository cannot process request. Please try later or contact administrator(s).");
+  }
+
+  @Override
+  protected void handleCommon(RoutingContext ctx, String[] requiredParams, String[] optionalParams,
+      Handler.TwoParamVoidFunction<OkapiClient, Map<String, String>> action) {
+    String key = keyHelper.getApiKey(ctx);
+    ClientInfo clientInfo;
+    try {
+      clientInfo = ApiKeyUtils.parseApiKey(key);
+    } catch (ApiKeyUtils.MalformedApiKeyException e) {
+      invalidApiKey(ctx, key);
+      return;
+    }
+
+    final OkapiClient client = ocf.getOkapiClient(clientInfo.tenantId);
+
+    iuHelper.getToken(client, clientInfo.salt, clientInfo.tenantId, clientInfo.username)
+      .thenAcceptAsync(token -> {
+        client.setToken(token);
+        action.apply(client, null);
+      })
+      .exceptionally(t -> {
+        if (t instanceof TimeoutException) {
+          requestTimeout(ctx, t.getMessage());
+        } else {
+          accessDenied(ctx, t.getMessage());
+        }
+        return null;
+      });
   }
 
   /**
@@ -278,34 +315,32 @@ public class OaiPmhHandler extends Handler {
   /**
    * This method make request to mod-configuration module and receive config setting associate with name behavior
    *
-   * @param ctx routing context
+   * @param client configuration client which make request to mod-congiguration
    * @return value of field errorsProcessing
    */
-  private CompletableFuture<String> getErrorsProcessingConfigSetting(RoutingContext ctx) {
+  private CompletableFuture<String> getErrorsProcessingConfigSetting(ConfigurationsClient client) {
     final String query = "module==OAIPMH and configName==behavior";
     final int configNumber = 0;
     CompletableFuture<String> future = new VertxCompletableFuture<>();
-    String tenantId = ctx.request().headers().get(X_OKAPI_TENANT);
-    String token = ctx.request().headers().get(X_OKAPI_TOKEN);
     try {
-      new ConfigurationsClient(getOkapiURL(), tenantId, token).getConfigurationsEntries(query, 0, 100, null, null,
-          responseConfig -> responseConfig.bodyHandler(body -> {
-            try {
-              if (responseConfig.statusCode() != 200) {
-                logger.error("Error getting configuration " + responseConfig.statusMessage());
-                future.complete(String.valueOf(responseConfig.statusCode()));
-                return;
-              }
-              future.complete(new JsonObject(body.toJsonObject()
-                .mapTo(Configs.class)
-                .getConfigs()
-                .get(configNumber)
-                .getValue()).getString("errorsProcessing"));
-            } catch (Exception exc) {
-              logger.error("Error when get configuration value from mod-configurations client response ", exc);
-              future.completeExceptionally(exc);
-            }
-          }));
+      client.getConfigurationsEntries(query, 0, 100, null, null,
+        responseConfig -> responseConfig.bodyHandler(body -> {
+        try {
+          if (responseConfig.statusCode() != 200) {
+            logger.error("Error getting configuration " + responseConfig.statusMessage());
+            future.complete(String.valueOf(responseConfig.statusCode()));
+            return;
+          }
+          future.complete(new JsonObject(body.toJsonObject()
+            .mapTo(Configs.class)
+            .getConfigs()
+            .get(configNumber)
+            .getValue()).getString("errorsProcessing"));
+        } catch (Exception exc) {
+          logger.error("Error when get configuration value from mod-configurations client response ", exc);
+          future.completeExceptionally(exc);
+        }
+      }));
     } catch (Exception e) {
       logger.error("Error happened initializing mod-configurations client ", e);
       future.completeExceptionally(e);
@@ -319,10 +354,6 @@ public class OaiPmhHandler extends Handler {
     } else {
       response.setStatusCode(status);
     }
-  }
-
-  public String getOkapiURL() {
-    return okapiURL;
   }
 
   public String getErrorsProcessingConfigSetting() {
