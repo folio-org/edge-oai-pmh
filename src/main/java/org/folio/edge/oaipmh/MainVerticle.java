@@ -4,6 +4,8 @@ import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 
 import org.folio.edge.core.EdgeVerticle2;
+import org.folio.edge.oaipmh.service.impl.ModConfigurationService;
+import org.folio.edge.oaipmh.service.ConfigurationService;
 import org.folio.edge.oaipmh.utils.OaiPmhOkapiClientFactory;
 
 import io.vertx.core.http.HttpMethod;
@@ -17,7 +19,8 @@ public class MainVerticle extends EdgeVerticle2 {
     String okapiURL = config().getString(SYS_OKAPI_URL);
     int reqTimeoutMs = config().getInteger(SYS_REQUEST_TIMEOUT_MS);
     OaiPmhOkapiClientFactory ocf = new OaiPmhOkapiClientFactory(vertx, okapiURL, reqTimeoutMs);
-    OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf);
+    ConfigurationService configurationService = new ModConfigurationService();
+    OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf, configurationService);
 
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());

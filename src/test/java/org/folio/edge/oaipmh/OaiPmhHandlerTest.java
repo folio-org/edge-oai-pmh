@@ -57,9 +57,9 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
-public class OaiPmhTest {
+public class OaiPmhHandlerTest {
 
-  private static final Logger logger = Logger.getLogger(OaiPmhTest.class);
+  private static final Logger logger = Logger.getLogger(OaiPmhHandlerTest.class);
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
@@ -81,7 +81,8 @@ public class OaiPmhTest {
 
     mockOkapi = spy(new OaiPmhMockOkapi(okapiPort, knownTenants));
     mockOkapi.start(context);
-    mockOkapi.setModConfigurationErrosProcessingValue("500");
+    mockOkapi.setModConfigurationErrorsProcessingValue("500");
+    mockOkapi.setModConfigurationEnableOaiServiceValue("true");
     vertx = Vertx.vertx();
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
@@ -101,7 +102,8 @@ public class OaiPmhTest {
 
   @After
   public void tearDown(){
-    mockOkapi.setModConfigurationErrosProcessingValue("500");
+    mockOkapi.setModConfigurationErrorsProcessingValue("500");
+    mockOkapi.setModConfigurationEnableOaiServiceValue("true");
   }
 
   @AfterClass
@@ -812,7 +814,7 @@ public class OaiPmhTest {
   public void testAllRequestsReturnErrorsWith200HttpCode() {
     logger.info("=== Test case when all errors return 200 Http code ===");
 
-    mockOkapi.setModConfigurationErrosProcessingValue("200");
+    mockOkapi.setModConfigurationErrorsProcessingValue("200");
 
     String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
       "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
@@ -828,7 +830,7 @@ public class OaiPmhTest {
         .log().all()
         .statusCode(HttpStatus.SC_OK);
     }
-    //fix jenkins code smells
+    //fix sonar code smells
     assert true;
   }
 
@@ -853,13 +855,13 @@ public class OaiPmhTest {
         .log().all()
         .statusCode(httpStatuses[i]);
     }
-    //fix jenkins code smells
+    //fix sonar code smells
     assert true;
   }
 
   @Test
   public void testInvalidAcceptHeaderReturns406IrrespectiveOfErrorsProcessingSetting() {
-    mockOkapi.setModConfigurationErrosProcessingValue("200");
+    mockOkapi.setModConfigurationErrorsProcessingValue("200");
 
     String url = "/oai/" + API_KEY + "?verb=ListRecords";
     RestAssured
@@ -869,7 +871,7 @@ public class OaiPmhTest {
       .then()
       .log().all()
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
-    //fix jenkins code smells
+    //fix sonar code smells
     assert true;
   }
 
@@ -877,7 +879,7 @@ public class OaiPmhTest {
   public void testStatusCodeInResponseNotEquals200() {
     logger.info("=== Test status code in mod-configuration response not equals 200 ===");
 
-    mockOkapi.setModConfigurationErrosProcessingValue("");
+    mockOkapi.setModConfigurationErrorsProcessingValue("");
 
     String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
       "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
@@ -896,7 +898,7 @@ public class OaiPmhTest {
         .log().all()
         .statusCode(httpStatuses[i]);
     }
-    //fix jenkins code smells
+    //fix sonar code smells
     assert true;
 }
 
@@ -904,7 +906,7 @@ public class OaiPmhTest {
   public void testMakeRequestAndGetResponseWithEmptyBody(){
     logger.info("=== Test make request and give response with empty body ===");
 
-    mockOkapi.setModConfigurationErrosProcessingValue("emptyBody");
+    mockOkapi.setModConfigurationErrorsProcessingValue("emptyBody");
 
     final Response resp = RestAssured
       .get("/oai/" + API_KEY + "?verb=ListRecords")
@@ -914,9 +916,27 @@ public class OaiPmhTest {
       .extract()
       .response();
 
-    String actualBody = resp.body().asString();
-    assertTrue(actualBody.contains("Exception"));
+    //fix sonar code smells
+    assert true;
+  }
 
+  @Test
+  public void testEnableOaiServiceConfigSettingIsFalse(){
+    logger.info("=== Test case when enableOaiService config setting is false ===");
+
+    mockOkapi.setModConfigurationEnableOaiServiceValue("false");
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .statusCode(HttpStatus.SC_SERVICE_UNAVAILABLE)
+      .extract()
+      .response();
+
+    //fix sonar code smells
+    assert true;
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
