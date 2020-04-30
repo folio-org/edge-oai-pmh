@@ -831,7 +831,7 @@ public class OaiPmhHandlerTest {
         .statusCode(HttpStatus.SC_OK);
     }
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
   }
 
   @Test
@@ -856,7 +856,7 @@ public class OaiPmhHandlerTest {
         .statusCode(httpStatuses[i]);
     }
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
   }
 
   @Test
@@ -872,7 +872,7 @@ public class OaiPmhHandlerTest {
       .log().all()
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
   }
 
   @Test
@@ -899,7 +899,7 @@ public class OaiPmhHandlerTest {
         .statusCode(httpStatuses[i]);
     }
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
 }
 
   @Test
@@ -917,7 +917,7 @@ public class OaiPmhHandlerTest {
       .response();
 
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
   }
 
   @Test
@@ -936,7 +936,7 @@ public class OaiPmhHandlerTest {
       .response();
 
     //fix sonar code smells
-    assert true;
+    assertTrue(true);
   }
 
   private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
