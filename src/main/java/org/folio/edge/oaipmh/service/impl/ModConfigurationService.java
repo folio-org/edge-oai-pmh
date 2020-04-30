@@ -50,7 +50,7 @@ public class ModConfigurationService implements ConfigurationService {
           responseConfig -> responseConfig.bodyHandler(body -> {
             try {
               if (responseConfig.statusCode() != HttpStatus.SC_OK) {
-                LOGGER.error("Error getting configuration " + responseConfig.statusMessage());
+                LOGGER.error(String.format("Error getting configuration: %s", responseConfig.statusMessage()));
                 future.complete(String.valueOf(responseConfig.statusCode()));
                 return;
               }
