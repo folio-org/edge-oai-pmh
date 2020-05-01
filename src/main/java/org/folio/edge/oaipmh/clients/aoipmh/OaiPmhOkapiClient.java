@@ -1,16 +1,10 @@
 package org.folio.edge.oaipmh.clients.aoipmh;
 
-import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientResponse;
-import lombok.extern.slf4j.Slf4j;
-
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.OkapiClient;
-import org.folio.edge.oaipmh.domain.Verb;
-import org.folio.edge.oaipmh.utils.Constants;
-import org.openarchives.oai._2.VerbType;
+import static io.vertx.core.http.HttpHeaders.ACCEPT;
+import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
+import static java.util.stream.Collectors.joining;
+import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -18,13 +12,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
-import static io.vertx.core.http.HttpHeaders.ACCEPT;
-import static java.util.stream.Collectors.joining;
-import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
-import static org.folio.edge.oaipmh.utils.Constants.VERB;
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.OkapiClient;
+import org.folio.edge.oaipmh.domain.Verb;
+import org.folio.edge.oaipmh.utils.Constants;
+import org.openarchives.oai._2.VerbType;
 
-import com.google.common.collect.Iterables;
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClientResponse;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class OaiPmhOkapiClient extends OkapiClient {
@@ -72,9 +70,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     Handler<Throwable> exceptionHandler) {
     String url = getUrlByVerb(parameters);
 
-    log.debug(url);
-    log.debug("call request headers: " + headers);
-
+    log.debug("Requesting {}. call request headers: {}", url, headers);
 
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
     // for GET request to mod-oai-pmh

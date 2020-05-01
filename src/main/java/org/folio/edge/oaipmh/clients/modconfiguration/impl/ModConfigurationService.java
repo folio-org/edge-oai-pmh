@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
+import lombok.extern.log4j.Log4j;
 
+@Log4j
 public class ModConfigurationService implements ConfigurationService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup()
@@ -51,16 +53,21 @@ public class ModConfigurationService implements ConfigurationService {
     final String s = buildQuery(moduleName, configName);
 
     try {
+      final String msg = String.format("%s in tenant %s: Getting configuration: MODULE_NAME:%s, configName: %s, configValue: %s",
+        okapiClient.okapiURL, okapiClient.tenant, moduleName, configName, value);
+      log.debug(msg);
       configurationsClient.getConfigurationsEntries(s, 0, 3, null, null, response -> response.bodyHandler(body -> {
         if (response.statusCode() != 200) {
-          future.fail(String.format("Expected status code 200, got %d: %s", response.statusCode(), body.toString()));
+          future.fail(String.format("%s. Expected status code 200, got %d: %s", msg, response.statusCode(), body.toString()));
           return;
         }
-        future.complete(new JsonObject(body.toJsonObject()
+        final String result = new JsonObject(body.toJsonObject()
           .mapTo(Configs.class)
           .getConfigs()
           .get(0)
-          .getValue()).getString(value));
+          .getValue()).getString(value);
+
+        future.complete(result);
       }));
     } catch (Exception e) {
       LOGGER.error("Error happened initializing mod-configurations client ", e);
@@ -71,10 +78,10 @@ public class ModConfigurationService implements ConfigurationService {
 
   private String buildQuery(String module, String configName) {
     StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("module==");
+    stringBuilder.append("module=");
     stringBuilder.append(module);
     stringBuilder.append(" and ");
-    stringBuilder.append("configName==");
+    stringBuilder.append("configName=");
     stringBuilder.append(configName);
     return stringBuilder.toString();
   }

@@ -80,41 +80,45 @@ public class OaiPmhHandler extends Handler {
     }
     getOkapiClient(ctx, (okapiClient, param) -> configurationService.getEnableOaiServiceConfigSetting(okapiClient)
       .setHandler(oaiPmhEnabled -> {
-        if (!oaiPmhEnabled.result()) {
-          serviceUnavailableResponse(ctx);
-          return;
-        }
-        configurationService.associateErrorsWith200Status(okapiClient)
-          .setHandler(responseStatusShouldBe200 -> {
-            if (responseStatusShouldBe200.failed()) {
-              oaiPmhFailureHandler(ctx, responseStatusShouldBe200.cause());
-            } else {
-              ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200.result());
-              Verb verb = Verb.fromName(request.getParam(VERB));
-              if (verb == null) {
-                badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
-                return;
-              }
-              List<OAIPMHerrorType> errors = verb.validate(ctx);
-              if (!errors.isEmpty()) {
-                badRequest(ctx, verb.toString(), errors);
-                return;
-              }
-              String[] requiredParams;
-              if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-                requiredParams = new String[] { verb.getExclusiveParam() };
+        if (oaiPmhEnabled.failed()) {
+          oaiPmhFailureHandler(ctx, oaiPmhEnabled.cause());
+        } else {
+          if (!oaiPmhEnabled.result()) {
+            serviceUnavailableResponse(ctx);
+            return;
+          }
+          configurationService.associateErrorsWith200Status(okapiClient)
+            .setHandler(responseStatusShouldBe200 -> {
+              if (responseStatusShouldBe200.failed()) {
+                oaiPmhFailureHandler(ctx, responseStatusShouldBe200.cause());
               } else {
-                requiredParams = verb.getRequiredParams()
-                  .toArray(new String[0]);
+                ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200.result());
+                Verb verb = Verb.fromName(request.getParam(VERB));
+                if (verb == null) {
+                  badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
+                  return;
+                }
+                List<OAIPMHerrorType> errors = verb.validate(ctx);
+                if (!errors.isEmpty()) {
+                  badRequest(ctx, verb.toString(), errors);
+                  return;
+                }
+                String[] requiredParams;
+                if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+                  requiredParams = new String[] { verb.getExclusiveParam() };
+                } else {
+                  requiredParams = verb.getRequiredParams()
+                    .toArray(new String[0]);
+                }
+                super.handleCommon(ctx, requiredParams, verb.getOptionalParams()
+                  .toArray(new String[0]), (client, params) -> {
+                    final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
+                    oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response),
+                        t -> oaiPmhFailureHandler(ctx, t));
+                  });
               }
-              super.handleCommon(ctx, requiredParams, verb.getOptionalParams()
-                .toArray(new String[0]), (client, params) -> {
-                  final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
-                  oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response),
-                      t -> oaiPmhFailureHandler(ctx, t));
-                });
-            }
-          });
+            });
+        }
       }));
   }
 
@@ -166,14 +170,12 @@ public class OaiPmhHandler extends Handler {
        */
       response.bodyHandler(buffer -> {
         edgeResponse.end(buffer);
-        if (log.isDebugEnabled()) {
           if (!encodingHeader.isPresent()) {
             log.debug("Repository response body: " + buffer);
           }
           log.debug("Edge response headers:");
           edgeResponse.headers()
             .forEach(header -> log.debug(String.format("< %s: %s", header.getKey(), header.getValue())));
-        }
       });
     } else {
       log.error(String.format("Error in the response from repository: (%d)", httpStatusCode));
@@ -245,9 +247,9 @@ public class OaiPmhHandler extends Handler {
   public void oaiPmhFailureHandler(RoutingContext ctx, Throwable t) {
     log.error("Exception in calling OKAPI", t);
     if (t instanceof TimeoutException) {
-      requestTimeout(ctx, t.getMessage());
+      requestTimeout(ctx, t != null? t.getMessage(): "");
     } else {
-      internalServerError(ctx, t.getMessage());
+      internalServerError(ctx, t != null? t.getMessage(): "");
     }
   }
 
