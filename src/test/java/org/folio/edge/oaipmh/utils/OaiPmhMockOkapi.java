@@ -1,5 +1,17 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.folio.edge.core.utils.test.MockOkapi;
+
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -9,16 +21,6 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.apache.log4j.Logger;
-import org.folio.edge.core.utils.test.MockOkapi;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
-import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
 public class OaiPmhMockOkapi extends MockOkapi {
 
@@ -30,12 +32,15 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/IdentifyResponse.xml";
   public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500
     = "src/test/resources/mocks/GetErrorsProcessingConfigSetting500.json";
+  public static final String PATH_TO_GENERAL_CONFIGS
+    = "src/test/resources/mocks/GetGeneralConfigs.json";
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
   private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
 
-  private String modConfigurationErrosProcessing;
+  private String modConfigurationErrorsProcessing;
+  private String modConfigurationEnableOaiService;
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
     super(port, knownTenants);
@@ -94,33 +99,33 @@ public class OaiPmhMockOkapi extends MockOkapi {
       && path.contains("oai%3AarXiv.org%3Acs%2F0112017")) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
     } else if (path.startsWith("/oai/records/")
       && path.contains("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
       ctx.response()
         .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (path.startsWith("/oai/repository_info")) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
     }else if (request.absoluteURI().contains("resumptionToken")) {
       ctx.response()
         .setStatusCode(400)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     }else if (path.startsWith("/oai/records/") && path.contains("oai%3AarXiv.org%3Atest-env%2F98765400")){
       ctx.response()
         .setStatusCode(422)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     }else if (request.absoluteURI().contains("metadataPrefix") && request.absoluteURI().contains("from")) {
       ctx.response()
         .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (path.startsWith("/oai/records/")
       && path.contains("exception")) {
@@ -132,26 +137,40 @@ public class OaiPmhMockOkapi extends MockOkapi {
   }
 
   private void handleConfigurationModuleResponse(RoutingContext ctx){
-    if (modConfigurationErrosProcessing.equals("200")){
-      ctx.response()
-        .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
-    } else if (modConfigurationErrosProcessing.equals("500")) {
-      ctx.response()
-        .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-        .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
-    } else if (modConfigurationErrosProcessing.equals("emptyBody")){
-      ctx.response()
-        .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-        .end();
+    if (ctx.request().absoluteURI().contains("behavior")) {
+      if (modConfigurationErrorsProcessing.equals("200")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
+      } else if (modConfigurationErrorsProcessing.equals("500")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
+      } else if (modConfigurationErrorsProcessing.equals("emptyBody")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end();
+      } else {
+        ctx.response()
+          .setStatusCode(404)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end();
+      }
     } else {
-      ctx.response()
-        .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-        .end();
+      if (modConfigurationEnableOaiService.equals("true")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end(getJsonObjectFromFile(Paths.get(PATH_TO_GENERAL_CONFIGS)));
+      } else {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+          .end(getJsonObjectFromFile(Paths.get(PATH_TO_GENERAL_CONFIGS)).replace("true", "false"));
+      }
     }
   }
 
@@ -165,8 +184,12 @@ public class OaiPmhMockOkapi extends MockOkapi {
     return json;
   }
 
-  public void setModConfigurationErrosProcessingValue(String errorsProcessing) {
-    this.modConfigurationErrosProcessing = errorsProcessing;
+  public void setModConfigurationErrorsProcessingValue(String errorsProcessing) {
+    this.modConfigurationErrorsProcessing = errorsProcessing;
+  }
+
+  public void setModConfigurationEnableOaiServiceValue(String enableOaiService) {
+    this.modConfigurationEnableOaiService = enableOaiService;
   }
 }
 

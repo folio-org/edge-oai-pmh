@@ -1,12 +1,15 @@
-package org.folio.edge.oaipmh.utils;
+package org.folio.edge.oaipmh.clients.aoipmh;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientResponse;
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.OkapiClient;
-import org.folio.edge.oaipmh.Verb;
+import org.folio.edge.oaipmh.domain.Verb;
+import org.folio.edge.oaipmh.utils.Constants;
 import org.openarchives.oai._2.VerbType;
 
 import java.io.UnsupportedEncodingException;
@@ -21,6 +24,9 @@ import static java.util.stream.Collectors.joining;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 
+import com.google.common.collect.Iterables;
+
+@Slf4j
 public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
@@ -65,6 +71,11 @@ public class OaiPmhOkapiClient extends OkapiClient {
     Handler<HttpClientResponse> responseHandler,
     Handler<Throwable> exceptionHandler) {
     String url = getUrlByVerb(parameters);
+
+    log.debug(url);
+    log.debug("call request headers: " + headers);
+
+
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
     // for GET request to mod-oai-pmh
     headers.remove(CONTENT_LENGTH);

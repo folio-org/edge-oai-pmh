@@ -1,7 +1,8 @@
-package org.folio.edge.oaipmh.utils;
+package org.folio.edge.oaipmh.clients.aoipmh;
+
+import org.folio.edge.core.utils.OkapiClientFactory;
 
 import io.vertx.core.Vertx;
-import org.folio.edge.core.utils.OkapiClientFactory;
 
 public class OaiPmhOkapiClientFactory extends OkapiClientFactory {
 
