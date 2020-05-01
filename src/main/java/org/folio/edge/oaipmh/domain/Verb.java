@@ -1,4 +1,4 @@
-package org.folio.edge.oaipmh;
+package org.folio.edge.oaipmh.domain;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static java.util.Collections.EMPTY_SET;

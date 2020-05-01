@@ -14,6 +14,8 @@ import java.util.List;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
+import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClientFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

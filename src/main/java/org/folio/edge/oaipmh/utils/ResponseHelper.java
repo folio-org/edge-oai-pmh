@@ -1,4 +1,4 @@
-package org.folio.edge.oaipmh;
+package org.folio.edge.oaipmh.utils;
 
 import org.openarchives.oai._2.OAIPMH;
 import io.vertx.core.logging.Logger;

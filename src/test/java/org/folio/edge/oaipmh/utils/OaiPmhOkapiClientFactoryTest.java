@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import io.vertx.core.Vertx;
+
+import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
+import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClientFactory;
 import org.junit.Before;
 import org.junit.Test;
 
