@@ -12,6 +12,9 @@
       "version": "5.0 6.0"
     }
   ],
+  "modulePermissions": [
+    "configuration.entries.collection.get"
+  ],
   "permissionSets": [],
   "launchDescriptor": {
     "dockerImage": "${artifactId}:${version}",
