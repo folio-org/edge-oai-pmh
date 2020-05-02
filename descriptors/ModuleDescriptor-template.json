@@ -10,10 +10,11 @@
     {
       "id": "login",
       "version": "5.0 6.0"
+    },
+    {
+      "id": "configuration",
+      "version": "2.0"
     }
-  ],
-  "modulePermissions": [
-    "configuration.entries.collection.get"
   ],
   "permissionSets": [],
   "launchDescriptor": {
