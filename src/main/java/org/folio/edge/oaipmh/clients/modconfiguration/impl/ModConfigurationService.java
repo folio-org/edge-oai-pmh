@@ -1,14 +1,10 @@
 package org.folio.edge.oaipmh.clients.modconfiguration.impl;
 
-import java.lang.invoke.MethodHandles;
-
 import org.apache.commons.lang3.StringUtils;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.oaipmh.clients.modconfiguration.ConfigurationService;
 import org.folio.rest.client.ConfigurationsClient;
 import org.folio.rest.jaxrs.model.Configs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -16,9 +12,6 @@ import lombok.extern.log4j.Log4j;
 
 @Log4j
 public class ModConfigurationService implements ConfigurationService {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup()
-    .lookupClass());
 
   private static final String MODULE_NAME = "OAIPMH";
   private static final String BEHAVIOR_CONFIG = "behavior";
@@ -28,12 +21,14 @@ public class ModConfigurationService implements ConfigurationService {
   private static final String CONFIG_ASSOSIATE_ERRORS_WITH_200 = "200";
 
   public Future<Boolean> getEnableOaiServiceConfigSetting(OkapiClient client) {
-    return getConfigSettingValue(client, MODULE_NAME, GENERAL_CONFIG, ENABLE_OAI_SERVICE).map(Boolean::parseBoolean);
+    return getConfigSettingValue(client, MODULE_NAME, GENERAL_CONFIG, ENABLE_OAI_SERVICE).map(Boolean::parseBoolean)
+      .otherwise(Boolean.TRUE);
   }
 
   public Future<Boolean> associateErrorsWith200Status(OkapiClient client) {
     return getConfigSettingValue(client, MODULE_NAME, BEHAVIOR_CONFIG, ERRORS_PROCESSING)
-      .map(setting -> StringUtils.isNotBlank(setting) && setting.equals(CONFIG_ASSOSIATE_ERRORS_WITH_200));
+      .map(setting -> StringUtils.isNotBlank(setting) && setting.equals(CONFIG_ASSOSIATE_ERRORS_WITH_200))
+      .otherwise(Boolean.FALSE);
   }
 
   /**
@@ -54,7 +49,7 @@ public class ModConfigurationService implements ConfigurationService {
 
     try {
       final String msg = String.format("%s in tenant %s: Getting configuration: MODULE_NAME:%s, configName: %s, configValue: %s",
-        okapiClient.okapiURL, okapiClient.tenant, moduleName, configName, value);
+          okapiClient.okapiURL, okapiClient.tenant, moduleName, configName, value);
       log.debug(msg);
       configurationsClient.getConfigurationsEntries(s, 0, 3, null, null, response -> response.bodyHandler(body -> {
         if (response.statusCode() != 200) {
@@ -70,19 +65,13 @@ public class ModConfigurationService implements ConfigurationService {
         future.complete(result);
       }));
     } catch (Exception e) {
-      LOGGER.error("Error happened initializing mod-configurations client ", e);
+      log.error("Error happened initializing mod-configurations client ", e);
       future.fail(e);
     }
     return future;
   }
 
   private String buildQuery(String module, String configName) {
-    StringBuilder stringBuilder = new StringBuilder();
-    stringBuilder.append("module=");
-    stringBuilder.append(module);
-    stringBuilder.append(" and ");
-    stringBuilder.append("configName=");
-    stringBuilder.append(configName);
-    return stringBuilder.toString();
+    return String.format("module=%s and configName=%s", module, configName);
   }
 }
