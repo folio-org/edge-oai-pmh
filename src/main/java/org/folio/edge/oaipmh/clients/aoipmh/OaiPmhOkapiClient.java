@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.oaipmh.domain.Verb;
 import org.folio.edge.oaipmh.utils.Constants;
@@ -21,6 +20,7 @@ import org.openarchives.oai._2.VerbType;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,7 +29,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   private static final String URL_ENCODING_TYPE = "UTF-8";
 
-  private static Logger logger = Logger.getLogger(OaiPmhOkapiClient.class);
   private static Map<String, String> endpointsMap = new HashMap<>();
 
   static {
@@ -69,9 +68,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
     Handler<HttpClientResponse> responseHandler,
     Handler<Throwable> exceptionHandler) {
     String url = getUrlByVerb(parameters);
-
-    log.debug("Requesting {}. call request headers: {}", url, headers);
-
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
     // for GET request to mod-oai-pmh
     headers.remove(CONTENT_LENGTH);
@@ -81,9 +77,28 @@ public class OaiPmhOkapiClient extends OkapiClient {
     get(
       url,
       tenant,
-      combineHeadersWithDefaults(headers),
+      headers,
       responseHandler,
       exceptionHandler);
+  }
+
+  @Override
+  public void get(String url, String tenant, MultiMap headers, Handler<HttpClientResponse> responseHandler,
+      Handler<Throwable> exceptionHandler) {
+    HttpClientRequest request = this.client.getAbs(url);
+    if (headers != null) {
+      request.headers()
+        .setAll(this.combineHeadersWithDefaults(headers));
+    } else {
+      request.headers()
+        .setAll(this.defaultHeaders);
+    }
+    log.info("Requesting {}. call request headers: {}", url, headers);
+
+    request.handler(responseHandler)
+      .exceptionHandler(exceptionHandler)
+      .setTimeout(this.reqTimeout)
+      .end();
   }
 
   /**
@@ -103,7 +118,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
         endpoint = endpoint + "/" + URLEncoder.encode(identifier, URL_ENCODING_TYPE);
         parameters.remove(Constants.IDENTIFIER);
       } catch (UnsupportedEncodingException e) {
-        logger.error(String.format("Error in identifier encoding: %s", e.getMessage()));
+        log.error("Error in identifier encoding", e);
       }
     }
     return endpoint;

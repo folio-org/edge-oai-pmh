@@ -45,8 +45,6 @@ import org.openarchives.oai._2.OAIPMHerrorcodeType;
 import org.openarchives.oai._2.RequestType;
 import org.openarchives.oai._2.VerbType;
 
-import com.google.common.collect.Iterables;
-
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
@@ -71,54 +69,48 @@ public class OaiPmhHandler extends Handler {
 
   protected void handle(RoutingContext ctx) {
     HttpServerRequest request = ctx.request();
-    log.debug(request.method() + " " + request.absoluteURI());
-    log.debug("Client request parameters: " + Iterables.toString(request.params()));
-    log.debug("Client request headers: " + Iterables.toString(request.headers()));
+    log.debug("Client request: {} {}", request.method(), request.absoluteURI());
+    log.debug("Client request parameters: " + request.params());
+    log.debug("Client request headers: " + request.headers());
+
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
       return;
     }
+
     getOkapiClient(ctx, (okapiClient, param) -> configurationService.getEnableOaiServiceConfigSetting(okapiClient)
       .setHandler(oaiPmhEnabled -> {
-        if (oaiPmhEnabled.failed()) {
-          oaiPmhFailureHandler(ctx, oaiPmhEnabled.cause());
-        } else {
-          if (!oaiPmhEnabled.result()) {
-            serviceUnavailableResponse(ctx);
-            return;
-          }
-          configurationService.associateErrorsWith200Status(okapiClient)
-            .setHandler(responseStatusShouldBe200 -> {
-              if (responseStatusShouldBe200.failed()) {
-                oaiPmhFailureHandler(ctx, responseStatusShouldBe200.cause());
-              } else {
-                ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200.result());
-                Verb verb = Verb.fromName(request.getParam(VERB));
-                if (verb == null) {
-                  badRequest(ctx, "Bad verb. Verb '" + request.getParam(VERB) + "' is not implemented", null, BAD_VERB);
-                  return;
-                }
-                List<OAIPMHerrorType> errors = verb.validate(ctx);
-                if (!errors.isEmpty()) {
-                  badRequest(ctx, verb.toString(), errors);
-                  return;
-                }
-                String[] requiredParams;
-                if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-                  requiredParams = new String[] { verb.getExclusiveParam() };
-                } else {
-                  requiredParams = verb.getRequiredParams()
-                    .toArray(new String[0]);
-                }
-                super.handleCommon(ctx, requiredParams, verb.getOptionalParams()
-                  .toArray(new String[0]), (client, params) -> {
-                    final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
-                    oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response),
-                        t -> oaiPmhFailureHandler(ctx, t));
-                  });
-              }
-            });
+        if (!oaiPmhEnabled.result()) {
+          serviceUnavailableResponse(ctx);
+          return;
         }
+        configurationService.associateErrorsWith200Status(okapiClient)
+          .setHandler(responseStatusShouldBe200 -> {
+            ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200.result());
+            Verb verb = Verb.fromName(request.getParam(VERB));
+            if (verb == null) {
+              badRequest(ctx, String.format("Bad verb. Verb '%s' is not implemented", request.getParam(VERB)), null, BAD_VERB);
+              return;
+            }
+            List<OAIPMHerrorType> errors = verb.validate(ctx);
+            if (!errors.isEmpty()) {
+              badRequest(ctx, verb.toString(), errors);
+              return;
+            }
+            String[] requiredParams;
+            if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+              requiredParams = new String[] { verb.getExclusiveParam() };
+            } else {
+              requiredParams = verb.getRequiredParams()
+                .toArray(new String[0]);
+            }
+            super.handleCommon(ctx, requiredParams, verb.getOptionalParams()
+              .toArray(new String[0]), (client, params) -> {
+                final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
+                oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response),
+                    t -> oaiPmhFailureHandler(ctx, t));
+              });
+          });
       }));
   }
 
@@ -170,12 +162,10 @@ public class OaiPmhHandler extends Handler {
        */
       response.bodyHandler(buffer -> {
         edgeResponse.end(buffer);
-          if (!encodingHeader.isPresent()) {
-            log.debug("Repository response body: " + buffer);
-          }
-          log.debug("Edge response headers:");
-          edgeResponse.headers()
-            .forEach(header -> log.debug(String.format("< %s: %s", header.getKey(), header.getValue())));
+        if (!encodingHeader.isPresent()) {
+          log.debug("Response from oai-pmh response:{} \n {}",response.headers(), buffer);
+        }
+        log.debug("Edge response headers: {}", edgeResponse.headers());
       });
     } else {
       log.error(String.format("Error in the response from repository: (%d)", httpStatusCode));
@@ -247,7 +237,7 @@ public class OaiPmhHandler extends Handler {
   public void oaiPmhFailureHandler(RoutingContext ctx, Throwable t) {
     log.error("Exception in calling OKAPI", t);
     if (t instanceof TimeoutException) {
-      requestTimeout(ctx, t != null? t.getMessage(): "");
+      requestTimeout(ctx, t.getMessage());
     } else {
       internalServerError(ctx, t != null? t.getMessage(): "");
     }
@@ -261,9 +251,9 @@ public class OaiPmhHandler extends Handler {
     } catch (Exception e) {
       log.error("Exception marshalling XML", e);
     }
-    final int i = getErrorsProcessingConfigSetting(ctx) ? SC_OK : SC_BAD_REQUEST;
+    final int responseStatusCode = getErrorsProcessingConfigSetting(ctx) ? SC_OK : SC_BAD_REQUEST;
     ctx.response()
-      .setStatusCode(i);
+      .setStatusCode(responseStatusCode);
 
     if (xml != null) {
       log.warn("The request was invalid. The response returned with errors: " + xml);
