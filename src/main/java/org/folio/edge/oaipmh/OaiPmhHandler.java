@@ -45,6 +45,8 @@ import org.openarchives.oai._2.OAIPMHerrorcodeType;
 import org.openarchives.oai._2.RequestType;
 import org.openarchives.oai._2.VerbType;
 
+import com.google.common.collect.Iterables;
+
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
@@ -71,7 +73,7 @@ public class OaiPmhHandler extends Handler {
     HttpServerRequest request = ctx.request();
     log.debug("Client request: {} {}", request.method(), request.absoluteURI());
     log.debug("Client request parameters: " + request.params());
-    log.debug("Client request headers: " + request.headers());
+    log.debug("Client request headers: " + Iterables.toString(request.headers()));
 
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
@@ -163,9 +165,9 @@ public class OaiPmhHandler extends Handler {
       response.bodyHandler(buffer -> {
         edgeResponse.end(buffer);
         if (!encodingHeader.isPresent()) {
-          log.debug("Response from oai-pmh response:{} \n {}",response.headers(), buffer);
+          log.debug("Response from oai-pmh headers:{} \n {}", Iterables.toString(response.headers()), buffer);
         }
-        log.debug("Edge response headers: {}", edgeResponse.headers());
+        log.debug("Edge response headers: {}", Iterables.toString(edgeResponse.headers()));
       });
     } else {
       log.error(String.format("Error in the response from repository: (%d)", httpStatusCode));
@@ -183,12 +185,12 @@ public class OaiPmhHandler extends Handler {
   private void badRequest(RoutingContext ctx, String body, String verb, OAIPMHerrorcodeType type) {
     OAIPMH resp = buildBaseResponse(ctx, verb).withErrors(new OAIPMHerrorType().withCode(type)
       .withValue(body));
-    writeResponse(ctx, resp);
+    writeBadRequestResponse(ctx, resp);
   }
 
   private void badRequest(RoutingContext ctx, String verb, List<OAIPMHerrorType> errors) {
     OAIPMH resp = buildBaseResponse(ctx, verb).withErrors(errors);
-    writeResponse(ctx, resp);
+    writeBadRequestResponse(ctx, resp);
   }
 
   @Override
@@ -243,7 +245,7 @@ public class OaiPmhHandler extends Handler {
     }
   }
 
-  private void writeResponse(RoutingContext ctx, OAIPMH respBody) {
+  private void writeBadRequestResponse(RoutingContext ctx, OAIPMH respBody) {
     String xml = null;
     try {
       xml = ResponseHelper.getInstance()

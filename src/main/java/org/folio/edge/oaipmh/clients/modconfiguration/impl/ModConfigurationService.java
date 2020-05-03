@@ -3,6 +3,7 @@ package org.folio.edge.oaipmh.clients.modconfiguration.impl;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.oaipmh.clients.modconfiguration.ConfigurationService;
+import org.folio.edge.oaipmh.clients.modconfiguration.ModConfigurationException;
 import org.folio.rest.client.ConfigurationsClient;
 import org.folio.rest.jaxrs.model.Configs;
 
@@ -18,7 +19,7 @@ public class ModConfigurationService implements ConfigurationService {
   private static final String ERRORS_PROCESSING = "errorsProcessing";
   private static final String GENERAL_CONFIG = "general";
   private static final String ENABLE_OAI_SERVICE = "enableOaiService";
-  private static final String CONFIG_ASSOSIATE_ERRORS_WITH_200 = "200";
+  private static final String CONFIG_ASSOCIATE_ERRORS_WITH_200 = "200";
 
   public Future<Boolean> getEnableOaiServiceConfigSetting(OkapiClient client) {
     return getConfigSettingValue(client, GENERAL_CONFIG, ENABLE_OAI_SERVICE).map(Boolean::parseBoolean)
@@ -27,7 +28,7 @@ public class ModConfigurationService implements ConfigurationService {
 
   public Future<Boolean> associateErrorsWith200Status(OkapiClient client) {
     return getConfigSettingValue(client, BEHAVIOR_CONFIG, ERRORS_PROCESSING)
-      .map(setting -> StringUtils.isNotBlank(setting) && setting.equals(CONFIG_ASSOSIATE_ERRORS_WITH_200))
+      .map(setting -> StringUtils.isNotBlank(setting) && setting.equals(CONFIG_ASSOCIATE_ERRORS_WITH_200))
       .otherwise(Boolean.FALSE);
   }
 
@@ -44,28 +45,32 @@ public class ModConfigurationService implements ConfigurationService {
     final ConfigurationsClient configurationsClient = new ConfigurationsClient(okapiClient.okapiURL, okapiClient.tenant,
         okapiClient.getToken());
     Future<String> future = Future.future();
-    final String s = buildQuery(configName);
-
+    final String query = buildQuery(configName);
+    final String msg = String.format("%s?query=%s in tenant %s", okapiClient.okapiURL, query, okapiClient.tenant);
+    log.debug(msg);
     try {
-      final String msg = String.format("%s in tenant %s: Getting configuration: MODULE_NAME:%s, configName: %s, configValue: %s",
-          okapiClient.okapiURL, okapiClient.tenant, MODULE_NAME, configName, value);
-      log.debug(msg);
-      configurationsClient.getConfigurationsEntries(s, 0, 3, null, null, response -> response.bodyHandler(body -> {
+      configurationsClient.getConfigurationsEntries(query, 0, 3, null, null, response -> response.bodyHandler(body -> {
         if (response.statusCode() != 200) {
-          future.fail(String.format("%s. Expected status code 200, got %d: %s", msg, response.statusCode(), body.toString()));
-          return;
+          String message = String.format("%s. Expected status code 200, got %d: %s", msg, response.statusCode(), body.toString());
+          throw new ModConfigurationException(message);
         }
-        final String result = new JsonObject(body.toJsonObject()
+        String result = new JsonObject(body.toJsonObject()
           .mapTo(Configs.class)
           .getConfigs()
           .get(0)
           .getValue()).getString(value);
-
+        if (result == null) {
+          throw new ModConfigurationException(msg);
+        }
         future.complete(result);
-      }));
+      })
+        .exceptionHandler(t -> {
+          log.error("ERROR in communicating with mod-configuration", t);
+          future.fail(msg);
+        }));
     } catch (Exception e) {
-      log.error("Error happened initializing mod-configurations client ", e);
-      future.fail(e);
+      log.error("ERROR in communicating with mod-configuration", e);
+      future.fail(msg);
     }
     return future;
   }

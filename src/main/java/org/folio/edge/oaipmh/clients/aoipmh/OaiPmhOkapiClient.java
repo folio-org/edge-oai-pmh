@@ -17,6 +17,8 @@ import org.folio.edge.oaipmh.domain.Verb;
 import org.folio.edge.oaipmh.utils.Constants;
 import org.openarchives.oai._2.VerbType;
 
+import com.google.common.collect.Iterables;
+
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -93,8 +95,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
       request.headers()
         .setAll(this.defaultHeaders);
     }
-    log.info("Requesting {}. call request headers: {}", url, headers);
-
+    log.info("Requesting {}. call request headers: {}", url, Iterables.toString(headers));
     request.handler(responseHandler)
       .exceptionHandler(exceptionHandler)
       .setTimeout(this.reqTimeout)
