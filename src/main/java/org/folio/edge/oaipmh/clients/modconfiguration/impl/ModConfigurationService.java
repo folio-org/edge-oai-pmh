@@ -8,9 +8,9 @@ import org.folio.rest.jaxrs.model.Configs;
 
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
-import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 
-@Log4j
+@Slf4j
 public class ModConfigurationService implements ConfigurationService {
 
   private static final String MODULE_NAME = "OAIPMH";
@@ -21,12 +21,12 @@ public class ModConfigurationService implements ConfigurationService {
   private static final String CONFIG_ASSOSIATE_ERRORS_WITH_200 = "200";
 
   public Future<Boolean> getEnableOaiServiceConfigSetting(OkapiClient client) {
-    return getConfigSettingValue(client, MODULE_NAME, GENERAL_CONFIG, ENABLE_OAI_SERVICE).map(Boolean::parseBoolean)
+    return getConfigSettingValue(client, GENERAL_CONFIG, ENABLE_OAI_SERVICE).map(Boolean::parseBoolean)
       .otherwise(Boolean.TRUE);
   }
 
   public Future<Boolean> associateErrorsWith200Status(OkapiClient client) {
-    return getConfigSettingValue(client, MODULE_NAME, BEHAVIOR_CONFIG, ERRORS_PROCESSING)
+    return getConfigSettingValue(client, BEHAVIOR_CONFIG, ERRORS_PROCESSING)
       .map(setting -> StringUtils.isNotBlank(setting) && setting.equals(CONFIG_ASSOSIATE_ERRORS_WITH_200))
       .otherwise(Boolean.FALSE);
   }
@@ -35,21 +35,20 @@ public class ModConfigurationService implements ConfigurationService {
    * This method make request to mod-configuration module and receive config setting
    *
    * @param okapiClient okapi client
-   * @param moduleName  name of module
    * @param configName  name of configuration (currently available general and behavior)
    * @param value       name of configuration setting in value section (currently available enableOaiService and errorsProcessing)
    * @return value of configuration setting
    */
-  private Future<String> getConfigSettingValue(OkapiClient okapiClient, String moduleName, String configName, String value) {
+  private Future<String> getConfigSettingValue(OkapiClient okapiClient, String configName, String value) {
 
     final ConfigurationsClient configurationsClient = new ConfigurationsClient(okapiClient.okapiURL, okapiClient.tenant,
         okapiClient.getToken());
     Future<String> future = Future.future();
-    final String s = buildQuery(moduleName, configName);
+    final String s = buildQuery(configName);
 
     try {
       final String msg = String.format("%s in tenant %s: Getting configuration: MODULE_NAME:%s, configName: %s, configValue: %s",
-          okapiClient.okapiURL, okapiClient.tenant, moduleName, configName, value);
+          okapiClient.okapiURL, okapiClient.tenant, MODULE_NAME, configName, value);
       log.debug(msg);
       configurationsClient.getConfigurationsEntries(s, 0, 3, null, null, response -> response.bodyHandler(body -> {
         if (response.statusCode() != 200) {
@@ -71,7 +70,7 @@ public class ModConfigurationService implements ConfigurationService {
     return future;
   }
 
-  private String buildQuery(String module, String configName) {
-    return String.format("module=%s and configName=%s", module, configName);
+  private String buildQuery(String configName) {
+    return String.format("module=%s and configName=%s", MODULE_NAME, configName);
   }
 }

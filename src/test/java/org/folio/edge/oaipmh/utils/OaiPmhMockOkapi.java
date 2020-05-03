@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-import org.apache.log4j.Logger;
 import org.folio.edge.core.utils.test.MockOkapi;
 
 import io.vertx.core.http.HttpHeaders;
@@ -21,7 +20,9 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class OaiPmhMockOkapi extends MockOkapi {
 
   public static final String PATH_TO_GET_RECORDS_MOCK
@@ -37,8 +38,6 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
-  private static Logger logger = Logger.getLogger(OaiPmhMockOkapi.class);
-
   private String modConfigurationErrorsProcessing;
   private String modConfigurationEnableOaiService;
 
@@ -51,7 +50,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     try {
       xml = new String(Files.readAllBytes(pathToXmlFile));
     } catch (IOException e) {
-      logger.error("Error in file reading: " + e.getMessage());
+      log.error("Error in file reading: " + e.getMessage());
     }
     return xml;
   }
@@ -66,7 +65,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     final Async async = context.async();
     server.requestHandler(defineRoutes()::accept).listen(okapiPort, result -> {
       if (result.failed()) {
-        logger.warn(result.cause());
+        log.warn(result.cause().toString());
       }
       context.assertTrue(result.succeeded());
       async.complete();
@@ -90,7 +89,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
     if(accept != null &&
         !accept.equals(MOD_OAI_PMH_ACCEPTED_TYPES)) {
-      logger.debug("Unsupported MIME type requested: " + accept);
+      log.debug("Unsupported MIME type requested: " + accept);
       ctx.response()
         .setStatusCode(400)
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
@@ -129,35 +128,40 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (path.startsWith("/oai/records/")
       && path.contains("exception")) {
-      logger.debug("Starting OKAPI exception...");
+      log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
     } else if (path.contains("TimeoutException")) {
-      vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> logger.debug("OKAPI client should throw TimeoutException"));
+      vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> log.debug("OKAPI client should throw TimeoutException"));
     }
   }
 
   private void handleConfigurationModuleResponse(RoutingContext ctx){
     if (ctx.request().absoluteURI().contains("behavior")) {
-      if (modConfigurationErrorsProcessing.equals("200")) {
-        ctx.response()
-          .setStatusCode(200)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
-      } else if (modConfigurationErrorsProcessing.equals("500")) {
-        ctx.response()
-          .setStatusCode(200)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
-      } else if (modConfigurationErrorsProcessing.equals("emptyBody")) {
-        ctx.response()
-          .setStatusCode(200)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end();
-      } else {
-        ctx.response()
-          .setStatusCode(404)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end();
+      switch (modConfigurationErrorsProcessing) {
+        case "200":
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
+          break;
+        case "500":
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
+          break;
+        case "emptyBody":
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .end();
+          break;
+        default:
+          ctx.response()
+            .setStatusCode(404)
+            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
+            .end();
+          break;
       }
     } else {
       if (modConfigurationEnableOaiService.equals("true")) {
@@ -179,7 +183,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     try {
       json = new String(Files.readAllBytes(path));
     } catch (IOException e) {
-      logger.error("Unexpected error", e);
+      log.error("Unexpected error", e);
     }
     return json;
   }
