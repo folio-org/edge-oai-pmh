@@ -17,12 +17,9 @@ import org.folio.edge.oaipmh.domain.Verb;
 import org.folio.edge.oaipmh.utils.Constants;
 import org.openarchives.oai._2.VerbType;
 
-import com.google.common.collect.Iterables;
-
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import lombok.extern.slf4j.Slf4j;
 

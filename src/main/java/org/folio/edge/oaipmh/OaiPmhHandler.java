@@ -86,7 +86,7 @@ public class OaiPmhHandler extends Handler {
     getOkapiClient(ctx, (okapiClient, notUsed) ->
       configurationService.getEnableOaiServiceConfigSetting(okapiClient)
         .compose(oaiPmhEnabled -> {
-          if (oaiPmhEnabled == false) {
+          if (!oaiPmhEnabled) {
             serviceUnavailableResponse(ctx);
           } else {
             configurationService.associateErrorsWith200Status(okapiClient)

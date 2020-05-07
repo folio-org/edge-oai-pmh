@@ -25,7 +25,6 @@ public class MainVerticle extends EdgeVerticle2 {
     Router router = Router.router(vertx);
     router.route().handler(BodyHandler.create());
 
-
     router.route(HttpMethod.GET, "/admin/health").handler(this::handleHealthCheck);
     router.route(HttpMethod.GET, "/oai").handler(oaiPmhHandler::handle);
     router.route(HttpMethod.GET, "/oai/:apiKeyPath").handler(oaiPmhHandler::handle);
