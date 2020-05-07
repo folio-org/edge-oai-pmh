@@ -84,24 +84,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
       exceptionHandler);
   }
 
-  @Override
-  public void get(String url, String tenant, MultiMap headers, Handler<HttpClientResponse> responseHandler,
-      Handler<Throwable> exceptionHandler) {
-    HttpClientRequest request = this.client.getAbs(url);
-    if (headers != null) {
-      request.headers()
-        .setAll(this.combineHeadersWithDefaults(headers));
-    } else {
-      request.headers()
-        .setAll(this.defaultHeaders);
-    }
-    log.info("Requesting {}. call request headers: {}", url, Iterables.toString(headers));
-    request.handler(responseHandler)
-      .exceptionHandler(exceptionHandler)
-      .setTimeout(this.reqTimeout)
-      .end();
-  }
-
   /**
    * This method resolves endpoint for 'verb' from {@link VerbType} based on 'verb' value extracted
    * from HTTP GET parameters multimap
