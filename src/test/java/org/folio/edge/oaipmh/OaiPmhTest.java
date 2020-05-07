@@ -487,7 +487,7 @@ public class OaiPmhTest {
       .response();
 
     OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
-      "Missing required parameter: metadataPrefix");
+      "Missing required parameters: metadataPrefix");
     expectedResp.getRequest()
                 .withFrom("2002-05-01T14:15:00Z");
     String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);

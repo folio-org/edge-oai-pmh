@@ -21,12 +21,14 @@ import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.edge.core.Handler;
@@ -47,6 +49,7 @@ import org.openarchives.oai._2.VerbType;
 
 import com.google.common.collect.Iterables;
 
+import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
@@ -80,46 +83,73 @@ public class OaiPmhHandler extends Handler {
       return;
     }
 
-    getOkapiClient(ctx, (okapiClient, param) -> configurationService.getEnableOaiServiceConfigSetting(okapiClient)
-      .setHandler(oaiPmhEnabled -> {
-        if (!oaiPmhEnabled.result()) {
-          serviceUnavailableResponse(ctx);
-          return;
-        }
-        configurationService.associateErrorsWith200Status(okapiClient)
-          .setHandler(responseStatusShouldBe200 -> {
-            ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200.result());
-            Verb verb = Verb.fromName(request.getParam(VERB));
-            if (verb == null) {
-              badRequest(ctx, String.format("Bad verb. Verb '%s' is not implemented", request.getParam(VERB)), null, BAD_VERB);
-              return;
-            }
-            List<OAIPMHerrorType> errors = verb.validate(ctx);
-            if (!errors.isEmpty()) {
-              badRequest(ctx, verb.toString(), errors);
-              return;
-            }
-            String[] requiredParams;
-            if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-              requiredParams = new String[] { verb.getExclusiveParam() };
-            } else {
-              requiredParams = verb.getRequiredParams()
-                .toArray(new String[0]);
-            }
-            super.handleCommon(ctx, requiredParams, verb.getOptionalParams()
-              .toArray(new String[0]), (client, params) -> {
-                final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(client);
-                oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response),
-                    t -> oaiPmhFailureHandler(ctx, t));
+    getOkapiClient(ctx, (okapiClient, notUsed) ->
+      configurationService.getEnableOaiServiceConfigSetting(okapiClient)
+        .compose(oaiPmhEnabled -> {
+          if (!oaiPmhEnabled) {
+            serviceUnavailableResponse(ctx);
+          } else {
+            configurationService.associateErrorsWith200Status(okapiClient)
+              .compose(responseStatusShouldBe200 -> {
+                ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200);
+                Verb verb = getAndValidateVerb(ctx, request);
+                final MultiMap requestParams = validateRequiredParams(ctx, verb);
+                final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+                oaiPmhClient.call(requestParams, request.headers(),
+                  response -> handleProxyResponse(ctx, response), t -> oaiPmhFailureHandler(ctx, t));
+                return Future.succeededFuture();
               });
-          });
-      }));
+          }
+          return Future.succeededFuture();
+        }));
+  }
+
+  private Verb getAndValidateVerb(RoutingContext ctx, HttpServerRequest request) {
+    Verb verb = Verb.fromName(request.getParam(VERB));
+    if (verb == null) {
+      badRequest(ctx, String.format("Bad verb. Verb '%s' is not implemented", request.getParam(VERB)), null, BAD_VERB);
+      return null;
+    }
+    List<OAIPMHerrorType> errors = verb.validate(ctx);
+    if (!errors.isEmpty()) {
+      badRequest(ctx, verb.toString(), errors);
+    }
+    return verb;
+  }
+
+  /**
+   * Return bad request to the client if any of the required parameters is missing.
+   *
+   * @param ctx  - routing context
+   * @param verb - request verb
+   * @return request parameters with values
+   */
+  private MultiMap validateRequiredParams(RoutingContext ctx, Verb verb) {
+
+    final HttpServerRequest request = ctx.request();
+    Set<String> params = new HashSet<>();
+
+    if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+      params.add(verb.getExclusiveParam());
+    } else {
+      params.addAll(verb.getRequiredParams());
+    }
+
+    final String missingRequiredParams = params.stream()
+      .filter(p -> StringUtils.isEmpty(request.getParam(p)))
+      .collect(Collectors.joining(","));
+
+    if (StringUtils.isNotEmpty(missingRequiredParams)) {
+      badRequest(ctx, "Missing required parameters: " + missingRequiredParams);
+    }
+
+    return request.params();
   }
 
   /**
    * EDGE-OAI-PMH supports only text/xml and all its derivatives in Accept header.
    * Empty Accept header implies any MIME type is accepted, same as Accept: *//*
-      *
+   *
    * Valid examples: text/xml, text/*, *//*, *\xml
    * NOT Valid examples: application/xml, application/*, test/json
    *
@@ -276,7 +306,7 @@ public class OaiPmhHandler extends Handler {
       .findFirst()
       .orElse("");
     notAcceptable(ctx,
-        "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
+      "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
   }
 
   private void serviceUnavailableResponse(RoutingContext ctx) {

@@ -46,7 +46,8 @@ public class ModConfigurationService implements ConfigurationService {
         okapiClient.getToken());
     Future<String> future = Future.future();
     final String query = buildQuery(configName);
-    final String msg = String.format("%s?query=%s in tenant %s", okapiClient.okapiURL, query, okapiClient.tenant);
+    final String msg = String.format("Querying setting: %s: %s?query=%s in tenant %s", value, okapiClient.okapiURL, query,
+        okapiClient.tenant);
     log.debug(msg);
     try {
       configurationsClient.getConfigurationsEntries(query, 0, 3, null, null, response -> response.bodyHandler(body -> {
@@ -60,7 +61,7 @@ public class ModConfigurationService implements ConfigurationService {
           .get(0)
           .getValue()).getString(value);
         if (result == null) {
-          throw new ModConfigurationException(msg);
+          throw new ModConfigurationException("Could not find configuration setting " + msg);
         }
         future.complete(result);
       })
