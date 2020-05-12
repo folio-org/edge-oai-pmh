@@ -83,7 +83,10 @@ public class OaiPmhHandler extends Handler {
       return;
     }
 
-    getOkapiClient(ctx, (okapiClient, notUsed) ->
+    Verb verb = Verb.fromName(request.getParam(VERB));
+    final String[] requestParams = getRequestParams(request, verb);
+
+    handleCommon(ctx, new String[0], requestParams, (okapiClient, params) -> {
       configurationService.getEnableOaiServiceConfigSetting(okapiClient)
         .compose(oaiPmhEnabled -> {
           if (!oaiPmhEnabled) {
@@ -92,29 +95,41 @@ public class OaiPmhHandler extends Handler {
             configurationService.associateErrorsWith200Status(okapiClient)
               .compose(responseStatusShouldBe200 -> {
                 ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200);
-                Verb verb = getAndValidateVerb(ctx, request);
-                final MultiMap requestParams = validateRequiredParams(ctx, verb);
+
+                validateVerb(ctx, request);
+                validateRequiredParams(ctx, verb);
+
                 final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-                oaiPmhClient.call(requestParams, request.headers(),
+                oaiPmhClient.call(request.params(), request.headers(),
                   response -> handleProxyResponse(ctx, response), t -> oaiPmhFailureHandler(ctx, t));
                 return Future.succeededFuture();
               });
           }
           return Future.succeededFuture();
-        }));
+        });
+    });
   }
 
-  private Verb getAndValidateVerb(RoutingContext ctx, HttpServerRequest request) {
+  private String[] getRequestParams(HttpServerRequest request, Verb verb) {
+    String[] requiredParams;
+    if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
+      requiredParams = new String[]{verb.getExclusiveParam()};
+    } else {
+      requiredParams = verb.getRequiredParams().toArray(new String[0]);
+    }
+    return requiredParams;
+  }
+
+  private void validateVerb(RoutingContext ctx, HttpServerRequest request) {
     Verb verb = Verb.fromName(request.getParam(VERB));
     if (verb == null) {
       badRequest(ctx, String.format("Bad verb. Verb '%s' is not implemented", request.getParam(VERB)), null, BAD_VERB);
-      return null;
+    } else {
+      List<OAIPMHerrorType> errors = verb.validate(ctx);
+      if (!errors.isEmpty()) {
+        badRequest(ctx, verb.toString(), errors);
+      }
     }
-    List<OAIPMHerrorType> errors = verb.validate(ctx);
-    if (!errors.isEmpty()) {
-      badRequest(ctx, verb.toString(), errors);
-    }
-    return verb;
   }
 
   /**
@@ -233,31 +248,6 @@ public class OaiPmhHandler extends Handler {
   protected void requestTimeout(RoutingContext ctx, String msg) {
     log.error("requestTimeout: " + msg);
     super.requestTimeout(ctx, "The repository cannot process request. Please try later or contact administrator(s).");
-  }
-
-  private void getOkapiClient(RoutingContext ctx, Handler.TwoParamVoidFunction<OkapiClient, Map<String, String>> action) {
-    String key = keyHelper.getApiKey(ctx);
-    ClientInfo clientInfo;
-    try {
-      clientInfo = ApiKeyUtils.parseApiKey(key);
-    } catch (ApiKeyUtils.MalformedApiKeyException e) {
-      invalidApiKey(ctx, key);
-      return;
-    }
-    final OkapiClient client = ocf.getOkapiClient(clientInfo.tenantId);
-    iuHelper.getToken(client, clientInfo.salt, clientInfo.tenantId, clientInfo.username)
-      .thenAcceptAsync(token -> {
-        client.setToken(token);
-        action.apply(client, null);
-      })
-      .exceptionally(t -> {
-        if (t instanceof TimeoutException) {
-          requestTimeout(ctx, t.getMessage());
-        } else {
-          accessDenied(ctx, t.getMessage());
-        }
-        return null;
-      });
   }
 
   /**
