@@ -1,6 +1,5 @@
 package org.folio.edge.oaipmh.utils;
 
-import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
 import java.io.IOException;
@@ -11,6 +10,7 @@ import java.util.List;
 
 import org.folio.edge.core.utils.test.MockOkapi;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -31,15 +31,10 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
-  public static final String PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500
-    = "src/test/resources/mocks/GetErrorsProcessingConfigSetting500.json";
-  public static final String PATH_TO_GENERAL_CONFIGS
-    = "src/test/resources/mocks/GetGeneralConfigs.json";
+  private static final String GET_RECORD = "GetRecord";
+  private static final String IDENTIFY = "Identify";
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
-
-  private String modConfigurationErrorsProcessing;
-  private String modConfigurationEnableOaiService;
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
     super(port, knownTenants);
@@ -65,7 +60,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     final Async async = context.async();
     server.requestHandler(defineRoutes()::accept).listen(okapiPort, result -> {
       if (result.failed()) {
-        log.warn(result.cause().toString());
+        log.warn(result.cause().getMessage());
       }
       context.assertTrue(result.succeeded());
       async.complete();
@@ -75,59 +70,43 @@ public class OaiPmhMockOkapi extends MockOkapi {
   @Override
   public Router defineRoutes() {
     Router router = super.defineRoutes();
-    router.route(HttpMethod.GET, "/oai/records/*").handler(this::oaiPmhHandler);
-    router.route(HttpMethod.GET, "/oai/repository_info").handler(this::oaiPmhHandler);
-    router.route(HttpMethod.GET, "/configurations/entries").handler(this::handleConfigurationModuleResponse);
+    router.route(HttpMethod.GET, "/oai/verbs*").handler(this::oaiPmhHandler);
     return router;
   }
 
   private void oaiPmhHandler(RoutingContext ctx) {
 
     HttpServerRequest request = ctx.request();
+    MultiMap requestParams = request.params();
     String path = request.path();
     String accept = request.getHeader(HttpHeaders.ACCEPT);
 
     if(accept != null &&
-        !accept.equals(MOD_OAI_PMH_ACCEPTED_TYPES)) {
+      !accept.equals(MOD_OAI_PMH_ACCEPTED_TYPES)) {
       log.debug("Unsupported MIME type requested: " + accept);
       ctx.response()
         .setStatusCode(400)
         .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
         .end("Accept header must be [\"application/xml\",\"text/plain\"] for this request, but it is \"text/xml\", cannot send */*");
-    } else if (path.startsWith("/oai/records/")
-      && path.contains("oai%3AarXiv.org%3Acs%2F0112017")) {
+    } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
+      && paramsContainParamWithValue(requestParams, "oai:arXiv.org:cs/0112017")) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
-    } else if (path.startsWith("/oai/records/")
-      && path.contains("oai%3AarXiv.org%3Aquant-ph%2F02131001")) {
+    } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
+      && paramsContainParamWithValue(requestParams, "oai:arXiv.org:quant-ph/02131001")) {
       ctx.response()
         .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
-    } else if (path.startsWith("/oai/repository_info")) {
+    } else if (paramsContainVerbWithName(requestParams, IDENTIFY)) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
-    }else if (request.absoluteURI().contains("resumptionToken")) {
-      ctx.response()
-        .setStatusCode(400)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
-    }else if (path.startsWith("/oai/records/") && path.contains("oai%3AarXiv.org%3Atest-env%2F98765400")){
-      ctx.response()
-        .setStatusCode(422)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
-    }else if (request.absoluteURI().contains("metadataPrefix") && request.absoluteURI().contains("from")) {
-      ctx.response()
-        .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
-    } else if (path.startsWith("/oai/records/")
-      && path.contains("exception")) {
+    } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
+      && paramsContainParamWithValue(requestParams, "exception")) {
       log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
     } else if (path.contains("TimeoutException")) {
@@ -135,68 +114,13 @@ public class OaiPmhMockOkapi extends MockOkapi {
     }
   }
 
-  private void handleConfigurationModuleResponse(RoutingContext ctx){
-    if (ctx.request().absoluteURI().contains("behavior")) {
-      switch (modConfigurationErrorsProcessing) {
-        case "200":
-          ctx.response()
-            .setStatusCode(200)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)).replace("500", "200"));
-          break;
-        case "500":
-          ctx.response()
-            .setStatusCode(200)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .end(getJsonObjectFromFile(Paths.get(PATH_TO_ERROR_PROCESSING_CONFIG_SETTING_500)));
-          break;
-        case "emptyBody":
-          ctx.response()
-            .setStatusCode(200)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .end();
-          break;
-        default:
-          ctx.response()
-            .setStatusCode(404)
-            .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-            .end();
-          break;
-      }
-    } else {
-      if (modConfigurationEnableOaiService.equals("true")) {
-        ctx.response()
-          .setStatusCode(200)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end(getJsonObjectFromFile(Paths.get(PATH_TO_GENERAL_CONFIGS)));
-      } else {
-        ctx.response()
-          .setStatusCode(200)
-          .putHeader(HttpHeaders.CONTENT_TYPE, "application/json")
-          .end(getJsonObjectFromFile(Paths.get(PATH_TO_GENERAL_CONFIGS)).replace("true", "false"));
-      }
-    }
+  private static boolean paramsContainVerbWithName(MultiMap requestParams, String verbName) {
+    return requestParams.get(Constants.VERB).equals(verbName);
   }
 
-  private String getJsonObjectFromFile(Path path) {
-    String json = null;
-    try {
-      json = new String(Files.readAllBytes(path));
-    } catch (IOException e) {
-      log.error("Unexpected error", e);
-    }
-    return json;
+  private static boolean paramsContainParamWithValue(MultiMap requestParams, String value) {
+    return requestParams.entries().stream()
+      .anyMatch(entry -> entry.getValue().equals(value));
   }
 
-  public void setModConfigurationErrorsProcessingValue(String errorsProcessing) {
-    this.modConfigurationErrorsProcessing = errorsProcessing;
-  }
-
-  public void setModConfigurationEnableOaiServiceValue(String enableOaiService) {
-    this.modConfigurationEnableOaiService = enableOaiService;
-  }
 }
-
-
-
-

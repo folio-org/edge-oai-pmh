@@ -1,26 +1,26 @@
 package org.folio.edge.oaipmh.utils;
 
-import org.openarchives.oai._2.OAIPMH;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.io.ByteArrayOutputStream;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 
-import java.io.ByteArrayOutputStream;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
+import org.openarchives.oai._2.OAIPMH;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Helper class to marshal {@link OAIPMH} object to string representation.
  * The class is made singleton to avoid multiple heavy JAXBContext initializations.
  */
+@Slf4j
 public class ResponseHelper {
-  private static final Logger logger = LoggerFactory.getLogger(ResponseHelper.class);
   private static ResponseHelper ourInstance = new ResponseHelper();
 
   private Marshaller jaxbMarshaller;
@@ -43,7 +43,7 @@ public class ResponseHelper {
       // Specifying if output should be formatted
       jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.parseBoolean(System.getProperty("jaxb.marshaller.formattedOutput")));
     } catch (JAXBException e) {
-      logger.error("Unable to create ResponseWriter", e);
+      log.error("Unable to create ResponseWriter", e);
       jaxbMarshaller = null;
     }
   }

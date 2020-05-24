@@ -12,41 +12,25 @@ import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
-import static org.openarchives.oai._2.VerbType.LIST_IDENTIFIERS;
 
-import java.io.UnsupportedEncodingException;
-import java.lang.invoke.MethodHandles;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBException;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.folio.edge.core.utils.ApiKeyUtils;
 import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.utils.Constants;
 import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
-import org.folio.edge.oaipmh.utils.ResponseHelper;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.OAIPMHerrorType;
-import org.openarchives.oai._2.OAIPMHerrorcodeType;
-import org.openarchives.oai._2.RequestType;
-import org.openarchives.oai._2.VerbType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.DecoderConfig;
@@ -57,12 +41,11 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RunWith(VertxUnitRunner.class)
 public class OaiPmhTest {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(MethodHandles.lookup()
-    .lookupClass());
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
@@ -84,8 +67,6 @@ public class OaiPmhTest {
 
     mockOkapi = spy(new OaiPmhMockOkapi(okapiPort, knownTenants));
     mockOkapi.start(context);
-    mockOkapi.setModConfigurationErrorsProcessingValue("500");
-    mockOkapi.setModConfigurationEnableOaiServiceValue("true");
     vertx = Vertx.vertx();
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
@@ -103,31 +84,25 @@ public class OaiPmhTest {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
   }
 
-  @After
-  public void tearDown(){
-    mockOkapi.setModConfigurationErrorsProcessingValue("500");
-    mockOkapi.setModConfigurationEnableOaiServiceValue("true");
-  }
-
   @AfterClass
   public static void tearDownOnce(TestContext context) {
-    LOGGER.info("Shutting down server");
+    log.info("Shutting down server");
     vertx.close(res -> {
       if (res.failed()) {
-        LOGGER.error("Failed to shut down edge-orders server", res.cause());
+        log.error("Failed to shut down edge-orders server", res.cause());
         fail(res.cause().getMessage());
       } else {
-        LOGGER.info("Successfully shut down edge-orders server");
+        log.info("Successfully shut down edge-orders server");
       }
 
-      LOGGER.info("Shutting down mock Okapi");
+      log.info("Shutting down mock Okapi");
       mockOkapi.close(context);
     });
   }
 
   @Test
   public void testAdminHealth() {
-    LOGGER.info("=== Test the health check endpoint ===");
+    log.info("=== Test the health check endpoint ===");
 
     final Response resp = RestAssured
       .get("/admin/health")
@@ -143,18 +118,18 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordNotFoundHttpGet() {
-    LOGGER.info("=== Test GetRecord OAI-PMH error - not found (HTTP GET)===");
+    log.info("=== Test GetRecord OAI-PMH error - not found (HTTP GET)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord" +
-        "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY))
-      .then()
-      .contentType(TEXT_XML)
+        "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY));
+      resp.then()
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_NOT_FOUND)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -164,7 +139,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordNotFoundHttpPost() {
-    LOGGER.info("=== Test GetRecord OAI-PMH error - not found (HTTP POST)===");
+    log.info("=== Test GetRecord OAI-PMH error - not found (HTTP POST)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -176,9 +151,9 @@ public class OaiPmhTest {
         "apikey", API_KEY)
       .post("/oai")
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_NOT_FOUND)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -188,7 +163,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordSuccessfulHttpGet() {
-    LOGGER.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
+    log.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -197,9 +172,9 @@ public class OaiPmhTest {
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -209,7 +184,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordSuccessfulHttpPost() {
-    LOGGER.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
+    log.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -221,9 +196,9 @@ public class OaiPmhTest {
         "identifier", "oai:arXiv.org:cs/0112017")
       .post("/oai")
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -233,7 +208,7 @@ public class OaiPmhTest {
 
   @Test
   public void testIdentifySuccessfulHttpGet() {
-    LOGGER.info("=== Test successful Identify OAI-PMH (HTTP GET) ===");
+    log.info("=== Test successful Identify OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -241,9 +216,9 @@ public class OaiPmhTest {
     final Response resp = RestAssured
       .get(String.format("/oai?verb=Identify&apikey=%s", API_KEY))
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -253,7 +228,7 @@ public class OaiPmhTest {
 
   @Test
   public void testIdentifySuccessfulHttpPost() {
-    LOGGER.info("=== Test successful Identify OAI-PMH (HTTP POST) ===");
+    log.info("=== Test successful Identify OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -263,9 +238,9 @@ public class OaiPmhTest {
         "verb", "Identify")
       .post("/oai")
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -275,7 +250,7 @@ public class OaiPmhTest {
 
   @Test
   public void testIdentifyBadApiKeyHttpGet() {
-    LOGGER.info("=== Test bad apikey Identify OAI-PMH (HTTP GET) ===");
+    log.info("=== Test bad apikey Identify OAI-PMH (HTTP GET) ===");
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=Identify&apikey=%s", BAD_API_KEY))
@@ -292,7 +267,7 @@ public class OaiPmhTest {
 
   @Test
   public void testApiKeyOnPath() {
-    LOGGER.info("=== Test ability to provide the api key on the path ===");
+    log.info("=== Test ability to provide the api key on the path ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -300,9 +275,9 @@ public class OaiPmhTest {
     final Response resp = RestAssured
       .get(String.format("/oai/%s?verb=Identify", API_KEY))
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -312,7 +287,7 @@ public class OaiPmhTest {
 
   @Test
   public void testIdentifyAccessDeniedApiKeyHttpGet() {
-    LOGGER.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
+    log.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured
       .post(String.format("/oai?verb=Identify&apikey=%s", ILLEGAL_API_KEY))
@@ -329,7 +304,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordInvalidApiKeyHttpPost() {
-    LOGGER.info("=== Test bad apikey GetRecord OAI-PMH (HTTP POST) ===");
+    log.info("=== Test bad apikey GetRecord OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured.given()
       .parameters("apikey", BAD_API_KEY,
@@ -350,7 +325,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordOkapiExceptionHttpGet() {
-    LOGGER.info("=== Test exceptional GetRecord OAI-PMH (HTTP GET) ===");
+    log.info("=== Test exceptional GetRecord OAI-PMH (HTTP GET) ===");
 
     String expectedMockBody = "Internal Server Error";
     final Response resp = RestAssured
@@ -369,7 +344,7 @@ public class OaiPmhTest {
 
   @Test
   public void testGetRecordOkapiTimeoutExceptionHttpGet() {
-    LOGGER.info("=== Test timeout GetRecord OAI-PMH (HTTP GET) ===");
+    log.info("=== Test timeout GetRecord OAI-PMH (HTTP GET) ===");
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord"
@@ -386,118 +361,8 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testValidateBadVerb() throws UnsupportedEncodingException, JAXBException {
-    LOGGER.info("=== Test validate w/ invalid verb ===");
-
-    final Response resp = RestAssured
-      .get("/oai?verb=nastyVerb&apikey=" + API_KEY)
-      .then()
-      .contentType(TEXT_XML)
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .extract()
-      .response();
-
-    OAIPMH expectedResp =
-      buildOAIPMHErrorResponse(null, BAD_VERB, "Bad verb. Verb 'nastyVerb' is not implemented");
-    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
-
-    verifyResponse(expectedRespStr, resp.body().asString());
-  }
-
-  @Test
-  public void testValidateIllegalParams() throws UnsupportedEncodingException, JAXBException {
-    LOGGER.info("=== Test validate w/ illegal params ===");
-
-    final Response resp = RestAssured
-      .get("/oai?verb=ListIdentifiers&metadataPrefix=oai_dc&from=2002-05-21&extraParam=Test&apikey=" + API_KEY)
-      .then()
-      .contentType(TEXT_XML)
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .extract()
-      .response();
-
-    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
-        "Verb 'ListIdentifiers', illegal argument: extraParam");
-    expectedResp.getRequest()
-                .withMetadataPrefix("oai_dc")
-                .withFrom("2002-05-21");
-    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
-
-    verifyResponse(expectedRespStr, resp.body().asString());
-  }
-
-  @Test
-  public void testValidateExclusiveParam() throws UnsupportedEncodingException, JAXBException {
-    LOGGER.info("=== Test validate w/ exclusive and other params ===");
-
-    final Response resp = RestAssured
-      .get("/oai?verb=ListIdentifiers&resumptionToken=123456789&metadataPrefix=oai_dc&apikey=" + API_KEY)
-      .then()
-      .contentType(TEXT_XML)
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .extract()
-      .response();
-
-    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
-      "Verb 'ListIdentifiers', argument 'resumptionToken' is exclusive, no others maybe specified with it.");
-    expectedResp.getRequest()
-                .withResumptionToken("123456789")
-                .withMetadataPrefix("oai_dc");
-    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
-
-    verifyResponse(expectedRespStr, resp.body().asString());
-  }
-
-  @Test
-  public void testValidateBadFromUntilParams() throws UnsupportedEncodingException, JAXBException {
-    LOGGER.info("=== Test validate w/ bad 'from' and 'until' params ===");
-
-    final Response resp = RestAssured
-      .get("/oai?verb=ListIdentifiers&metadataPrefix=oai_dc&from=2002-05-01T14:15:00&until=2002-05-02T14:15:00.000Z&apikey=" + API_KEY)
-      .then()
-      .contentType(TEXT_XML)
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .extract()
-      .response();
-
-    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
-      "Bad datestamp format for 'from' argument.")
-        .withErrors(new OAIPMHerrorType()
-          .withCode(BAD_ARGUMENT)
-          .withValue("Bad datestamp format for 'until' argument."));
-    expectedResp.getRequest()
-                .withMetadataPrefix("oai_dc")
-                .withFrom("2002-05-01T14:15:00")
-                .withUntil("2002-05-02T14:15:00.000Z");
-    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
-
-    verifyResponse(expectedRespStr, resp.body().asString());
-  }
-
-  @Test
-  public void testValidateMissingRequiredParams() throws UnsupportedEncodingException, JAXBException {
-    LOGGER.info("=== Test validate w/ missing required params ===");
-
-    final Response resp = RestAssured
-      .get("/oai?verb=ListIdentifiers&from=2002-05-01T14:15:00Z&apikey=" + API_KEY)
-      .then()
-      .contentType(TEXT_XML)
-      .statusCode(HttpStatus.SC_BAD_REQUEST)
-      .extract()
-      .response();
-
-    OAIPMH expectedResp = buildOAIPMHErrorResponse(LIST_IDENTIFIERS, BAD_ARGUMENT,
-      "Missing required parameters: metadataPrefix");
-    expectedResp.getRequest()
-                .withFrom("2002-05-01T14:15:00Z");
-    String expectedRespStr = ResponseHelper.getInstance().writeToString(expectedResp);
-
-    verifyResponse(expectedRespStr, resp.body().asString());
-  }
-
-  @Test
   public void testCompressionAlgorithms() {
-    LOGGER.info("=== Test response compression ===");
+    log.info("=== Test response compression ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -507,9 +372,9 @@ public class OaiPmhTest {
         .config(RestAssured.config().decoderConfig(decoderConfig().contentDecoders(type)))
         .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
         .then()
-        .contentType(TEXT_XML)
+        .contentType(Constants.TEXT_XML_TYPE)
         .statusCode(HttpStatus.SC_OK)
-        .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
         .header(HttpHeaders.CONTENT_ENCODING, type.name().toLowerCase())
         .extract()
         .response();
@@ -519,7 +384,7 @@ public class OaiPmhTest {
 
   @Test
   public void testNoCompression() {
-    LOGGER.info("=== Test no response compression  ===");
+    log.info("=== Test no response compression  ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -528,9 +393,9 @@ public class OaiPmhTest {
       .header(new Header(HttpHeaders.ACCEPT_ENCODING, "instance"))
       .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -543,7 +408,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeader() {
-    LOGGER.info("=== Test handling of the Accept header ===");
+    log.info("=== Test handling of the Accept header ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -555,9 +420,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -567,7 +432,7 @@ public class OaiPmhTest {
 
   @Test
   public void testNoAcceptHeader() {
-    LOGGER.info("=== Test handling of the Accept header ===");
+    log.info("=== Test handling of the Accept header ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -577,9 +442,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -589,7 +454,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasUnsupportedType() {
-    LOGGER.info("=== Test handling of unsupported type in Accept header ===");
+    log.info("=== Test handling of unsupported type in Accept header ===");
 
     String unsupportedAcceptType = "application/json";
 
@@ -600,9 +465,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -614,7 +479,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderIsAbsent() {
-    LOGGER.info("=== Test Accept header is absent ===");
+    log.info("=== Test Accept header is absent ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -626,9 +491,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -638,7 +503,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderIsEmpty() {
-    LOGGER.info("=== Test Accept header is empty ===");
+    log.info("=== Test Accept header is empty ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -650,9 +515,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -662,7 +527,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasAllTextSybtypesSymbol() {
-    LOGGER.info("=== Test Accept header has all text sybtypes symbol ===");
+    log.info("=== Test Accept header has all text sybtypes symbol ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -674,9 +539,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -686,7 +551,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasAllTextSybtypesSymbolWithParameterAndWithUnsupportedTypes() {
-    LOGGER.info("=== Test Accept header has all text sybtypes symbol with parameter and with unsupported types ===");
+    log.info("=== Test Accept header has all text sybtypes symbol with parameter and with unsupported types ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -700,9 +565,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -712,7 +577,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasTextTypeXMLAndSomeUnsupportedTypes() {
-    LOGGER.info("=== Test Accept header has text type XML and some unsupported types ===");
+    log.info("=== Test Accept header has text type XML and some unsupported types ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -726,9 +591,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -738,7 +603,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndSomeUnsupportedTypes() {
-    LOGGER.info("=== Test Accept header has all types and all subtypes symbol and some unsupported types ===");
+    log.info("=== Test Accept header has all types and all subtypes symbol and some unsupported types ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -752,9 +617,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -764,7 +629,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndAllTextSubtypesSymbolAndSomeUnsupportedTypes() {
-    LOGGER.info("=== Test Accept header has all types and all subtypes symbol and all text subtypes symbol and some unsupported types ===");
+    log.info("=== Test Accept header has all types and all subtypes symbol and all text subtypes symbol and some unsupported types ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
@@ -778,9 +643,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -790,7 +655,7 @@ public class OaiPmhTest {
 
   @Test
   public void testAcceptHeaderHasOnlyUnsupportedTypesWithParameter() {
-    LOGGER.info("=== Accept header has only unsupported types with parameter ===");
+    log.info("=== Accept header has only unsupported types with parameter ===");
 
     String acceptHeader = "text/plain; q=0.5, text/html";
 
@@ -801,9 +666,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(TEXT_XML)
+      .contentType(Constants.TEXT_XML_TYPE)
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
       .extract()
       .response();
 
@@ -814,58 +679,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAllRequestsReturnErrorsWith200HttpCode() {
-    LOGGER.info("=== Test case when all errors return 200 Http code ===");
-
-    mockOkapi.setModConfigurationErrorsProcessingValue("200");
-
-    String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
-      "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
-      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:test-env/98765400&metadataPrefix=oai&apikey=" + API_KEY,
-      "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
-      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
-    };
-
-    for (String invalidURL : invalidURLs) {
-      RestAssured
-        .get(invalidURL)
-        .then()
-        .log().all()
-        .statusCode(HttpStatus.SC_OK);
-    }
-    //fix sonar code smells
-    assertTrue(true);
-  }
-
-  @Test
-  public void testAllRequestsReturnErrorsWithTheirOriginalHttpCode() {
-    LOGGER.info("=== Test case when all errors return 4xx Http code ===");
-
-    String[] invalidURLs = {"/oai/" + API_KEY + "?verb=ListRecords", "/oai/" + API_KEY + "?verb=ListRecord",
-      "/oai/" + API_KEY + "?verb=ListRecords" + "&resumptionToken=bWV0YWRhdGFQcmVmaXg9bWFyYzIxJmZyb209MjAyMC0wNC0wOVQxMjoyMjo",
-      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:test-env/98765400&metadataPrefix=oai&apikey=" + API_KEY,
-      "/oai/" + API_KEY + "?verb=ListRecords&metadataPrefix=marc21&from=2020-04-15T00:00:00Z",
-      "/oai?verb=GetRecord" + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=" + API_KEY
-    };
-
-    int[] httpStatuses = {HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST, HttpStatus.SC_BAD_REQUEST,
-      HttpStatus.SC_UNPROCESSABLE_ENTITY, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_NOT_FOUND};
-
-    for (int i=0; i < invalidURLs.length; ++i) {
-      RestAssured
-        .get(invalidURLs[i])
-        .then()
-        .log().all()
-        .statusCode(httpStatuses[i]);
-    }
-    //fix sonar code smells
-    assertTrue(true);
-  }
-
-  @Test
-  public void testInvalidAcceptHeaderReturns406IrrespectiveOfErrorsProcessingSetting() {
-    mockOkapi.setModConfigurationErrorsProcessingValue("200");
-
+  public void testInvalidAcceptHeaderReturns406() {
     String url = "/oai/" + API_KEY + "?verb=ListRecords";
     RestAssured
       .given()
@@ -874,49 +688,7 @@ public class OaiPmhTest {
       .then()
       .log().all()
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
-    //fix sonar code smells
-    assertTrue(true);
-  }
-
-  @Test
-  public void testEnableOaiServiceConfigSettingIsFalse(){
-    LOGGER.info("=== Test case when enableOaiService config setting is false ===");
-
-    mockOkapi.setModConfigurationEnableOaiServiceValue("false");
-
-    final Response resp = RestAssured
-      .get(String.format("/oai?verb=GetRecord"
-        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
-      .then()
-      .log().all()
-      .statusCode(HttpStatus.SC_SERVICE_UNAVAILABLE)
-      .extract()
-      .response();
-
-    //fix sonar code smells
-    assertTrue(true);
-  }
-
-  private OAIPMH buildOAIPMHErrorResponse(VerbType verb, OAIPMHerrorcodeType errorCode, String message) {
-    return new OAIPMH()
-      .withRequest(new RequestType()
-        .withVerb(verb)
-        .withValue(RestAssured.baseURI + "/oai"))
-      .withErrors(new OAIPMHerrorType()
-        .withCode(errorCode)
-        .withValue(message));
-  }
-
-  private void verifyResponse(String expectedResponse, String actualResponse)
-    throws JAXBException, UnsupportedEncodingException {
-    // Unmarshal string to OAIPMH, verify presence of volatile ResponseDate and then remove it to verify the rest of the data
-    OAIPMH actualOaiResp = ResponseHelper.getInstance().stringToOaiPmh(actualResponse);
-
-    assertNotNull(actualOaiResp.getResponseDate());
-    actualOaiResp.setResponseDate(null);
-
-    actualResponse = ResponseHelper.getInstance().writeToString(actualOaiResp);
-
-    assertEquals(expectedResponse, actualResponse);
+    //fix jenkins code smells
+    assert true;
   }
 }

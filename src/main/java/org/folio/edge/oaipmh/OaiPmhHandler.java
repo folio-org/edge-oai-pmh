@@ -6,7 +6,6 @@ import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.Constants.FROM;
@@ -17,29 +16,19 @@ import static org.folio.edge.oaipmh.utils.Constants.SET;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 import static org.folio.edge.oaipmh.utils.Constants.VERB;
 import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_VERB;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.folio.edge.core.Handler;
-import org.folio.edge.core.model.ClientInfo;
 import org.folio.edge.core.security.SecureStore;
-import org.folio.edge.core.utils.ApiKeyUtils;
-import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
-import org.folio.edge.oaipmh.clients.modconfiguration.ConfigurationService;
-import org.folio.edge.oaipmh.domain.Verb;
 import org.folio.edge.oaipmh.utils.ResponseHelper;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.OAIPMHerrorType;
@@ -49,7 +38,6 @@ import org.openarchives.oai._2.VerbType;
 
 import com.google.common.collect.Iterables;
 
-import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
@@ -61,15 +49,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OaiPmhHandler extends Handler {
 
-  private final ConfigurationService configurationService;
-
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY);
-  private static final String ERRORS_PROCESSING_KEY = "responsestatus200";
 
-  public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf, ConfigurationService configurationService) {
+  public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
-    this.configurationService = configurationService;
   }
 
   protected void handle(RoutingContext ctx) {
@@ -83,82 +67,10 @@ public class OaiPmhHandler extends Handler {
       return;
     }
 
-    Verb verb = Verb.fromName(request.getParam(VERB));
-    final String[] requestParams = getRequestParams(request, verb);
-
-    handleCommon(ctx, new String[0], requestParams, (okapiClient, params) -> {
-      configurationService.getEnableOaiServiceConfigSetting(okapiClient)
-        .compose(oaiPmhEnabled -> {
-          if (!oaiPmhEnabled) {
-            serviceUnavailableResponse(ctx);
-          } else {
-            configurationService.associateErrorsWith200Status(okapiClient)
-              .compose(responseStatusShouldBe200 -> {
-                ctx.put(ERRORS_PROCESSING_KEY, responseStatusShouldBe200);
-
-                validateVerb(ctx, request);
-                validateRequiredParams(ctx, verb);
-
-                final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-                oaiPmhClient.call(request.params(), request.headers(),
-                  response -> handleProxyResponse(ctx, response), t -> oaiPmhFailureHandler(ctx, t));
-                return Future.succeededFuture();
-              });
-          }
-          return Future.succeededFuture();
-        });
+    handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
+      final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+      oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response), t -> oaiPmhFailureHandler(ctx, t));
     });
-  }
-
-  private String[] getRequestParams(HttpServerRequest request, Verb verb) {
-    String[] requiredParams;
-    if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-      requiredParams = new String[]{verb.getExclusiveParam()};
-    } else {
-      requiredParams = verb.getRequiredParams().toArray(new String[0]);
-    }
-    return requiredParams;
-  }
-
-  private void validateVerb(RoutingContext ctx, HttpServerRequest request) {
-    Verb verb = Verb.fromName(request.getParam(VERB));
-    if (verb == null) {
-      badRequest(ctx, String.format("Bad verb. Verb '%s' is not implemented", request.getParam(VERB)), null, BAD_VERB);
-    } else {
-      List<OAIPMHerrorType> errors = verb.validate(ctx);
-      if (!errors.isEmpty()) {
-        badRequest(ctx, verb.toString(), errors);
-      }
-    }
-  }
-
-  /**
-   * Return bad request to the client if any of the required parameters is missing.
-   *
-   * @param ctx  - routing context
-   * @param verb - request verb
-   * @return request parameters with values
-   */
-  private MultiMap validateRequiredParams(RoutingContext ctx, Verb verb) {
-
-    final HttpServerRequest request = ctx.request();
-    Set<String> params = new HashSet<>();
-
-    if (verb.getExclusiveParam() != null && request.getParam(verb.getExclusiveParam()) != null) {
-      params.add(verb.getExclusiveParam());
-    } else {
-      params.addAll(verb.getRequiredParams());
-    }
-
-    final String missingRequiredParams = params.stream()
-      .filter(p -> StringUtils.isEmpty(request.getParam(p)))
-      .collect(Collectors.joining(","));
-
-    if (StringUtils.isNotEmpty(missingRequiredParams)) {
-      badRequest(ctx, "Missing required parameters: " + missingRequiredParams);
-    }
-
-    return request.params();
   }
 
   /**
@@ -195,8 +107,7 @@ public class OaiPmhHandler extends Handler {
   protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse response) {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = response.statusCode();
-    ctx.response()
-      .setStatusCode(getErrorsProcessingConfigSetting(ctx) ? SC_OK : response.statusCode());
+    ctx.response().setStatusCode(response.statusCode());
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
@@ -215,7 +126,7 @@ public class OaiPmhHandler extends Handler {
         log.debug("Edge response headers: {}", Iterables.toString(edgeResponse.headers()));
       });
     } else {
-      log.error(String.format("Error in the response from repository: (%d)", httpStatusCode));
+      log.error(String.format("Error in the response from repository: (%d)", response.statusCode()));
       internalServerError(ctx, "Internal Server Error");
     }
   }
@@ -230,11 +141,6 @@ public class OaiPmhHandler extends Handler {
   private void badRequest(RoutingContext ctx, String body, String verb, OAIPMHerrorcodeType type) {
     OAIPMH resp = buildBaseResponse(ctx, verb).withErrors(new OAIPMHerrorType().withCode(type)
       .withValue(body));
-    writeBadRequestResponse(ctx, resp);
-  }
-
-  private void badRequest(RoutingContext ctx, String verb, List<OAIPMHerrorType> errors) {
-    OAIPMH resp = buildBaseResponse(ctx, verb).withErrors(errors);
     writeBadRequestResponse(ctx, resp);
   }
 
@@ -273,10 +179,7 @@ public class OaiPmhHandler extends Handler {
     } catch (Exception e) {
       log.error("Exception marshalling XML", e);
     }
-    final int responseStatusCode = getErrorsProcessingConfigSetting(ctx) ? SC_OK : SC_BAD_REQUEST;
-    ctx.response()
-      .setStatusCode(responseStatusCode);
-
+    ctx.response().setStatusCode(SC_BAD_REQUEST);
     if (xml != null) {
       log.warn("The request was invalid. The response returned with errors: " + xml);
       ctx.response()
@@ -297,17 +200,6 @@ public class OaiPmhHandler extends Handler {
       .orElse("");
     notAcceptable(ctx,
       "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
-  }
-
-  private void serviceUnavailableResponse(RoutingContext ctx) {
-    ctx.response()
-      .setStatusCode(SC_SERVICE_UNAVAILABLE)
-      .putHeader(HttpHeaders.CONTENT_TYPE, "text/plain")
-      .end("OAI-PMH service is disabled");
-  }
-
-  public Boolean getErrorsProcessingConfigSetting(RoutingContext ctx) {
-    return ctx.get(ERRORS_PROCESSING_KEY);
   }
 
   private OAIPMH buildBaseResponse(RoutingContext ctx, String verb) {
