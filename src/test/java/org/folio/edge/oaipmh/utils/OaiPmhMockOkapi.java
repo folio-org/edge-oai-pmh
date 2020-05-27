@@ -1,5 +1,6 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
 import java.io.IOException;
@@ -70,7 +71,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   @Override
   public Router defineRoutes() {
     Router router = super.defineRoutes();
-    router.route(HttpMethod.GET, "/oai/verbs*").handler(this::oaiPmhHandler);
+    router.route(HttpMethod.GET, "/oai/records*").handler(this::oaiPmhHandler);
     return router;
   }
 
@@ -92,18 +93,18 @@ public class OaiPmhMockOkapi extends MockOkapi {
       && paramsContainParamWithValue(requestParams, "oai:arXiv.org:cs/0112017")) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
       && paramsContainParamWithValue(requestParams, "oai:arXiv.org:quant-ph/02131001")) {
       ctx.response()
         .setStatusCode(404)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, IDENTIFY)) {
       ctx.response()
         .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
       && paramsContainParamWithValue(requestParams, "exception")) {

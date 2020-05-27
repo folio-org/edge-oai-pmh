@@ -2,43 +2,25 @@ package org.folio.edge.oaipmh;
 
 import static com.google.common.collect.ImmutableSet.of;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
+import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.core.Constants.TEXT_XML;
-import static org.folio.edge.oaipmh.utils.Constants.FROM;
-import static org.folio.edge.oaipmh.utils.Constants.IDENTIFIER;
-import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
-import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
-import static org.folio.edge.oaipmh.utils.Constants.SET;
-import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
-import static org.folio.edge.oaipmh.utils.Constants.VERB;
-import static org.openarchives.oai._2.OAIPMHerrorcodeType.BAD_ARGUMENT;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
-import org.folio.edge.oaipmh.utils.ResponseHelper;
-import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.OAIPMHerrorType;
-import org.openarchives.oai._2.OAIPMHerrorcodeType;
-import org.openarchives.oai._2.RequestType;
-import org.openarchives.oai._2.VerbType;
 
 import com.google.common.collect.Iterables;
 
-import io.vertx.core.MultiMap;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
@@ -133,15 +115,10 @@ public class OaiPmhHandler extends Handler {
 
   @Override
   protected void badRequest(RoutingContext ctx, String body) {
-    String verb = ctx.request()
-      .getParam(VERB);
-    badRequest(ctx, body, verb, BAD_ARGUMENT);
-  }
-
-  private void badRequest(RoutingContext ctx, String body, String verb, OAIPMHerrorcodeType type) {
-    OAIPMH resp = buildBaseResponse(ctx, verb).withErrors(new OAIPMHerrorType().withCode(type)
-      .withValue(body));
-    writeBadRequestResponse(ctx, resp);
+    ctx.response()
+      .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .setStatusCode(SC_BAD_REQUEST)
+      .end(body);
   }
 
   @Override
@@ -171,26 +148,6 @@ public class OaiPmhHandler extends Handler {
     }
   }
 
-  private void writeBadRequestResponse(RoutingContext ctx, OAIPMH respBody) {
-    String xml = null;
-    try {
-      xml = ResponseHelper.getInstance()
-        .writeToString(respBody);
-    } catch (Exception e) {
-      log.error("Exception marshalling XML", e);
-    }
-    ctx.response().setStatusCode(SC_BAD_REQUEST);
-    if (xml != null) {
-      log.warn("The request was invalid. The response returned with errors: " + xml);
-      ctx.response()
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(xml);
-    } else {
-      ctx.response()
-        .end();
-    }
-  }
-
   private void notAcceptableResponse(RoutingContext ctx, HttpServerRequest request) {
     String unsupportedType = request.headers()
       .getAll(ACCEPT)
@@ -202,20 +159,4 @@ public class OaiPmhHandler extends Handler {
       "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
   }
 
-  private OAIPMH buildBaseResponse(RoutingContext ctx, String verb) {
-    String baseUrl = StringUtils.substringBefore(ctx.request()
-      .absoluteURI(), "?");
-    MultiMap params = ctx.request()
-      .params();
-    return new OAIPMH().withResponseDate(Instant.now()
-      .truncatedTo(ChronoUnit.SECONDS))
-      .withRequest(new RequestType().withVerb(isEmpty(verb) ? null : VerbType.fromValue(verb))
-        .withSet(params.get(SET))
-        .withResumptionToken(params.get(RESUMPTION_TOKEN))
-        .withIdentifier(params.get(IDENTIFIER))
-        .withMetadataPrefix(params.get(METADATA_PREFIX))
-        .withFrom(params.get(FROM))
-        .withUntil(params.get(UNTIL))
-        .withValue(baseUrl));
-  }
 }

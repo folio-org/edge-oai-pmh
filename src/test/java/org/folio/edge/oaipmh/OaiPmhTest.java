@@ -8,6 +8,7 @@ import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 import static org.folio.edge.core.Constants.SYS_RESPONSE_COMPRESSION;
 import static org.folio.edge.core.Constants.SYS_SECURE_STORE_PROP_FILE;
 import static org.folio.edge.core.Constants.TEXT_PLAIN;
+import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -25,7 +26,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.folio.edge.core.utils.ApiKeyUtils;
 import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.utils.Constants;
 import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -52,7 +52,6 @@ public class OaiPmhTest {
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
   private static final String INVALID_API_KEY_EXPECTED_RESPONSE_BODY = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
-  private static final String TEXT_XML = "text/xml";
 
   private static Vertx vertx;
   private static OaiPmhMockOkapi mockOkapi;
@@ -127,9 +126,9 @@ public class OaiPmhTest {
       .get(String.format("/oai?verb=GetRecord" +
         "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY));
       resp.then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -151,9 +150,9 @@ public class OaiPmhTest {
         "apikey", API_KEY)
       .post("/oai")
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -172,9 +171,9 @@ public class OaiPmhTest {
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -196,9 +195,9 @@ public class OaiPmhTest {
         "identifier", "oai:arXiv.org:cs/0112017")
       .post("/oai")
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -216,9 +215,9 @@ public class OaiPmhTest {
     final Response resp = RestAssured
       .get(String.format("/oai?verb=Identify&apikey=%s", API_KEY))
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -238,9 +237,9 @@ public class OaiPmhTest {
         "verb", "Identify")
       .post("/oai")
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -275,9 +274,9 @@ public class OaiPmhTest {
     final Response resp = RestAssured
       .get(String.format("/oai/%s?verb=Identify", API_KEY))
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -372,9 +371,9 @@ public class OaiPmhTest {
         .config(RestAssured.config().decoderConfig(decoderConfig().contentDecoders(type)))
         .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
         .then()
-        .contentType(Constants.TEXT_XML_TYPE)
+        .contentType(TEXT_XML)
         .statusCode(HttpStatus.SC_OK)
-        .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+        .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .header(HttpHeaders.CONTENT_ENCODING, type.name().toLowerCase())
         .extract()
         .response();
@@ -393,9 +392,9 @@ public class OaiPmhTest {
       .header(new Header(HttpHeaders.ACCEPT_ENCODING, "instance"))
       .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -420,9 +419,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -442,9 +441,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -465,9 +464,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -491,9 +490,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -515,9 +514,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -539,9 +538,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -565,9 +564,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -591,9 +590,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -617,9 +616,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -643,9 +642,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 
@@ -666,9 +665,9 @@ public class OaiPmhTest {
         + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .log().all()
-      .contentType(Constants.TEXT_XML_TYPE)
+      .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE)
-      .header(HttpHeaders.CONTENT_TYPE, Constants.TEXT_XML_TYPE)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
 

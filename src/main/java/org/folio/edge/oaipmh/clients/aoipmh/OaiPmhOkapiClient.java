@@ -16,8 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OaiPmhOkapiClient extends OkapiClient {
 
-  private static final String URL_ENCODING_TYPE = "UTF-8";
-  private static final String OAI_PMH_ENDPOINT = "/oai/verbs";
+  private static final String OAI_PMH_ENDPOINT = "/oai/records";
 
   public OaiPmhOkapiClient(OkapiClient client) {
     super(client);
@@ -63,7 +62,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   private String getParametersAsString(MultiMap parameters) {
     return parameters.entries().stream()
-      .filter(e -> !e.getKey().equals("apikey"))
+      .filter(e -> !e.getKey().equals("apiKeyPath"))
       .map(e -> e.getKey() + "=" + e.getValue())
       .collect(joining("&"));
   }
