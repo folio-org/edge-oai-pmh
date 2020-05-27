@@ -114,14 +114,6 @@ public class OaiPmhHandler extends Handler {
   }
 
   @Override
-  protected void badRequest(RoutingContext ctx, String body) {
-    ctx.response()
-      .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
-      .setStatusCode(SC_BAD_REQUEST)
-      .end(body);
-  }
-
-  @Override
   protected void accessDenied(RoutingContext ctx, String msg) {
     log.error("accessDenied: " + msg);
     super.accessDenied(ctx, "The access to repository is denied. Please contact administrator(s).");
