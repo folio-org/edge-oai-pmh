@@ -7,6 +7,8 @@ import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
+import lombok.extern.slf4j.Slf4j;
+
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,10 +24,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.openarchives.oai._2.VerbType;
 
+@Slf4j
 @RunWith(VertxUnitRunner.class)
 public class OaiPmhOkapiClientTest {
-
-  private static final Logger logger = Logger.getLogger(OaiPmhOkapiClientTest.class);
 
   private static final String TENANT = "diku";
   private static final long REQUEST_TIMEOUT = 3000L;
@@ -57,7 +58,7 @@ public class OaiPmhOkapiClientTest {
 
   @Test
   public void testGetRecord(TestContext context) {
-    logger.info("=== Test successful OAI-PMH Request ===");
+    log.info("=== Test successful OAI-PMH Request ===");
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -78,7 +79,7 @@ public class OaiPmhOkapiClientTest {
 
   @Test
   public void testGetRecordError(TestContext context) {
-    logger.info("=== Test error GetRecord OAI-PMH request ===");
+    log.info("=== Test error GetRecord OAI-PMH request ===");
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -99,7 +100,7 @@ public class OaiPmhOkapiClientTest {
 
   @Test
   public void testIdentify(TestContext context) {
-    logger.info("=== Test Identify OAI-PMH request ===");
+    log.info("=== Test Identify OAI-PMH request ===");
 
     String expectedBody
       = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
@@ -126,7 +127,7 @@ public class OaiPmhOkapiClientTest {
           response.bodyHandler(buffer -> {
             final StringBuilder body = new StringBuilder();
             body.append(buffer);
-            logger.info("oai-pmh-mod response body: " + body);
+            log.info("oai-pmh-mod response body: " + body);
             assertEquals(expected, body.toString());
           });
           async.complete();
