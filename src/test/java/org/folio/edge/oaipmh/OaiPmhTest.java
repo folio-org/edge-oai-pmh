@@ -13,6 +13,7 @@ import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
 
@@ -688,6 +689,6 @@ public class OaiPmhTest {
       .log().all()
       .statusCode(HttpStatus.SC_NOT_ACCEPTABLE);
     //fix jenkins code smells
-    assert true;
+    assertTrue(true);
   }
 }

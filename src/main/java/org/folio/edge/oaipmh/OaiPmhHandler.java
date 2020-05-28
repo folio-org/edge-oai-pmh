@@ -5,8 +5,8 @@ import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
+import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
-import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.core.Constants.TEXT_XML;
 
 import java.util.Optional;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OaiPmhHandler extends Handler {
 
   /** Expected valid http status codes to be returned by repository logic */
-  private static final Set<Integer> EXPECTED_CODES = of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY);
+  private static final Set<Integer> EXPECTED_CODES = of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
