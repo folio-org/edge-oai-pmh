@@ -1,4 +1,13 @@
-## 2.2.0 - Unreleased
+## 2.2.0 - Released
+
+This release includes transfer of the business logic to the corresponding business module cause edge is a proxy between clients and pmh  (Q2/2020). 
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.1.2...v2.2.0)
+
+### Stories
+* [EDGOAIPMH-131](https://issues.folio.org/browse/MODOAIPMH-131) - Move all request validations from edge module to oai-pmh module & remove interactions with [mod-configuration](https://github.com/folio-org/mod-configuration).
+
+* [MODOAIPMH-86](https://issues.folio.org/browse/MODOAIPMH-86) - add support of text/xml headers.
 
 ## 2.1.2 - Released
 
