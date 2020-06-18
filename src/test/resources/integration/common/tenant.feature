@@ -1,0 +1,39 @@
+Feature: Tenants
+
+  Background:
+    * url baseUrl
+    * configure retry = { count: 5, interval: 5000 }
+
+  @create
+  Scenario: createTenant
+    Given path '_/proxy/tenants'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And request { id: '#(__arg.tenant)', name: 'Test tenant', description: 'Tenant for test purpose' }
+    When method POST
+    Then status 201
+
+  @install
+  Scenario: install tenant for modules
+
+    * def response = call read('common/module.feature') __arg.modules
+
+    * def modulesWithVersions = $response[*].response[0].id
+    * def enabledModules = karate.map(modulesWithVersions, function(x) {return {id: x, action: 'enable'}})
+    * print enabledModules
+
+    Given path '_/proxy/tenants', __arg.tenant, 'install'
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    And retry until responseStatus == 200
+    And request enabledModules
+    When method POST
+    Then status 200
+
+  @delete
+  Scenario: deleteTenant
+    Given path '_/proxy/tenants', __arg.tenant
+    And header Content-Type = 'application/json'
+    And header Accept = 'application/json'
+    When method DELETE
+    Then status 204
