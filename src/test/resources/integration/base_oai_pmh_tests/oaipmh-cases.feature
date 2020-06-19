@@ -35,7 +35,7 @@ Feature: Test oai-pmh
     And param until = currentOnlyDate()
     When method GET
     Then status 200
-    Then match response //identifier == 'oai:folio.org:test_oaipmh/1b74ab75-9f41-4837-8662-a1d99118008d'
+    * match response count(//identifier) == 10
 
     Examples:
       | prefix                |

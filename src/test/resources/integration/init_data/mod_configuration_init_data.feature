@@ -3,7 +3,6 @@ Feature: init data for mod-configuration
   Background:
     * url baseUrl
     * call login testUser
-    * def edgeUrl = 'http://localhost:8082/oai/eyJzIjoiQlBhb2ZORm5jSzY0NzdEdWJ4RGgiLCJ0IjoidGVzdF9vYWlwbWgiLCJ1IjoidGVzdC11c2VyIn0='
 
   Scenario: set errors to 500 Http status
     Given path 'configurations/entries'

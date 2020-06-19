@@ -3,10 +3,10 @@ Feature: mod-oai-pmh tests
   Background:
     * url baseUrl
     * table modules
-      | name                                  |
-      | 'mod-oai-pmh'                         |
-      | 'mod-login'                           |
-      | 'mod-configuration'                   |
+      | name                                       |
+      | 'mod-oai-pmh'                              |
+      | 'mod-login'                                |
+      | 'mod-configuration'                        |
 
     * def testTenant = 'test_oaipmh'
 

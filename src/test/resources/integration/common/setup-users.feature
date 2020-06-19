@@ -50,7 +50,7 @@ Feature: prepare data for api test
       | testUser.name  | testUser.password  |
 
   Scenario: get permissions for admin and add to new admin user
-    Given path '/perms/permissions'
+    Given path 'perms/permissions'
     And header x-okapi-tenant = testTenant
     And param length = 1000
     And param query = '(subPermissions="" NOT subPermissions ==/respectAccents []) and (cql.allRecords=1 NOT childOf <>/respectAccents [])'
