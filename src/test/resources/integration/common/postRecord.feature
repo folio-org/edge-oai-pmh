@@ -11,6 +11,7 @@ Feature: postRecord
     * def record = read('marc_record.json')
     * set record.id = id
     * set record.externalIdsHolder.instanceId = instanceId
+    * set record.matchedId = matchedId
     And request record
     When method POST
     Then status 201
