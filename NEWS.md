@@ -1,3 +1,7 @@
+## 2.2.1 - Released
+
+This release includes minor bug fixes for edge-oai-pmh module (Q2/2020).
+
 ## 2.2.0 - Released
 
 This release includes transfer of the business logic to the corresponding business module cause edge is a proxy between clients and pmh  (Q2/2020). 
