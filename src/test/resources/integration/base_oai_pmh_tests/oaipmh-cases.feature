@@ -4,7 +4,7 @@ Feature: Test oai-pmh
   Background:
     * url baseUrl
     * def edgeUrl = 'http://localhost:8082/oai/eyJzIjoiQlBhb2ZORm5jSzY0NzdEdWJ4RGgiLCJ0IjoidGVzdF9vYWlwbWgiLCJ1IjoidGVzdC11c2VyIn0='
-    * def currentDate = function(){return java.time.LocalDateTime.now(java.time.ZoneOffset.UTC).format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'"))}
+    * def checkDateByRegEx = '#regex \\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z'
     * call login testUser
 
   Scenario Outline: get ListRecords
@@ -16,7 +16,7 @@ Feature: Test oai-pmh
     And param metadataPrefix = <prefix>
     When method GET
     Then status 200
-    Then match response //responseDate == currentDate()
+    Then match response //responseDate == checkDateByRegEx
 
     Examples:
     | prefix                |
@@ -35,7 +35,7 @@ Feature: Test oai-pmh
     And param until = currentOnlyDate()
     When method GET
     Then status 200
-    * match response count(//identifier) == 10
+    * match response count(//identifier) == 13
 
     Examples:
       | prefix                |
@@ -52,8 +52,8 @@ Feature: Test oai-pmh
     And param set = 'all'
     When method GET
     Then status 200
-    Then match response //responseDate == currentDate()
-    * match response count(//header) == 10
+    Then match response //responseDate == checkDateByRegEx
+    * match response count(//header) == 13
 
     Examples:
       | prefix                |
@@ -68,7 +68,7 @@ Feature: Test oai-pmh
     And param verb = 'ListSets'
     When method GET
     Then status 200
-    Then match response //responseDate == currentDate()
+    Then match response //responseDate == checkDateByRegEx
     Then match response //setSpec == 'all'
     * match response count(//set) == 1
 
@@ -92,7 +92,7 @@ Feature: Test oai-pmh
     And param verb = 'ListMetadataFormats'
     When method GET
     Then status 200
-    Then match response //responseDate == currentDate()
+    Then match response //responseDate == checkDateByRegEx
     Then match response //metadataPrefix == ['marc21', 'oai_dc', 'marc21_withholdings']
     * match response count(//metadataFormat) == 3
 
@@ -106,7 +106,7 @@ Feature: Test oai-pmh
     And param metadataPrefix = <prefix>
     When method GET
     Then status 200
-    Then match response //responseDate == currentDate()
+    Then match response //responseDate == checkDateByRegEx
     Then match response //setSpec == 'all'
 
     Examples:
@@ -358,7 +358,7 @@ Feature: Test oai-pmh
      """
     When method POST
     Then status 200
-    Then match response //responseDate == currentDate()
+    Then match response //responseDate == checkDateByRegEx
     Then match response //setSpec == 'all'
 
     Examples:

@@ -210,3 +210,229 @@ Feature: Test new oai-pmh functionality
     And param metadataPrefix = 'marc21_withholdings'
     When method GET
     Then status 404
+
+  Scenario: get resumptionToken and make responses until resumptionToken is present
+    Given path 'configurations/entries'
+    And param query = 'module==OAIPMH and configName==technical'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+
+    * def configId = get response.configs[0].id
+
+    Given path 'configurations/entries', configId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And request
+    """
+    {
+        "module" : "OAIPMH",
+        "configName" : "technical",
+        "enabled" : true,
+        "value" : "{\"maxRecordsPerResponse\": \"4\",\"enableValidation\":\"false\",\"formattedOutput\":\"false\"}"
+    }
+    """
+    When method PUT
+    Then status 204
+
+    Given url edgeUrl
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And param verb = 'ListRecords'
+    And param metadataPrefix = 'marc21'
+    When method GET
+    Then status 200
+    Then match response //resumptionToken[@completeListSize='10'] == '#notnull'
+    * match response //resumptionToken[@cursor='0'] == '#notnull'
+
+    * def resumptionToken = get response //resumptionToken
+
+    Given url edgeUrl
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And param verb = 'ListRecords'
+    And param resumptionToken = resumptionToken
+    When method GET
+    Then status 200
+    * match response //resumptionToken[@cursor='4'] == '#notnull'
+
+    * def resumptionToken2 = get response //resumptionToken
+
+    Given url edgeUrl
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And param verb = 'ListRecords'
+    And param resumptionToken = resumptionToken2
+    When method GET
+    Then status 200
+    * match response //resumptionToken[@cursor='8'] == '#notnull'
+
+  Scenario: one record has field leader which marked as deleted and record is not displayed because config "deletedRecordsSupport" is "no"
+    Given path 'configurations/entries'
+    And param query = 'module==OAIPMH and configName==technical'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+
+    * def configId = get response.configs[0].id
+
+    Given path 'configurations/entries', configId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And request
+    """
+    {
+        "module" : "OAIPMH",
+        "configName" : "technical",
+        "enabled" : true,
+        "value" : "{\"maxRecordsPerResponse\": \"100\",\"enableValidation\":\"false\",\"formattedOutput\":\"false\"}"
+    }
+    """
+    When method PUT
+    Then status 204
+
+    Given path 'source-storage/records'
+    And header Accept = 'application/json'
+    And header x-okapi-tenant = tenant
+    And header x-okapi-token = okapitoken
+    * def record = read('marc_record.json')
+    * set record.id = 'aa1df976-bb70-11ea-b3de-0242ac130004'
+    * set record.externalIdsHolder.instanceId = 'b1fa21b0-bb70-11ea-b3de-0242ac130004'
+    * set record.matchedId = 'b97e1068-bb70-11ea-b3de-0242ac130004'
+    * set record.parsedRecord.content.leader = '01542xcm a2200361   4500'
+    And request record
+    When method POST
+    Then status 201
+
+    Given url edgeUrl
+    And param verb = 'ListRecords'
+    And param metadataPrefix = 'marc21'
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * match response count(//record) == 10
+
+  Scenario: set suppressDiscovery to true and record is absent in response
+    Given path 'source-storage/records'
+    And header Accept = 'application/json'
+    And header x-okapi-tenant = tenant
+    And header x-okapi-token = okapitoken
+    * def record = read('marc_record.json')
+    * set record.id = 'ccc35ac6-bb8d-11ea-b3de-0242ac130004'
+    * set record.externalIdsHolder.instanceId = 'e900266a-bb8d-11ea-b3de-0242ac130004'
+    * set record.matchedId = 'f41cad98-bb8d-11ea-b3de-0242ac130004'
+    * set record.additionalInfo.suppressDiscovery = true
+    And request record
+    When method POST
+    Then status 201
+
+    Given url edgeUrl
+    And param verb = 'ListRecords'
+    And param metadataPrefix = 'marc21'
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * match response count(//record) == 10
+
+  Scenario: set config "deletedRecordsSupport" to "transient" and find record marked as deleted by header with status = deleted in response
+    Given path 'configurations/entries'
+    And param query = 'module==OAIPMH and configName==behavior'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+
+    * def configId = get response.configs[0].id
+
+    Given path 'configurations/entries', configId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And request
+    """
+    {
+       "module" : "OAIPMH",
+       "configName" : "behavior",
+       "enabled" : true,
+       "value" : "{\"deletedRecordsSupport\":\"transient\",\"suppressedRecordsProcessing\":\"false\",\"errorsProcessing\":\"200\"}"
+    }
+    """
+    When method PUT
+    Then status 204
+
+    Given url edgeUrl
+    And param verb = 'ListRecords'
+    And param metadataPrefix = 'marc21'
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * match response count(//record) == 11
+    * match response //header[@status='deleted'] == '#notnull'
+
+  Scenario: record marc as deleted and suppressDiscovery is true and config "suppressedRecordsProcessing" is true
+    Given path 'configurations/entries'
+    And param query = 'module==OAIPMH and configName==behavior'
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+
+    * def configId = get response.configs[0].id
+
+    Given path 'configurations/entries', configId
+    And header Accept = 'application/json'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    And request
+    """
+    {
+       "module" : "OAIPMH",
+       "configName" : "behavior",
+       "enabled" : true,
+       "value" : "{\"deletedRecordsSupport\":\"transient\",\"suppressedRecordsProcessing\":\"true\",\"errorsProcessing\":\"500\"}"
+    }
+    """
+    When method PUT
+    Then status 204
+
+    Given path 'source-storage/records'
+    And header Accept = 'application/json'
+    And header x-okapi-tenant = tenant
+    And header x-okapi-token = okapitoken
+    * def record = read('marc_record.json')
+    * set record.id = '1ae24758-bb9d-11ea-b3de-0242ac130004'
+    * set record.externalIdsHolder.instanceId = '2aa223a2-bb9d-11ea-b3de-0242ac130004'
+    * set record.matchedId = '32f8b160-bb9d-11ea-b3de-0242ac130004'
+    * set record.parsedRecord.content.leader = '01542dcm a2200361   4500'
+    * set record.additionalInfo.suppressDiscovery = true
+    And request record
+    When method POST
+    Then status 201
+
+    Given url edgeUrl
+    And param verb = 'ListRecords'
+    And param metadataPrefix = 'marc21'
+    And header Accept = 'text/xml'
+    And header Content-Type = 'application/json'
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * match response count(//record) == 13
+    * match response count(//header[@status='deleted']) == 2

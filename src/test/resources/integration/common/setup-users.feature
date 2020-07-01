@@ -73,19 +73,5 @@ Feature: prepare data for api test
     When method POST
     Then status 201
 
-  Scenario: add permissions for test user
-    * def permissions = $userPermissions[*].name
-    Given path 'perms/users'
-    And header x-okapi-tenant = testTenant
-    And request
-    """
-    {
-      "userId":"00000000-1111-5555-9999-999999999992",
-      "permissions": #(permissions)
-    }
-    """
-    When method POST
-    Then status 201
-
   Scenario: enable mod-authtoken module
     Given call read('common/tenant.feature@install') { modules: [{name: 'mod-authtoken'}], tenant: '#(testTenant)'}
