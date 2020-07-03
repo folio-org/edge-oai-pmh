@@ -17,7 +17,9 @@ function fn() {
     // define global features
     login: karate.read('common/login.feature'),
     dev: karate.read('common/dev.feature'),
-
+    getModuleIdByName: karate.read('common/module.feature@getModuleIdByName'),
+    enableModule: karate.read('common/module.feature@enableModule'),
+    deleteModule: karate.read('common/module.feature@deleteModule'),
     // define global functions
     uuid: function () {
       return java.util.UUID.randomUUID() + ''
@@ -25,6 +27,10 @@ function fn() {
 
     random: function (max) {
       return Math.floor(Math.random() * max)
+    },
+
+    getConfigurationEntryIds: function(resp) {
+      return resp.configs.map(config=>config.id)
     }
   };
 
