@@ -2,7 +2,6 @@ Feature: init data for mod-configuration
 
   Background:
     * url baseUrl
-    * call login testUser
 
   Scenario: set errors to 500 Http status
     Given path 'configurations/entries'

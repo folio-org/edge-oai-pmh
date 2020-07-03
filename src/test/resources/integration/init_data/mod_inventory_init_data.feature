@@ -2,7 +2,6 @@ Feature: init data for mod-configuration
 
   Background:
     * url baseUrl
-    * call login testUser
 
   Scenario: post instances, holdings and items
     Given path 'instance-types'

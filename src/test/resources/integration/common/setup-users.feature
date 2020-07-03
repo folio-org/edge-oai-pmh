@@ -13,15 +13,15 @@ Feature: prepare data for api test
   Scenario: get and install configured modules
     Given call read('common/tenant.feature@install') { modules: '#(modules)', tenant: '#(testTenant)'}
 
-  Scenario Outline: create test users
-    * def userName = <name>
+  Scenario: create test users
+    * def userName = testUser.name
 
     Given path 'users'
     And header x-okapi-tenant = testTenant
     And request
     """
     {
-      "id":"00000000-1111-5555-9999-99999999999<id>",
+      "id":"00000000-1111-5555-9999-999999999991",
       "username": '#(userName)',
       "active":true,
       "personal": {"firstName":"Admin","lastName":"Orders API Tests"}
@@ -30,24 +30,17 @@ Feature: prepare data for api test
     When method POST
     Then status 201
 
-    Examples:
-      | name           | id |
-      | testUser.name  | 1  |
 
 
-  Scenario Outline: specify user credentials
-    * def userName = <name>
-    * def password = <pass>
+  Scenario: specify user credentials
+    * def userName = testUser.name
+    * def password = testUser.password
 
     Given path 'authn/credentials'
     And header x-okapi-tenant = testTenant
     And request {username: '#(userName)', password :'#(password)'}
     When method POST
     Then status 201
-
-    Examples:
-      | name           | pass               |
-      | testUser.name  | testUser.password  |
 
   Scenario: get permissions for admin and add to new admin user
     Given path 'perms/permissions'
