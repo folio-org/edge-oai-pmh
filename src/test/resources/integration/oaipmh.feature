@@ -38,5 +38,8 @@ Feature: mod-oai-pmh tests
   Scenario: test oai-pmh
     Given call read('base_oai_pmh_tests/oaipmh-cases.feature')
 
+  Scenario: test integration with mod-configuration
+    Given call read('base_oai_pmh_tests/mod-configuration-integration-cases.feature')
+
   Scenario: wipe data
     Given call read('common/destroy-data.feature')
