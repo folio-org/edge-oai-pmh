@@ -15,7 +15,7 @@ Feature: Module
 
   @enableModule
   Scenario: enables module for tenant
-    Given path '_/proxy/tenants' tenant, 'modules'
+    Given path '_/proxy/tenants', tenant, 'modules'
     And header Content-Type = 'application/json'
     And header Accept = 'application/json'
     And request

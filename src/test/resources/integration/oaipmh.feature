@@ -21,7 +21,6 @@ Feature: mod-oai-pmh tests
       | 'configuration.all'               |
 
 
-
   Scenario: create tenant and users for testing
     Given call read('common/setup-users.feature')
 
@@ -39,7 +38,7 @@ Feature: mod-oai-pmh tests
     Given call read('base_oai_pmh_tests/oaipmh-cases.feature')
 
   Scenario: test integration with mod-configuration
-    Given call read('base_oai_pmh_tests/mod-configuration-integration-cases.feature')
+    * call read('base_oai_pmh_tests/mod-configuration-integration-cases.feature')
 
   Scenario: wipe data
     Given call read('common/destroy-data.feature')

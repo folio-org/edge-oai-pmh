@@ -27,10 +27,6 @@ function fn() {
 
     random: function (max) {
       return Math.floor(Math.random() * max)
-    },
-
-    getConfigurationEntryIds: function(resp) {
-      return resp.configs.map(config=>config.id)
     }
   };
 

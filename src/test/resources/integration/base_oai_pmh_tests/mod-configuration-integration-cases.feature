@@ -10,72 +10,80 @@ Feature: Test integration with mod-configuration during Posting the mod-oai-pmh 
   Scenario: Should post default configs to mod-configuration and enable the module when mod-config does not contain the data
     * def result = call read('mod-configuration/get_oaipmh_configs.feature')
     * def configResponse = result.response
-    * def func = function(configResponse){return configResponse.configs.map(config=>config.id)}
-    * print 'response - '+result.response
-    * def configIds = func(configResponse)
-    * print 'CONFIG IDS - '+configIds
+    * def ids = get configResponse.configs[*].id
+    * def configIds = karate.mapWithKey(ids, 'id')
 
     Given call deleteModule $module
     Given call read('mod-configuration/delete_config_by_id.feature') configIds
     Given call enableModule $module
     Given path '/configurations/entries'
     And header Content-Type = 'application/json'
+    And header Accept = '*/*'
     And header x-okapi-tenant = testTenant
     And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * def configGroups = get $.configs[*].configName
+    And match configGroups contains 'behavior'
+    And match configGroups contains 'technical'
+    And match configGroups contains 'general'
+
+  Scenario: Should post missing default configs to mod-configuration and enable module when mod-config has only part of oaipmh configuration groups
+    * def result = call read('mod-configuration/get_oaipmh_configs.feature')
+    * def configResponse = result.response
+    * def ids = get configResponse.configs[*].id
+    * def configIds = karate.mapWithKey(ids, 'id')
+
+    Given call deleteModule $module
+    Given call read('mod-configuration/delete_config_by_id.feature') configIds
+    Given path '/configurations/entries'
+    And header Content-Type = 'application/json'
+    And header Accept = '*/*'
+    And header x-okapi-tenant = testTenant
+    And header x-okapi-token = okapitoken
+    And request
+    """
+    {
+      "module" : "OAIPMH",
+      "configName" : "technical",
+      "enabled" : true,
+      "value" : "{\"maxRecordsPerResponse\":\"50\",\"enableValidation\":\"false\",\"formattedOutput\":\"false\"}"
+    }
+    """
     When method POST
     Then status 201
-    And match $ contains {configName : "behavior"}
-    And match $ contains {configName : "technical"}
-    And match $ contains {configName : "general"}
 
-#  Scenario: Should post missing default configs to mod-configuration and enable module when mod-config has only part of oaipmh configuration groups
-#    * def response = call read('mod-configuration/get_oaipmh_configs.feature')
-#    * def configIds = $response[*].response[0].id
-#    * print <result of evaluation 'response[*].response[0].id'>
-#    * print configIds
-#
-#    Given call deleteModule $module
-#    Given call read('mod-configuration/delete_config_by_id.feature') configIds
-#    Given path '/configurations/entries'
-#    And header Content-Type = 'application/json'
-#    And header x-okapi-tenant = testTenant
-#    And header x-okapi-token = okapitoken
-#    And request
-#    """
-#    {
-#      "module" : "OAIPMH",
-#      "configName" : "technical",
-#      "enabled" : true,
-#      "value" : "{\"maxRecordsPerResponse\":\"50\",\"enableValidation\":\"false\",\"formattedOutput\":\"false\"}"
-#    }
-#    """
-#    When method POST
-#    Then status 201
-#
-#    Given call enableModule $module
-#    Given path '/configurations/entries'
-#    And header Content-Type = 'application/json'
-#    And header x-okapi-tenant = testTenant
-#    And header x-okapi-token = okapitoken
-#    When method POST
-#    Then status 201
-#    And match $ contains {configName : "behavior"}
-#    And match $ contains {configName : "technical"}
-#    And match $ contains {configName : "general"}
-#
-#  Scenario: Should just enable module when mod-configuration already contains all related configs
-#    * def response = call read('mod-configuration/get_oaipmh_configs.feature')
-#    * def configIds = $response[*].response[0].id
-#
-#    Given call deleteModule $module
-#    Given call enableModule $module
-#    Given path '/configurations/entries'
-#    And header Content-Type = 'application/json'
-#    And header x-okapi-tenant = testTenant
-#    And header x-okapi-token = okapitoken
-#    When method POST
-#    Then status 201
-#    And match $ contains {configName : "behavior"}
-#    And match $ contains {configName : "technical"}
-#    And match $ contains {configName : "general"}
-#
+    Given call enableModule $module
+    Given path '/configurations/entries'
+    And header Content-Type = 'application/json'
+    And header Accept = '*/*'
+    And header x-okapi-tenant = testTenant
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * def configGroups = get $.configs[*].configName
+    And match configGroups contains 'behavior'
+    And match configGroups contains 'technical'
+    And match configGroups contains 'general'
+
+  Scenario: Should just enable module when mod-configuration already contains all related configs
+    * def result = call read('mod-configuration/get_oaipmh_configs.feature')
+    * def configResponse = result.response
+    * def configGroups = get configResponse.configs[*].configName
+    And match configGroups contains 'behavior'
+    And match configGroups contains 'technical'
+    And match configGroups contains 'general'
+
+    Given call deleteModule $module
+    Given call enableModule $module
+    Given path '/configurations/entries'
+    And header Content-Type = 'application/json'
+    And header Accept = '*/*'
+    And header x-okapi-tenant = testTenant
+    And header x-okapi-token = okapitoken
+    When method GET
+    Then status 200
+    * def configGroups = get $.configs[*].configName
+    And match configGroups contains 'behavior'
+    And match configGroups contains 'technical'
+    And match configGroups contains 'general'
