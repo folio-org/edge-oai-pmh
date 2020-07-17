@@ -31,19 +31,17 @@ function fn() {
   };
 
   if (env == 'testing') {
-    config.baseUrl = 'https://folio-testing-okapi.aws.indexdata.com:443';
-    config.admin = {
-      tenant: 'supertenant',
-      name: 'testing_admin',
-      password: 'admin'
-    }
+    // dikuid=f8f97da4-c39a-548c-8092-3f297bc7779d
+
+    config.baseUrl = 'https://folio-testing-okapi.aws.indexdata.com';
+    config.admin = {tenant: 'supertenant', name: 'testing_admin', password: 'admin'};
+    config.edgeHost = 'https://folio-testing.aws.indexdata.com:8000';
+    config.edgeApiKey = 'eyJzIjoiNXNlNGdnbXk1TiIsInQiOiJkaWt1IiwidSI6ImRpa3UifQ==';
   } else if (env == 'snapshot') {
-    config.baseUrl = 'https://folio-snapshot-okapi.aws.indexdata.com:443';
-    config.admin = {
-      tenant: 'supertenant',
-      name: 'testing_admin',
-      password: 'admin'
-    }
+    config.baseUrl = 'https://folio-snapshot-okapi.aws.indexdata.com';
+    config.admin = {tenant: 'supertenant', name: 'testing_admin', password: 'admin'};
+    config.edgeHost = 'https://folio-snapshot.aws.indexdata.com:8000';
+    config.edgeApiKey = 'eyJzIjoiNXNlNGdnbXk1TiIsInQiOiJkaWt1IiwidSI6ImRpa3UifQ==';
   } else if (env != null && env.match(/^ec2-\d+/)) {
     // Config for FOLIO CI "folio-integration" public ec2- dns name
     config.baseUrl = 'http://' + env + ':9130';
