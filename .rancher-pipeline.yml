@@ -1,0 +1,38 @@
+stages:
+- name: Build
+  steps:
+  - runScriptConfig:
+      image: maven:3-openjdk-8
+      shellScript: mvn package -DskipTests
+    when:
+      event:
+        include:
+        - push
+- name: Build Docker with DIND
+  steps:
+  - publishImageConfig:
+      dockerfilePath: ./Dockerfile
+      buildContext: .
+      tag: docker.dev.folio.org/edge-oai-pmh:gulfstream-latest
+      pushRemote: true
+      registry: docker.dev.folio.org
+    when:
+      event:
+        include:
+        - push
+- name: Deploy
+  steps:
+  - applyAppConfig:
+      catalogTemplate: p-ghk9f:gulfstream-helmcharts-edge-oai-pmh
+      version: 0.1.16
+      answers:
+        image.repository: docker.dev.folio.org/edge-oai-pmh
+        image.tag: gulfstream-latest
+      name: edge-oai-pmh
+      targetNamespace: gulfstream
+    when:
+      event:
+        include:
+        - push
+timeout: 60
+notification: {}
