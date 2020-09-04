@@ -1,6 +1,6 @@
 package org.folio.edge.oaipmh;
 
-import static com.jayway.restassured.config.DecoderConfig.decoderConfig;
+import static io.restassured.config.DecoderConfig.decoderConfig;
 import static org.folio.edge.core.Constants.SYS_LOG_LEVEL;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_PORT;
@@ -33,10 +33,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.DecoderConfig;
-import com.jayway.restassured.response.Header;
-import com.jayway.restassured.response.Response;
+import io.restassured.RestAssured;
+import io.restassured.config.DecoderConfig;
+import io.restassured.http.Header;
+import io.restassured.response.Response;
 
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
@@ -145,7 +145,7 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .parameters("verb", "GetRecord",
+      .params("verb", "GetRecord",
         "identifier", "oai:arXiv.org:quant-ph/02131001",
         "metadataPrefix", "oai_dc",
         "apikey", API_KEY)
@@ -190,7 +190,7 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .parameters("apikey", API_KEY,
+      .params("apikey", API_KEY,
         "verb", "GetRecord",
         "metadataPrefix", "oai_dc",
         "identifier", "oai:arXiv.org:cs/0112017")
@@ -234,7 +234,7 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .parameters("apikey", API_KEY,
+      .params("apikey", API_KEY,
         "verb", "Identify")
       .post("/oai")
       .then()
@@ -307,7 +307,7 @@ public class OaiPmhTest {
     log.info("=== Test bad apikey GetRecord OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured.given()
-      .parameters("apikey", BAD_API_KEY,
+      .params("apikey", BAD_API_KEY,
         "verb", "GetRecord",
         "metadataPrefix", "oai_dc",
         "identifier", "oai:arXiv.org:cs/0112017")
@@ -390,7 +390,7 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
     final Response resp = RestAssured.given()
       .config(RestAssured.config().decoderConfig(decoderConfig().noContentDecoders()))
-      .header(new Header(HttpHeaders.ACCEPT_ENCODING, "instance"))
+      .header(HttpHeaders.ACCEPT_ENCODING, "instance")
       .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_XML)
