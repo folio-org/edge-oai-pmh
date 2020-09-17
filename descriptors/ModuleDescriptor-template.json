@@ -28,7 +28,7 @@
     },
     "env": [
       { "name": "JAVA_OPTIONS",
-        "value": "-XX:MaxRAMPercentage=66.0"
+        "value": "-XX:MaxRAMPercentage=66.0 -Drequest_timeout_ms=7200000"
       }
     ]
   }
