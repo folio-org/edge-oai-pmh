@@ -1,3 +1,12 @@
+## 2.3.0 - Releases
+
+This release includes updating module Java version up to 11
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.2.0...v2.3.0)
+
+### Stories
+* [EDGOAIPMH-50](https://issues.folio.org/browse/EDGOAIPMH-50) - Move all request validations from ed
+
 ## 2.2.1 - Released
 
 This release includes minor bug fixes for edge-oai-pmh module (Q2/2020).
