@@ -1,13 +1,25 @@
+
+## 2.3.0 - Releases
+
+This release includes updating module Java version up to 11
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.2.0...v2.3.0)
+
+### Stories
+* [EDGOAIPMH-50](https://issues.folio.org/browse/EDGOAIPMH-50) - Move all request validations from ed
+
 ## 2.2.2 (Released)
 
 Increasing edge timeout for metadata prefix marc21_withholdings
 
+### Stories
 * [MODOAIPMH-226](https://issues.folio.org/browse/MODOAIPMH-226) ListRecords with metdataPrefix=marc21_withholdings timeouts on BugFest
-
 
 ## 2.2.1 (Released)
 
 This release includes minor bug fixes for edge-oai-pmh module (Q2/2020).
+
+### Stories
 * [EDGOAIPMH-49](https://issues.folio.org/browse/EDGOAIPMH-49) ListRecords with metdataPrefix=marc21_withholdings timeouts on BugFest
 
 ## 2.2.0 - Released
