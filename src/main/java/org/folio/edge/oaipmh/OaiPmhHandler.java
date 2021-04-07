@@ -16,7 +16,6 @@ import java.util.regex.Pattern;
 
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
-import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
 
@@ -110,11 +109,11 @@ public class OaiPmhHandler extends Handler {
         okapiClient.close();
       });
       oaiPmhResponse.exceptionHandler(throwable -> {
-        log.error("Exception occurred while getting oai-pmh response." , throwable);
+        log.error("Exception occurred while getting oai-pmh response.", throwable);
         okapiClient.close();
       });
     } else {
-      log.error(String.format("Error in the response from repository: (%d)", oaiPmhResponse.statusCode()));
+      log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
       okapiClient.close();
       internalServerError(ctx, "Internal Server Error");
     }
