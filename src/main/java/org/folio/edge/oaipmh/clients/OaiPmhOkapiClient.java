@@ -1,4 +1,4 @@
-package org.folio.edge.oaipmh.clients.aoipmh;
+package org.folio.edge.oaipmh.clients;
 
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;

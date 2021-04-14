@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
-import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 
 import com.google.common.collect.Iterables;
 
@@ -51,7 +51,9 @@ public class OaiPmhHandler extends Handler {
 
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
       final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-      oaiPmhClient.call(request.params(), request.headers(), response -> handleProxyResponse(ctx, response), t -> oaiPmhFailureHandler(ctx, t));
+      oaiPmhClient.call(request.params(), request.headers(),
+        response -> handleProxyResponse(ctx, response, oaiPmhClient),
+        throwable -> oaiPmhFailureHandler(ctx, throwable, oaiPmhClient));
     });
   }
 
@@ -83,32 +85,36 @@ public class OaiPmhHandler extends Handler {
    * This method contains processing of oai-pmh-mod response in normal processing flow
    *
    * @param ctx      routing context
-   * @param response populated http-response
+   * @param oaiPmhResponse populated http-response
    */
-  @Override
-  protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse response) {
+  protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse oaiPmhResponse, OaiPmhOkapiClient okapiClient) {
     HttpServerResponse edgeResponse = ctx.response();
-    int httpStatusCode = response.statusCode();
-    ctx.response().setStatusCode(response.statusCode());
+    int httpStatusCode = oaiPmhResponse.statusCode();
+    ctx.response().setStatusCode(oaiPmhResponse.statusCode());
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
-      Optional<String> encodingHeader = Optional.ofNullable(response.getHeader(HttpHeaders.CONTENT_ENCODING));
+      Optional<String> encodingHeader = Optional.ofNullable(oaiPmhResponse.getHeader(HttpHeaders.CONTENT_ENCODING));
       encodingHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.CONTENT_ENCODING, value));
       /*
        * Using bodyHandler to wait for full response body to be read. Alternative option is to use endHandler and pumping i.e.
        * Pump.pump(response, ctx.response()).start() but this requires chunked response (ctx.response().setChunked(true)) and there
        * is no any guarantee that all harvesters support such responses.
        */
-      response.bodyHandler(buffer -> {
+      oaiPmhResponse.bodyHandler(buffer -> {
         edgeResponse.end(buffer);
-        if (!encodingHeader.isPresent()) {
-          log.debug("Response from oai-pmh headers:{} \n {}", Iterables.toString(response.headers()), buffer);
+        if (encodingHeader.isEmpty()) {
+          log.debug("Returned oai-pmh response doesn't contain encoding header.");
         }
-        log.debug("Edge response headers: {}", Iterables.toString(edgeResponse.headers()));
+        okapiClient.close();
+      });
+      oaiPmhResponse.exceptionHandler(throwable -> {
+        log.error("Exception occurred while getting oai-pmh response.", throwable);
+        okapiClient.close();
       });
     } else {
-      log.error(String.format("Error in the response from repository: (%d)", response.statusCode()));
+      log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
+      okapiClient.close();
       internalServerError(ctx, "Internal Server Error");
     }
   }
@@ -129,14 +135,15 @@ public class OaiPmhHandler extends Handler {
    * This handler-method for processing exceptional flow
    *
    * @param ctx current routing context
-   * @param t   throwable object
+   * @param throwable   throwable object
    */
-  public void oaiPmhFailureHandler(RoutingContext ctx, Throwable t) {
-    log.error("Exception in calling OKAPI", t);
-    if (t instanceof TimeoutException) {
-      requestTimeout(ctx, t.getMessage());
+  private void oaiPmhFailureHandler(RoutingContext ctx, Throwable throwable, OaiPmhOkapiClient client) {
+    log.error("Exception in calling OKAPI", throwable);
+    client.close();
+    if (throwable instanceof TimeoutException) {
+      requestTimeout(ctx, throwable.getMessage());
     } else {
-      internalServerError(ctx, t != null? t.getMessage(): "");
+      internalServerError(ctx, throwable != null? throwable.getMessage(): "");
     }
   }
 

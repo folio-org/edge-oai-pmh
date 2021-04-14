@@ -5,7 +5,7 @@ import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 
 import org.folio.edge.core.Constants;
 import org.folio.edge.core.EdgeVerticle2;
-import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClientFactory;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
 
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
