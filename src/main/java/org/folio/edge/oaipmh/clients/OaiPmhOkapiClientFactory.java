@@ -1,4 +1,4 @@
-package org.folio.edge.oaipmh.clients.aoipmh;
+package org.folio.edge.oaipmh.clients;
 
 import org.folio.edge.core.utils.OkapiClientFactory;
 

@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
-import org.folio.edge.oaipmh.clients.aoipmh.OaiPmhOkapiClient;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 
 import com.google.common.collect.Iterables;
 
