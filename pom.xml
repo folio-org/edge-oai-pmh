@@ -44,7 +44,6 @@
     <junit.ver>4.13.1</junit.ver>
     <mockito.ver>1.9.5</mockito.ver>
     <rest.assured.ver>4.3.0</rest.assured.ver>
-    <edge.common.ver>0.3.8-SNAPSHOT</edge.common.ver>
     <mod-configuration-client.version>5.1.0</mod-configuration-client.version>
 
     <!-- the main class -->
