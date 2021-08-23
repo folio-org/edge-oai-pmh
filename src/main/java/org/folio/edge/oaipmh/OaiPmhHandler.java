@@ -52,8 +52,8 @@ public class OaiPmhHandler extends Handler {
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
       final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
       oaiPmhClient.call(request.params(), request.headers(),
-        response -> handleProxyResponse(ctx, response, oaiPmhClient),
-        throwable -> oaiPmhFailureHandler(ctx, throwable, oaiPmhClient));
+        response -> handleProxyResponse(ctx, response),
+        throwable -> oaiPmhFailureHandler(ctx, throwable));
     });
   }
 
@@ -87,7 +87,7 @@ public class OaiPmhHandler extends Handler {
    * @param ctx      routing context
    * @param oaiPmhResponse populated http-response
    */
-  protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse oaiPmhResponse, OaiPmhOkapiClient okapiClient) {
+  protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse oaiPmhResponse) {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
     ctx.response().setStatusCode(oaiPmhResponse.statusCode());
@@ -106,15 +106,12 @@ public class OaiPmhHandler extends Handler {
         if (encodingHeader.isEmpty()) {
           log.debug("Returned oai-pmh response doesn't contain encoding header.");
         }
-        okapiClient.close();
       });
       oaiPmhResponse.exceptionHandler(throwable -> {
         log.error("Exception occurred while getting oai-pmh response.", throwable);
-        okapiClient.close();
       });
     } else {
       log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
-      okapiClient.close();
       internalServerError(ctx, "Internal Server Error");
     }
   }
@@ -137,9 +134,8 @@ public class OaiPmhHandler extends Handler {
    * @param ctx current routing context
    * @param throwable   throwable object
    */
-  private void oaiPmhFailureHandler(RoutingContext ctx, Throwable throwable, OaiPmhOkapiClient client) {
+  private void oaiPmhFailureHandler(RoutingContext ctx, Throwable throwable) {
     log.error("Exception in calling OKAPI", throwable);
-    client.close();
     if (throwable instanceof TimeoutException) {
       requestTimeout(ctx, throwable.getMessage());
     } else {

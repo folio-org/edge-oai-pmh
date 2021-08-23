@@ -28,7 +28,7 @@ import org.openarchives.oai._2.VerbType;
 public class OaiPmhOkapiClientTest {
 
   private static final String TENANT = "diku";
-  private static final long REQUEST_TIMEOUT = 3000L;
+  private static final int REQUEST_TIMEOUT = 3000;
 
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
@@ -51,7 +51,6 @@ public class OaiPmhOkapiClientTest {
 
   @After
   public void tearDown(TestContext context) {
-    client.close();
     mockOkapi.close(context);
   }
 
@@ -123,12 +122,9 @@ public class OaiPmhOkapiClientTest {
       .thenAcceptAsync(v -> client.call(parameters, headers,
         response -> {
           context.assertEquals(expectedHttpStatusCode, response.statusCode());
-          response.bodyHandler(buffer -> {
-            final StringBuilder body = new StringBuilder();
-            body.append(buffer);
-            log.info("oai-pmh-mod response body: " + body);
-            assertEquals(expected, body.toString());
-          });
+          String body = response.bodyAsString();
+          log.info("oai-pmh-mod response body: " + body);
+          assertEquals(expected, body);
           async.complete();
         },
         t -> context.fail(t.getMessage())

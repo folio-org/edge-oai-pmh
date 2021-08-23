@@ -5,12 +5,13 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
 import static java.util.stream.Collectors.joining;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
 import org.folio.edge.core.utils.OkapiClient;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClientResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -23,7 +24,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
     fixDefaultHeaders();
   }
 
-  OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, long timeout) {
+  OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
     super(vertx, okapiURL, tenant, timeout);
     fixDefaultHeaders();
   }
@@ -43,7 +44,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
    * @param headers multimap of HTTP GET headers
    */
   public void call(MultiMap parameters, MultiMap headers,
-    Handler<HttpClientResponse> responseHandler,
+    Handler<HttpResponse<Buffer>> responseHandler,
     Handler<Throwable> exceptionHandler) {
     String url = getUrl(parameters);
     // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
