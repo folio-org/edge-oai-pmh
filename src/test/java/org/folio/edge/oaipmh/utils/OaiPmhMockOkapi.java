@@ -109,6 +109,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
       && paramsContainParamWithValue(requestParams, "exception")) {
+      ctx.response()
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN);
       log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
     } else if (path.contains("TimeoutException")) {
