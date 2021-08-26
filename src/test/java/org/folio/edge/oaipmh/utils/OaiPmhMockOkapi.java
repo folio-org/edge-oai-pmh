@@ -1,5 +1,6 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
@@ -59,7 +60,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
       .setCompressionSupported(true));
 
     final Async async = context.async();
-    server.requestHandler(defineRoutes()::accept).listen(okapiPort, result -> {
+    server.requestHandler(defineRoutes()).listen(okapiPort, result -> {
       if (result.failed()) {
         log.warn(result.cause().getMessage());
       }
@@ -108,6 +109,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_IDENTIFY_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
       && paramsContainParamWithValue(requestParams, "exception")) {
+      ctx.response()
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN);
       log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
     } else if (path.contains("TimeoutException")) {

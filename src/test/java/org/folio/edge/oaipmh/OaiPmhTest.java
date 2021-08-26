@@ -145,11 +145,9 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .params("verb", "GetRecord",
-        "identifier", "oai:arXiv.org:quant-ph/02131001",
-        "metadataPrefix", "oai_dc",
-        "apikey", API_KEY)
-      .post("/oai")
+      .headers(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .post(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
@@ -190,11 +188,9 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .params("apikey", API_KEY,
-        "verb", "GetRecord",
-        "metadataPrefix", "oai_dc",
-        "identifier", "oai:arXiv.org:cs/0112017")
-      .post("/oai")
+      .headers(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .post(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
@@ -234,9 +230,8 @@ public class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured.given()
-      .params("apikey", API_KEY,
-        "verb", "Identify")
-      .post("/oai")
+      .headers(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+      .post(String.format("/oai?verb=Identify&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)

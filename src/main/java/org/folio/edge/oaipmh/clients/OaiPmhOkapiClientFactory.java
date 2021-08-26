@@ -6,7 +6,7 @@ import io.vertx.core.Vertx;
 
 public class OaiPmhOkapiClientFactory extends OkapiClientFactory {
 
-  public OaiPmhOkapiClientFactory(Vertx vertx, String okapiURL, long reqTimeoutMs) {
+  public OaiPmhOkapiClientFactory(Vertx vertx, String okapiURL, int reqTimeoutMs) {
     super(vertx, okapiURL, reqTimeoutMs);
   }
 
