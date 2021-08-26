@@ -87,6 +87,7 @@ public class OaiPmhHandler extends Handler {
    * @param ctx      routing context
    * @param oaiPmhResponse populated http-response
    */
+  @Override
   protected void handleProxyResponse(RoutingContext ctx, HttpResponse<Buffer> oaiPmhResponse) {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
