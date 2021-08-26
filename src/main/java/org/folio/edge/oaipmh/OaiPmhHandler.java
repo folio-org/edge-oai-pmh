@@ -1,6 +1,5 @@
 package org.folio.edge.oaipmh;
 
-import static com.google.common.collect.ImmutableSet.of;
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
@@ -14,6 +13,8 @@ import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.security.SecureStore;
 import org.folio.edge.core.utils.OkapiClientFactory;
@@ -21,7 +22,6 @@ import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 
 import com.google.common.collect.Iterables;
 
-import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
@@ -32,7 +32,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OaiPmhHandler extends Handler {
 
   /** Expected valid http status codes to be returned by repository logic */
-  private static final Set<Integer> EXPECTED_CODES = of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
+  private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
@@ -87,29 +87,20 @@ public class OaiPmhHandler extends Handler {
    * @param ctx      routing context
    * @param oaiPmhResponse populated http-response
    */
-  protected void handleProxyResponse(RoutingContext ctx, HttpClientResponse oaiPmhResponse) {
+  protected void handleProxyResponse(RoutingContext ctx, HttpResponse<Buffer> oaiPmhResponse) {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
     ctx.response().setStatusCode(oaiPmhResponse.statusCode());
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
-      Optional<String> encodingHeader = Optional.ofNullable(oaiPmhResponse.getHeader(HttpHeaders.CONTENT_ENCODING));
+      Optional<String> encodingHeader = Optional.ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.CONTENT_ENCODING)));
       encodingHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.CONTENT_ENCODING, value));
-      /*
-       * Using bodyHandler to wait for full response body to be read. Alternative option is to use endHandler and pumping i.e.
-       * Pump.pump(response, ctx.response()).start() but this requires chunked response (ctx.response().setChunked(true)) and there
-       * is no any guarantee that all harvesters support such responses.
-       */
-      oaiPmhResponse.bodyHandler(buffer -> {
-        edgeResponse.end(buffer);
-        if (encodingHeader.isEmpty()) {
-          log.debug("Returned oai-pmh response doesn't contain encoding header.");
-        }
-      });
-      oaiPmhResponse.exceptionHandler(throwable -> {
-        log.error("Exception occurred while getting oai-pmh response.", throwable);
-      });
+      Buffer buffer = oaiPmhResponse.body();
+      edgeResponse.end(buffer);
+      if (encodingHeader.isEmpty()) {
+        log.debug("Returned oai-pmh response doesn't contain encoding header.");
+      }
     } else {
       log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
       internalServerError(ctx, "Internal Server Error");
