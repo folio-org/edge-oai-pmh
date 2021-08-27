@@ -33,8 +33,13 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/GetRecordErrorResponse.xml";
   public static final String PATH_TO_IDENTIFY_MOCK
     = "src/test/resources/mocks/IdentifyResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_EMPTY_MOCK
+    = "src/test/resources/mocks/ListRecordsEmptyResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_MOCK
+    = "src/test/resources/mocks/ListRecordsResponse.xml";
   private static final String GET_RECORD = "GetRecord";
   private static final String IDENTIFY = "Identify";
+  private static final String LIST_RECORDS = "ListRecords";
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
@@ -83,7 +88,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     String path = request.path();
     String accept = request.getHeader(HttpHeaders.ACCEPT);
 
-    if(accept != null &&
+    if (accept != null &&
       !accept.equals(MOD_OAI_PMH_ACCEPTED_TYPES)) {
       log.debug("Unsupported MIME type requested: " + accept);
       ctx.response()
@@ -113,7 +118,18 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN);
       log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
-    } else if (path.contains("TimeoutException")) {
+    } else if (paramsContainVerbWithName(requestParams, LIST_RECORDS)
+      && paramsContainParamWithValue(requestParams, "test_resumption_token")) {
+      ctx.response()
+        .setStatusCode(200)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_MOCK)));
+    } else if (paramsContainVerbWithName(requestParams, LIST_RECORDS)) {
+      ctx.response()
+        .setStatusCode(200)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_EMPTY_MOCK)));
+    }else if (path.contains("TimeoutException")) {
       vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> log.debug("OKAPI client should throw TimeoutException"));
     }
   }
