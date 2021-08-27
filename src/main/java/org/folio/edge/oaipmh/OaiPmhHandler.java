@@ -174,7 +174,6 @@ public class OaiPmhHandler extends Handler {
         .createUnmarshaller()
         .unmarshal(new ByteArrayInputStream(buffer.getBytes()));
     } catch (JAXBException e) {
-      e.printStackTrace();
       return new OAIPMH();
     }
   }
