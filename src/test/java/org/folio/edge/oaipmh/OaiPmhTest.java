@@ -686,4 +686,24 @@ public class OaiPmhTest {
     //fix jenkins code smells
     assertTrue(true);
   }
+
+  @Test
+  public void shouldResendRequestUsingResumptionTokenWhenListRecordsResponseHasEmptyRecordsList() {
+    log.info("=== Test successful ListRecords with empty records response ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
 }

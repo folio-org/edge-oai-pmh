@@ -1,13 +1,17 @@
 package org.folio.edge.oaipmh;
 
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
+import static java.util.Objects.nonNull;
+import static java.util.Optional.ofNullable;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
 
+import java.io.ByteArrayInputStream;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
@@ -27,12 +31,19 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
+import org.openarchives.oai._2.ListRecordsType;
+import org.openarchives.oai._2.OAIPMH;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 
 @Slf4j
 public class OaiPmhHandler extends Handler {
 
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
+
+  private OaiPmhOkapiClient oaiPmhClient;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
@@ -50,11 +61,17 @@ public class OaiPmhHandler extends Handler {
     }
 
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
-      final OaiPmhOkapiClient oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-      oaiPmhClient.call(request.params(), request.headers(),
-        response -> handleProxyResponse(ctx, response),
-        throwable -> oaiPmhFailureHandler(ctx, throwable));
+      oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+      performCall(ctx, oaiPmhClient, null);
     });
+  }
+
+  private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
+    var request = ctx.request();
+    ofNullable(resumptionToken).ifPresent(token -> request.params().add(RESUMPTION_TOKEN, token));
+    client.call(request.params(), request.headers(),
+      response -> handleProxyResponse(ctx, response),
+      throwable -> oaiPmhFailureHandler(ctx, throwable));
   }
 
   /**
@@ -95,12 +112,17 @@ public class OaiPmhHandler extends Handler {
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
-      Optional<String> encodingHeader = Optional.ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.CONTENT_ENCODING)));
+      Optional<String> encodingHeader = ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.CONTENT_ENCODING)));
       encodingHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.CONTENT_ENCODING, value));
       Buffer buffer = oaiPmhResponse.body();
-      edgeResponse.end(buffer);
-      if (encodingHeader.isEmpty()) {
-        log.debug("Returned oai-pmh response doesn't contain encoding header.");
+      var oaipmh = readOAIPMH(buffer);
+      if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {
+        performCall(ctx, oaiPmhClient, oaipmh.getListRecords().getResumptionToken().getValue());
+      } else {
+        edgeResponse.end(buffer);
+        if (encodingHeader.isEmpty()) {
+          log.debug("Returned oai-pmh response doesn't contain encoding header.");
+        }
       }
     } else {
       log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
@@ -146,4 +168,24 @@ public class OaiPmhHandler extends Handler {
       "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
   }
 
+  private OAIPMH readOAIPMH(Buffer buffer) {
+    try {
+      return (OAIPMH) JAXBContext.newInstance(OAIPMH.class)
+        .createUnmarshaller()
+        .unmarshal(new ByteArrayInputStream(buffer.getBytes()));
+    } catch (JAXBException e) {
+      e.printStackTrace();
+      return new OAIPMH();
+    }
+  }
+
+  private boolean isListRecords(OAIPMH oaipmh) {
+    return nonNull(oaipmh.getListRecords());
+  }
+
+  private boolean isResumptionTokenOnly(ListRecordsType listRecordsType) {
+    return listRecordsType.getRecords().isEmpty()
+      && nonNull(listRecordsType.getResumptionToken())
+      && !listRecordsType.getResumptionToken().getValue().isEmpty();
+  }
 }
