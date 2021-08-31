@@ -9,6 +9,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
 import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
 
 import java.io.ByteArrayInputStream;
@@ -68,7 +69,10 @@ public class OaiPmhHandler extends Handler {
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
     var request = ctx.request();
-    ofNullable(resumptionToken).ifPresent(token -> request.params().set(RESUMPTION_TOKEN, token));
+    ofNullable(resumptionToken).ifPresent(token -> {
+      request.params().set(RESUMPTION_TOKEN, token);
+      request.params().remove(METADATA_PREFIX);
+    });
     client.call(request.params(), request.headers(),
       response -> handleProxyResponse(ctx, response),
       throwable -> oaiPmhFailureHandler(ctx, throwable));
