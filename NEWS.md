@@ -1,3 +1,15 @@
+## 2.4.1 - Unreleased
+
+## 2.4.0 - Released
+
+This release includes improvements for creating HTTP client and responses when no records harvested
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.3.1...v2.4.0)
+
+### Stories
+* [EDGOAIPMH-62](https://issues.folio.org/browse/EDGOAIPMH-62) - Replace the current approach of creating HTTP Clients with keeping a single client for the tenant
+* [EDGOAIPMH-60](https://issues.folio.org/browse/EDGOAIPMH-60) - Check if the response contains records
+
 ## 2.3.1 - Released
 
 ## 2.3.0 - Released
