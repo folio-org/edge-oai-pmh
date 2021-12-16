@@ -1,3 +1,14 @@
+## 2.4.0 (Unreleased)
+
+## 2.3.2 (Released)
+
+Primary focus of this release is fixing log4j vulnerability
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.3.1...v2.3.2)
+
+### Bug Fixes
+* [EDGOAIPMH-69](https://issues.folio.org/browse/EDGOAIPMH-69) - Kiwi R3 2021 - Log4j vulnerability verification and correction
+
 ## 2.3.1 - Released
 
 ## 2.3.0 - Released
