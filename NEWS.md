@@ -2,7 +2,7 @@
 
 ## 2.5.0 - Released
 
-This release includes logging and CI facilities upgrades
+This release includes logging upgrades
 
 [Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.4.2...v2.5.0)
 
