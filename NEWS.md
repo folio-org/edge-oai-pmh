@@ -9,8 +9,6 @@ This release includes logging and CI facilities upgrades
 ### Technical tasks
 * [EDGOAIPMH-74](https://issues.folio.org/browse/EDGOAIPMH-74) - Log4j edge-modules 2.17.0 upgrade
 * [EDGOAIPMH-69](https://issues.folio.org/browse/EDGOAIPMH-69) - Log4j vulnerability verification and correction
-* [FOLIO-3231](https://issues.folio.org/browse/FOLIO-3231) - Ensure that each API-using backend module migrates to new CI facilities
-* [FOLIO-1021](https://issues.folio.org/browse/FOLIO-1021) - Update each README to use range of years in the copyright statement
 
 ## 2.4.0 - Released
 
