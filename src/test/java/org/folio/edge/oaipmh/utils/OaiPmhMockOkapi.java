@@ -13,15 +13,15 @@ import java.util.List;
 import org.folio.edge.core.utils.test.MockOkapi;
 
 import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -45,8 +45,11 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
-  public OaiPmhMockOkapi(int port, List<String> knownTenants) {
+  private final Vertx vertx;
+
+  public OaiPmhMockOkapi(Vertx vertx, int port, List<String> knownTenants) {
     super(port, knownTenants);
+    this.vertx = vertx;
   }
 
   public static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
@@ -59,21 +62,25 @@ public class OaiPmhMockOkapi extends MockOkapi {
     return xml;
   }
 
-  @Override
-  public void start(TestContext context) {
-
+  public void start(VertxTestContext context) {
     // Setup Mock Okapi and enable compression
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
       .setCompressionSupported(true));
 
-    final Async async = context.async();
-    server.requestHandler(defineRoutes()).listen(okapiPort, result -> {
-      if (result.failed()) {
-        log.warn(result.cause().getMessage());
-      }
-      context.assertTrue(result.succeeded());
-      async.complete();
-    });
+    server.requestHandler(defineRoutes())
+      .listen(okapiPort, context.succeeding(result -> {
+        log.info("The server has started.");
+        context.completeNow();
+      }));
+
+//    final Async async = context.async();
+//    server.requestHandler(defineRoutes()).listen(okapiPort, result -> {
+//      if (result.failed()) {
+//        log.warn(result.cause().getMessage());
+//      }
+//      context.assertTrue(result.succeeded());
+//      async.complete();
+//    });
   }
 
   @Override

@@ -1,5 +1,33 @@
 package org.folio.edge.oaipmh;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpStatus;
+import org.folio.edge.core.utils.ApiKeyUtils;
+import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
+import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import io.restassured.RestAssured;
+import io.restassured.config.DecoderConfig;
+import io.restassured.http.Header;
+import io.restassured.response.Response;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import lombok.extern.slf4j.Slf4j;
+
 import static io.restassured.config.DecoderConfig.decoderConfig;
 import static org.folio.edge.core.Constants.SYS_LOG_LEVEL;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
@@ -15,38 +43,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.apache.http.HttpHeaders;
-import org.apache.http.HttpStatus;
-import org.folio.edge.core.utils.ApiKeyUtils;
-import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-
-import io.restassured.RestAssured;
-import io.restassured.config.DecoderConfig;
-import io.restassured.http.Header;
-import io.restassured.response.Response;
-
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.junit5.VertxExtension;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @ExtendWith(VertxExtension.class)
@@ -61,20 +58,19 @@ public class OaiPmhTest {
   private static final String EXPECTED_ERROR_FORBIDDEN_MSG = "Error in the response from repository: status code - 403, response status message - Access requires permission: oai-pmh.records.collection.get";
   private static final String EXPECTED_ERROR_INTERNAL_SERVER_ERROR_MSG = "Error in the response from repository: status code - 500, response status message - Internal Server Error";
 
-  private static Vertx vertx;
   private static OaiPmhMockOkapi mockOkapi;
 
-  @BeforeClass
-  public void setUpOnce(TestContext context) throws Exception {
+  @BeforeAll
+  public void setUpOnce(Vertx vertx, VertxTestContext context) throws Exception {
     int okapiPort = TestUtils.getPort();
     int serverPort = TestUtils.getPort();
 
+    RestAssured.baseURI = "http://localhost:" + serverPort;
+    RestAssured.port = serverPort;
+    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(ApiKeyUtils.parseApiKey(API_KEY).tenantId);
-
-    mockOkapi = spy(new OaiPmhMockOkapi(okapiPort, knownTenants));
-    mockOkapi.start(context);
-    vertx = Vertx.vertx();
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
     System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
@@ -84,26 +80,23 @@ public class OaiPmhTest {
     System.setProperty(SYS_RESPONSE_COMPRESSION, Boolean.toString(true));
 
     final DeploymentOptions opt = new DeploymentOptions();
-    vertx.deployVerticle(MainVerticle.class.getName(), opt, context.asyncAssertSuccess());
-
-    RestAssured.baseURI = "http://localhost:" + serverPort;
-    RestAssured.port = serverPort;
-    RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    vertx.deployVerticle(MainVerticle.class.getName(), opt, context.succeeding(id -> {
+      mockOkapi = spy(new OaiPmhMockOkapi(vertx, okapiPort, knownTenants));
+      mockOkapi.start(context);
+    }));
   }
 
-  @AfterClass
-  public void tearDownOnce(TestContext context) {
+  @AfterAll
+  public void tearDownOnce(Vertx vertx, VertxTestContext context) {
     log.info("Shutting down server");
     vertx.close(res -> {
-      if (res.failed()) {
-        log.error("Failed to shut down edge-orders server", res.cause());
-        fail(res.cause().getMessage());
-      } else {
+      if (res.succeeded()) {
         log.info("Successfully shut down edge-orders server");
+        context.completeNow();
+      } else {
+        log.error("Failed to shut down edge-orders server", res.cause());
+        context.failNow(res.cause().getMessage());
       }
-
-      log.info("Shutting down mock Okapi");
-      mockOkapi.close(context);
     });
   }
 
@@ -575,7 +568,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-//  @Test
+  //  @Test
   public void testAcceptHeaderHasAllTextSybtypesSymbolWithParameterAndWithUnsupportedTypes() {
     log.info("=== Test Accept header has all text sybtypes symbol with parameter and with unsupported types ===");
 
@@ -601,7 +594,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-//  @Test
+  //  @Test
   public void testAcceptHeaderHasTextTypeXMLAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has text type XML and some unsupported types ===");
 
@@ -627,7 +620,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-//  @Test
+  //  @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has all types and all subtypes symbol and some unsupported types ===");
 
@@ -653,7 +646,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-//  @Test
+  //  @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndAllTextSubtypesSymbolAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has all types and all subtypes symbol and all text subtypes symbol and some unsupported types ===");
 

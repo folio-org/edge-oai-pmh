@@ -130,7 +130,7 @@ public class OaiPmhHandler extends Handler {
         }
       }
     } else {
-      var message = String.format(ERROR_FROM_REPOSITORY,oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
+      var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
       log.error(message);
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(500).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);

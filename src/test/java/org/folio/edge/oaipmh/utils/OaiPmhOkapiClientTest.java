@@ -1,30 +1,32 @@
 package org.folio.edge.oaipmh.utils;
 
-import static org.junit.Assert.assertEquals;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.http.HttpStatus;
+import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
+import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.openarchives.oai._2.VerbType;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.http.HttpStatus;
-import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.openarchives.oai._2.VerbType;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
-@RunWith(VertxUnitRunner.class)
+@ExtendWith(VertxExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class OaiPmhOkapiClientTest {
 
   private static final String TENANT = "diku";
@@ -33,29 +35,28 @@ public class OaiPmhOkapiClientTest {
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
 
-  @Before
-  public void setUp(TestContext context) {
+  @BeforeAll
+  public void setUp(Vertx vertx, VertxTestContext context) {
     int okapiPort = TestUtils.getPort();
 
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(TENANT);
 
-    mockOkapi = new OaiPmhMockOkapi(okapiPort, knownTenants);
-    mockOkapi.start(context);
-
-
-    client = new OaiPmhOkapiClientFactory(Vertx.vertx(),
+    client = new OaiPmhOkapiClientFactory(vertx,
       "http://localhost:" + okapiPort, REQUEST_TIMEOUT)
       .getOaiPmhOkapiClient(TENANT);
+
+    mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
+    mockOkapi.start(context);
   }
 
-  @After
+  @AfterAll
   public void tearDown(TestContext context) {
     mockOkapi.close(context);
   }
 
   @Test
-  public void testGetRecord(TestContext context) {
+  public void testGetRecord(VertxTestContext context) {
     log.info("=== Test successful OAI-PMH Request ===");
 
     String expectedBody
@@ -76,7 +77,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testGetRecordError(TestContext context) {
+  public void testGetRecordError(VertxTestContext context) {
     log.info("=== Test error GetRecord OAI-PMH request ===");
 
     String expectedBody
@@ -97,7 +98,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testIdentify(TestContext context) {
+  public void testIdentify(VertxTestContext context) {
     log.info("=== Test Identify OAI-PMH request ===");
 
     String expectedBody
