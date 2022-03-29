@@ -136,7 +136,6 @@ public class OaiPmhMockOkapi extends MockOkapi {
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD) && paramsContainParamWithValue(requestParams, "recordIdForbiddenResponse")) {
       ctx.response()
         .setStatusCode(403)
-        .setStatusMessage(ERROR_MSG_FORBIDDEN)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
         .end(ERROR_MSG_FORBIDDEN);
     }

@@ -58,8 +58,7 @@ public class OaiPmhTest {
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
   private static final String INVALID_API_KEY_EXPECTED_RESPONSE_BODY = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
-  private static final String EXPECTED_ERROR_FORBIDDEN_MSG = "Error in the response from repository: status code - 403, response status message - Access requires permission: oai-pmh.records.collection.get";
-  private static final String EXPECTED_ERROR_INTERNAL_SERVER_ERROR_MSG = "Error in the response from repository: status code - 500, response status message - Internal Server Error";
+  private static final String EXPECTED_ERROR_MSG = "Error in the response from repository: status code - 403, response status message - Access requires permission: oai-pmh.records.collection.get";
 
   private static Vertx vertx;
   private static OaiPmhMockOkapi mockOkapi;
@@ -329,14 +328,19 @@ public class OaiPmhTest {
   public void testGetRecordOkapiExceptionHttpGet() {
     log.info("=== Test exceptional GetRecord OAI-PMH (HTTP GET) ===");
 
-    RestAssured
+    String expectedMockBody = "Internal Server Error";
+    final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord"
         + "&identifier=exception&metadataPrefix=oai_dc&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
       .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
-      .body(containsString(EXPECTED_ERROR_INTERNAL_SERVER_ERROR_MSG));
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
   }
 
   @Test
@@ -747,6 +751,6 @@ public class OaiPmhTest {
       .then()
       .contentType(TEXT_PLAIN)
       .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-      .body(containsString(EXPECTED_ERROR_FORBIDDEN_MSG));
+      .body(containsString(EXPECTED_ERROR_MSG));
   }
 }
