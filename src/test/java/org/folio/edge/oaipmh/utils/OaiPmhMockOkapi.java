@@ -41,6 +41,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
   private static final String IDENTIFY = "Identify";
   private static final String LIST_RECORDS = "ListRecords";
 
+  private static final String ERROR_MSG_FORBIDDEN = "Access requires permission: oai-pmh.records.collection.get";
+
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
   public OaiPmhMockOkapi(int port, List<String> knownTenants) {
@@ -129,8 +131,13 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_EMPTY_MOCK)));
-    }else if (path.contains("TimeoutException")) {
+    } else if (path.contains("TimeoutException")) {
       vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> log.debug("OKAPI client should throw TimeoutException"));
+    } else if (paramsContainVerbWithName(requestParams, GET_RECORD) && paramsContainParamWithValue(requestParams, "recordIdForbiddenResponse")) {
+      ctx.response()
+        .setStatusCode(403)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+        .end(ERROR_MSG_FORBIDDEN);
     }
   }
 

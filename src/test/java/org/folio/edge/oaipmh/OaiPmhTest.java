@@ -10,6 +10,7 @@ import static org.folio.edge.core.Constants.SYS_SECURE_STORE_PROP_FILE;
 import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -53,6 +54,7 @@ public class OaiPmhTest {
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
   private static final String INVALID_API_KEY_EXPECTED_RESPONSE_BODY = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
+  private static final String EXPECTED_ERROR_MSG = "Error in the response from repository: status code - 403, response status message - Access requires permission: oai-pmh.records.collection.get";
 
   private static Vertx vertx;
   private static OaiPmhMockOkapi mockOkapi;
@@ -705,5 +707,17 @@ public class OaiPmhTest {
 
     String actualBody = resp.body().asString();
     assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  public void shouldReturnForbidden_whenUserHasMissingPermission() {
+    log.info("=== Test successful ListRecords with empty records response ===");
+
+    RestAssured
+      .get(String.format("/oai?verb=GetRecord&metadataPrefix=marc21&identifier=recordIdForbiddenResponse&apikey=%s", API_KEY))
+      .then()
+      .contentType(TEXT_PLAIN)
+      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+      .body(containsString(EXPECTED_ERROR_MSG));
   }
 }

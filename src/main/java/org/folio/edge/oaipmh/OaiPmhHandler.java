@@ -43,6 +43,7 @@ public class OaiPmhHandler extends Handler {
 
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
+  private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s";
 
   private OaiPmhOkapiClient oaiPmhClient;
 
@@ -129,8 +130,11 @@ public class OaiPmhHandler extends Handler {
         }
       }
     } else {
-      log.error("Error in the response from repository: status code - {}, response status message - {}", oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
-      internalServerError(ctx, "Internal Server Error");
+      var message = String.format(ERROR_FROM_REPOSITORY,oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
+      log.error(message);
+      if (!ctx.response().ended()) {
+        ctx.response().setStatusCode(500).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
+      }
     }
   }
 
