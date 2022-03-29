@@ -32,10 +32,9 @@ import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.runner.RunWith;
 
 import io.restassured.RestAssured;
 import io.restassured.config.DecoderConfig;
@@ -45,12 +44,11 @@ import io.restassured.response.Response;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.TestContext;
-import io.vertx.junit5.VertxExtension;
+import io.vertx.ext.unit.junit.VertxUnitRunner;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@ExtendWith(VertxExtension.class)
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@RunWith(VertxUnitRunner.class)
 public class OaiPmhTest {
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
@@ -65,7 +63,7 @@ public class OaiPmhTest {
   private static OaiPmhMockOkapi mockOkapi;
 
   @BeforeClass
-  public void setUpOnce(TestContext context) throws Exception {
+  public static void setUpOnce(TestContext context) throws Exception {
     int okapiPort = TestUtils.getPort();
     int serverPort = TestUtils.getPort();
 
@@ -92,7 +90,7 @@ public class OaiPmhTest {
   }
 
   @AfterClass
-  public void tearDownOnce(TestContext context) {
+  public static void tearDownOnce(TestContext context) {
     log.info("Shutting down server");
     vertx.close(res -> {
       if (res.failed()) {
