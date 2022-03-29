@@ -32,6 +32,8 @@ import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runner.RunWith;
 
 import io.restassured.RestAssured;
@@ -129,7 +131,7 @@ public class OaiPmhTest {
     final Response resp = RestAssured
       .get(String.format("/oai?verb=GetRecord" +
         "&identifier=oai:arXiv.org:quant-ph/02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY));
-      resp.then()
+    resp.then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
@@ -465,8 +467,8 @@ public class OaiPmhTest {
       .response();
 
     String actualBody = resp.body().asString();
-    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " +"\""+ unsupportedAcceptType
-      +"\""+", can not send */*";
+    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedAcceptType
+      + "\"" + ", can not send */*";
     assertEquals(expectedBody, actualBody);
   }
 
@@ -542,7 +544,36 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
+  @ParameterizedTest
+  @ValueSource(strings =
+    {
+      "text/*; q=0.2, application/xml, application/xhtml+xml",
+      "text/html, application/xml, text/xml",
+      "text/html, text/html;level=1, */*",
+      "text/*;q=0.3, text/html;level=1, */*;q=0.5"
+    })
+  public void testAcceptHeadersHasDifferentTypos(String header) {
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .given()
+      .header(HttpHeaders.ACCEPT, header)
+      .get(String.format("/oai?verb=GetRecord"
+        + "&identifier=oai:arXiv.org:cs/0112017&metadataPrefix=oai_dc&apikey=%s", API_KEY))
+      .then()
+      .log().all()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+//  @Test
   public void testAcceptHeaderHasAllTextSybtypesSymbolWithParameterAndWithUnsupportedTypes() {
     log.info("=== Test Accept header has all text sybtypes symbol with parameter and with unsupported types ===");
 
@@ -568,7 +599,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
+//  @Test
   public void testAcceptHeaderHasTextTypeXMLAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has text type XML and some unsupported types ===");
 
@@ -594,7 +625,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
+//  @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has all types and all subtypes symbol and some unsupported types ===");
 
@@ -620,7 +651,7 @@ public class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
+//  @Test
   public void testAcceptHeaderHasAllTypesAndAllSubtypesSymbolAndAllTextSubtypesSymbolAndSomeUnsupportedTypes() {
     log.info("=== Test Accept header has all types and all subtypes symbol and all text subtypes symbol and some unsupported types ===");
 
@@ -666,8 +697,8 @@ public class OaiPmhTest {
       .response();
 
     String actualBody = resp.body().asString();
-    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " +"\""+ acceptHeader
-      +"\""+", can not send */*";
+    String expectedBody = "Accept header must be \"text/xml\" for this request, but it is " + "\"" + acceptHeader
+      + "\"" + ", can not send */*";
     assertEquals(expectedBody, actualBody);
   }
 
