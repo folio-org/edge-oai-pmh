@@ -13,15 +13,15 @@ import java.util.List;
 import org.folio.edge.core.utils.test.MockOkapi;
 
 import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -41,10 +41,15 @@ public class OaiPmhMockOkapi extends MockOkapi {
   private static final String IDENTIFY = "Identify";
   private static final String LIST_RECORDS = "ListRecords";
 
+  private static final String ERROR_MSG_FORBIDDEN = "Access requires permission: oai-pmh.records.collection.get";
+
   public static final long REQUEST_TIMEOUT_MS = 1000L;
 
-  public OaiPmhMockOkapi(int port, List<String> knownTenants) {
+  private final Vertx vertx;
+
+  public OaiPmhMockOkapi(Vertx vertx, int port, List<String> knownTenants) {
     super(port, knownTenants);
+    this.vertx = vertx;
   }
 
   public static String getOaiPmhResponseAsXml(Path pathToXmlFile) {
@@ -57,21 +62,16 @@ public class OaiPmhMockOkapi extends MockOkapi {
     return xml;
   }
 
-  @Override
-  public void start(TestContext context) {
-
+  public void start(VertxTestContext context) {
     // Setup Mock Okapi and enable compression
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
       .setCompressionSupported(true));
 
-    final Async async = context.async();
-    server.requestHandler(defineRoutes()).listen(okapiPort, result -> {
-      if (result.failed()) {
-        log.warn(result.cause().getMessage());
-      }
-      context.assertTrue(result.succeeded());
-      async.complete();
-    });
+    server.requestHandler(defineRoutes())
+      .listen(okapiPort, context.succeeding(result -> {
+        log.info("The server has started.");
+        context.completeNow();
+      }));
   }
 
   @Override
@@ -129,8 +129,14 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_EMPTY_MOCK)));
-    }else if (path.contains("TimeoutException")) {
+    } else if (path.contains("TimeoutException")) {
       vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> log.debug("OKAPI client should throw TimeoutException"));
+    } else if (paramsContainVerbWithName(requestParams, GET_RECORD) && paramsContainParamWithValue(requestParams, "recordIdForbiddenResponse")) {
+      ctx.response()
+        .setStatusCode(403)
+        .setStatusMessage(ERROR_MSG_FORBIDDEN)
+        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
+        .end(ERROR_MSG_FORBIDDEN);
     }
   }
 

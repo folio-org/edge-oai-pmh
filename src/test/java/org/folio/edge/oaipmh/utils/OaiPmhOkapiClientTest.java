@@ -1,31 +1,31 @@
 package org.folio.edge.oaipmh.utils;
 
-import static org.junit.Assert.assertEquals;
-
-import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
-import io.vertx.ext.unit.junit.VertxUnitRunner;
-import lombok.extern.slf4j.Slf4j;
-
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.http.HttpStatus;
 import org.folio.edge.core.utils.test.TestUtils;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.openarchives.oai._2.VerbType;
 
+import io.vertx.core.MultiMap;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import io.vertx.junit5.VertxTestContext;
+import lombok.extern.slf4j.Slf4j;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @Slf4j
-@RunWith(VertxUnitRunner.class)
-public class OaiPmhOkapiClientTest {
+@ExtendWith(VertxExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class OaiPmhOkapiClientTest {
 
   private static final String TENANT = "diku";
   private static final int REQUEST_TIMEOUT = 3000;
@@ -33,29 +33,37 @@ public class OaiPmhOkapiClientTest {
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
 
-  @Before
-  public void setUp(TestContext context) {
+  @BeforeEach
+  void setUp(Vertx vertx, VertxTestContext context) {
     int okapiPort = TestUtils.getPort();
 
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(TENANT);
 
-    mockOkapi = new OaiPmhMockOkapi(okapiPort, knownTenants);
-    mockOkapi.start(context);
-
-
-    client = new OaiPmhOkapiClientFactory(Vertx.vertx(),
+    client = new OaiPmhOkapiClientFactory(vertx,
       "http://localhost:" + okapiPort, REQUEST_TIMEOUT)
       .getOaiPmhOkapiClient(TENANT);
+
+    mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
+    mockOkapi.start(context);
   }
 
-  @After
-  public void tearDown(TestContext context) {
-    mockOkapi.close(context);
+  @AfterEach
+  void tearDown(Vertx vertx, VertxTestContext context) {
+    log.info("Shutting down server");
+    vertx.close(res -> {
+      if (res.succeeded()) {
+        log.info("Successfully shut down edge-oai-pmh server");
+        context.completeNow();
+      } else {
+        log.error("Failed to shut down edge-oai-pmh server", res.cause());
+        context.failNow(res.cause().getMessage());
+      }
+    });
   }
 
   @Test
-  public void testGetRecord(TestContext context) {
+  void testGetRecord(VertxTestContext context) {
     log.info("=== Test successful OAI-PMH Request ===");
 
     String expectedBody
@@ -76,7 +84,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testGetRecordError(TestContext context) {
+  void testGetRecordError(VertxTestContext context) {
     log.info("=== Test error GetRecord OAI-PMH request ===");
 
     String expectedBody
@@ -97,7 +105,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testIdentify(TestContext context) {
+  void testIdentify(VertxTestContext context) {
     log.info("=== Test Identify OAI-PMH request ===");
 
     String expectedBody
@@ -115,19 +123,18 @@ public class OaiPmhOkapiClientTest {
     processRequest(context, parameters, headers, HttpStatus.SC_OK, expectedBody);
   }
 
-  private void processRequest(TestContext context, MultiMap parameters, MultiMap headers,
+  private void processRequest(VertxTestContext context, MultiMap parameters, MultiMap headers,
     int expectedHttpStatusCode, String expected) {
-    Async async = context.async();
     client.login("admin", "password")
       .thenAcceptAsync(v -> client.call(parameters, headers,
         response -> {
-          context.assertEquals(expectedHttpStatusCode, response.statusCode());
+          assertEquals(expectedHttpStatusCode, response.statusCode());
           String body = response.bodyAsString();
           log.info("oai-pmh-mod response body: " + body);
           assertEquals(expected, body);
-          async.complete();
+          context.completeNow();
         },
-        t -> context.fail(t.getMessage())
+        t -> context.failNow(t.getMessage())
         )
       );
   }
