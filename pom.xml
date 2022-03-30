@@ -40,7 +40,7 @@
     <apache.common.lang.ver>3.5</apache.common.lang.ver>
     <guava.ver>19.0</guava.ver>
     <jaxb.time.adaptor.ver>1.1.3</jaxb.time.adaptor.ver>
-    <junit.ver>4.13.1</junit.ver>
+    <vertx-junit5.ver>4.2.6</vertx-junit5.ver>
     <org.junit.jupiter.ver>5.8.1</org.junit.jupiter.ver>
     <mockito.ver>1.9.5</mockito.ver>
     <rest.assured.ver>4.3.0</rest.assured.ver>
@@ -103,7 +103,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-junit5</artifactId>
-      <version>4.2.6</version>
+      <version>${vertx-junit5.ver}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
