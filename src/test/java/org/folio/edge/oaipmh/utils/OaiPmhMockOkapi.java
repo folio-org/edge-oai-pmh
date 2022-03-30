@@ -72,15 +72,6 @@ public class OaiPmhMockOkapi extends MockOkapi {
         log.info("The server has started.");
         context.completeNow();
       }));
-
-//    final Async async = context.async();
-//    server.requestHandler(defineRoutes()).listen(okapiPort, result -> {
-//      if (result.failed()) {
-//        log.warn(result.cause().getMessage());
-//      }
-//      context.assertTrue(result.succeeded());
-//      async.complete();
-//    });
   }
 
   @Override

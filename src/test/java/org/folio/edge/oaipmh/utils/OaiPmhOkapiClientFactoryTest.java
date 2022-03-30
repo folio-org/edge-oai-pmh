@@ -1,14 +1,14 @@
 package org.folio.edge.oaipmh.utils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.vertx.core.Vertx;
 
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class OaiPmhOkapiClientFactoryTest {
 
@@ -16,7 +16,7 @@ public class OaiPmhOkapiClientFactoryTest {
 
   private OaiPmhOkapiClientFactory ocf;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     Vertx vertx = Vertx.vertx();
     ocf = new OaiPmhOkapiClientFactory(vertx, "http://mocked.okapi:9130", reqTimeout);

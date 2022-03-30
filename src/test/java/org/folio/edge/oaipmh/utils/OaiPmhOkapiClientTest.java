@@ -7,22 +7,20 @@ import org.apache.http.HttpStatus;
 import org.folio.edge.core.utils.test.TestUtils;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.Test;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openarchives.oai._2.VerbType;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
-import io.vertx.ext.unit.Async;
-import io.vertx.ext.unit.TestContext;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Slf4j
 @ExtendWith(VertxExtension.class)
@@ -35,7 +33,7 @@ public class OaiPmhOkapiClientTest {
   private OaiPmhOkapiClient client;
   private OaiPmhMockOkapi mockOkapi;
 
-  @BeforeAll
+  @BeforeEach
   public void setUp(Vertx vertx, VertxTestContext context) {
     int okapiPort = TestUtils.getPort();
 
@@ -50,9 +48,18 @@ public class OaiPmhOkapiClientTest {
     mockOkapi.start(context);
   }
 
-  @AfterAll
-  public void tearDown(TestContext context) {
-    mockOkapi.close(context);
+  @AfterEach
+  public void tearDown(Vertx vertx, VertxTestContext context) {
+    log.info("Shutting down server");
+    vertx.close(res -> {
+      if (res.succeeded()) {
+        log.info("Successfully shut down edge-oai-pmh server");
+        context.completeNow();
+      } else {
+        log.error("Failed to shut down edge-oai-pmh server", res.cause());
+        context.failNow(res.cause().getMessage());
+      }
+    });
   }
 
   @Test
@@ -116,19 +123,18 @@ public class OaiPmhOkapiClientTest {
     processRequest(context, parameters, headers, HttpStatus.SC_OK, expectedBody);
   }
 
-  private void processRequest(TestContext context, MultiMap parameters, MultiMap headers,
+  private void processRequest(VertxTestContext context, MultiMap parameters, MultiMap headers,
     int expectedHttpStatusCode, String expected) {
-    Async async = context.async();
     client.login("admin", "password")
       .thenAcceptAsync(v -> client.call(parameters, headers,
         response -> {
-          context.assertEquals(expectedHttpStatusCode, response.statusCode());
+          assertEquals(expectedHttpStatusCode, response.statusCode());
           String body = response.bodyAsString();
           log.info("oai-pmh-mod response body: " + body);
           assertEquals(expected, body);
-          async.complete();
+          context.completeNow();
         },
-        t -> context.fail(t.getMessage())
+        t -> context.failNow(t.getMessage())
         )
       );
   }
