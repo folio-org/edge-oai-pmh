@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Slf4j
 @ExtendWith(VertxExtension.class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class OaiPmhOkapiClientTest {
+class OaiPmhOkapiClientTest {
 
   private static final String TENANT = "diku";
   private static final int REQUEST_TIMEOUT = 3000;
@@ -34,7 +34,7 @@ public class OaiPmhOkapiClientTest {
   private OaiPmhMockOkapi mockOkapi;
 
   @BeforeEach
-  public void setUp(Vertx vertx, VertxTestContext context) {
+  void setUp(Vertx vertx, VertxTestContext context) {
     int okapiPort = TestUtils.getPort();
 
     List<String> knownTenants = new ArrayList<>();
@@ -49,7 +49,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @AfterEach
-  public void tearDown(Vertx vertx, VertxTestContext context) {
+  void tearDown(Vertx vertx, VertxTestContext context) {
     log.info("Shutting down server");
     vertx.close(res -> {
       if (res.succeeded()) {
@@ -63,7 +63,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testGetRecord(VertxTestContext context) {
+  void testGetRecord(VertxTestContext context) {
     log.info("=== Test successful OAI-PMH Request ===");
 
     String expectedBody
@@ -84,7 +84,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testGetRecordError(VertxTestContext context) {
+  void testGetRecordError(VertxTestContext context) {
     log.info("=== Test error GetRecord OAI-PMH request ===");
 
     String expectedBody
@@ -105,7 +105,7 @@ public class OaiPmhOkapiClientTest {
   }
 
   @Test
-  public void testIdentify(VertxTestContext context) {
+  void testIdentify(VertxTestContext context) {
     log.info("=== Test Identify OAI-PMH request ===");
 
     String expectedBody

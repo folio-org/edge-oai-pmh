@@ -46,7 +46,7 @@ import static org.mockito.Mockito.spy;
 
 @Slf4j
 @ExtendWith(VertxExtension.class)
-public class OaiPmhTest {
+class OaiPmhTest {
 
   private static final String API_KEY = ApiKeyUtils.generateApiKey(10, "diku", "user");
   private static final String ILLEGAL_API_KEY = "eyJzIjoiYmJaUnYyamt2ayIsInQiOiJkaWt1IiwidSI6ImRpa3VfYSJ9";
@@ -59,7 +59,7 @@ public class OaiPmhTest {
   private static OaiPmhMockOkapi mockOkapi;
 
   @BeforeAll
-  public static void setUpOnce(Vertx vertx, VertxTestContext context) throws Exception {
+  static void setUpOnce(Vertx vertx, VertxTestContext context) throws Exception {
     int okapiPort = TestUtils.getPort();
     int serverPort = TestUtils.getPort();
 
@@ -85,7 +85,7 @@ public class OaiPmhTest {
   }
 
   @AfterAll
-  public static void tearDownOnce(Vertx vertx, VertxTestContext context) {
+  static void tearDownOnce(Vertx vertx, VertxTestContext context) {
     log.info("Shutting down server");
     vertx.close(res -> {
       if (res.succeeded()) {
@@ -99,7 +99,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAdminHealth() {
+  void testAdminHealth() {
     log.info("=== Test the health check endpoint ===");
 
     final Response resp = RestAssured
@@ -115,7 +115,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordNotFoundHttpGet() {
+  void testGetRecordNotFoundHttpGet() {
     log.info("=== Test GetRecord OAI-PMH error - not found (HTTP GET)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
@@ -136,7 +136,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordNotFoundHttpPost() {
+  void testGetRecordNotFoundHttpPost() {
     log.info("=== Test GetRecord OAI-PMH error - not found (HTTP POST)===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK);
@@ -158,7 +158,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordSuccessfulHttpGet() {
+  void testGetRecordSuccessfulHttpGet() {
     log.info("=== Test successful GetRecord OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -179,7 +179,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordSuccessfulHttpPost() {
+  void testGetRecordSuccessfulHttpPost() {
     log.info("=== Test successful GetRecord OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -201,7 +201,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testIdentifySuccessfulHttpGet() {
+  void testIdentifySuccessfulHttpGet() {
     log.info("=== Test successful Identify OAI-PMH (HTTP GET) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
@@ -221,7 +221,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testIdentifySuccessfulHttpPost() {
+  void testIdentifySuccessfulHttpPost() {
     log.info("=== Test successful Identify OAI-PMH (HTTP POST) ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
@@ -242,7 +242,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testIdentifyBadApiKeyHttpGet() {
+  void testIdentifyBadApiKeyHttpGet() {
     log.info("=== Test bad apikey Identify OAI-PMH (HTTP GET) ===");
 
     final Response resp = RestAssured
@@ -259,7 +259,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testApiKeyOnPath() {
+  void testApiKeyOnPath() {
     log.info("=== Test ability to provide the api key on the path ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK);
@@ -279,7 +279,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testIdentifyAccessDeniedApiKeyHttpGet() {
+  void testIdentifyAccessDeniedApiKeyHttpGet() {
     log.info("=== Test Access Denied apikey Identify OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured
@@ -296,7 +296,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordInvalidApiKeyHttpPost() {
+  void testGetRecordInvalidApiKeyHttpPost() {
     log.info("=== Test bad apikey GetRecord OAI-PMH (HTTP POST) ===");
 
     final Response resp = RestAssured.given()
@@ -317,7 +317,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordOkapiExceptionHttpGet() {
+  void testGetRecordOkapiExceptionHttpGet() {
     log.info("=== Test exceptional GetRecord OAI-PMH (HTTP GET) ===");
 
     RestAssured
@@ -331,7 +331,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testGetRecordOkapiTimeoutExceptionHttpGet() {
+  void testGetRecordOkapiTimeoutExceptionHttpGet() {
     log.info("=== Test timeout GetRecord OAI-PMH (HTTP GET) ===");
 
     final Response resp = RestAssured
@@ -349,7 +349,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testCompressionAlgorithms() {
+  void testCompressionAlgorithms() {
     log.info("=== Test response compression ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -371,7 +371,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testNoCompression() {
+  void testNoCompression() {
     log.info("=== Test no response compression  ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -395,7 +395,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAcceptHeader() {
+  void testAcceptHeader() {
     log.info("=== Test handling of the Accept header ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -419,7 +419,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testNoAcceptHeader() {
+  void testNoAcceptHeader() {
     log.info("=== Test handling of the Accept header ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -441,7 +441,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAcceptHeaderHasUnsupportedType() {
+  void testAcceptHeaderHasUnsupportedType() {
     log.info("=== Test handling of unsupported type in Accept header ===");
 
     String unsupportedAcceptType = "application/json";
@@ -466,7 +466,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAcceptHeaderIsAbsent() {
+  void testAcceptHeaderIsAbsent() {
     log.info("=== Test Accept header is absent ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -490,7 +490,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAcceptHeaderIsEmpty() {
+  void testAcceptHeaderIsEmpty() {
     log.info("=== Test Accept header is empty ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
@@ -522,7 +522,7 @@ public class OaiPmhTest {
       "text/html, text/html;level=1, */*",
       "text/*;q=0.3, text/html;level=1, */*;q=0.5"
     })
-  public void testAcceptHeadersHasDifferentTypos(String header) {
+  void testAcceptHeadersHasDifferentTypos(String header) {
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK);
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
@@ -544,7 +544,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testAcceptHeaderHasOnlyUnsupportedTypesWithParameter() {
+  void testAcceptHeaderHasOnlyUnsupportedTypesWithParameter() {
     log.info("=== Accept header has only unsupported types with parameter ===");
 
     String acceptHeader = "text/plain; q=0.5, text/html";
@@ -569,7 +569,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void testInvalidAcceptHeaderReturns406() {
+  void testInvalidAcceptHeaderReturns406() {
     String url = "/oai/" + API_KEY + "?verb=ListRecords";
     RestAssured
       .given()
@@ -583,7 +583,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void shouldResendRequestUsingResumptionTokenWhenListRecordsResponseHasEmptyRecordsList() {
+  void shouldResendRequestUsingResumptionTokenWhenListRecordsResponseHasEmptyRecordsList() {
     log.info("=== Test successful ListRecords with empty records response ===");
 
     Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_MOCK);
@@ -603,7 +603,7 @@ public class OaiPmhTest {
   }
 
   @Test
-  public void shouldReturnForbidden_whenUserHasMissingPermission() {
+  void shouldReturnForbidden_whenUserHasMissingPermission() {
     log.info("=== Test successful ListRecords with empty records response ===");
 
     RestAssured
