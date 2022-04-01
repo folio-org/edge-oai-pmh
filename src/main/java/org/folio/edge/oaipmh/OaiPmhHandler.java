@@ -130,10 +130,10 @@ public class OaiPmhHandler extends Handler {
         }
       }
     } else {
-      var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage());
+      var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage() + " " + oaiPmhResponse.bodyAsString());
       log.error(message);
       if (!ctx.response().ended()) {
-        ctx.response().setStatusCode(500).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
+        ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
       }
     }
   }
