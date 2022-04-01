@@ -53,7 +53,7 @@ class OaiPmhTest {
   private static final String BAD_API_KEY = "ZnMwMDAwMDAwMA==0000";
 
   private static final String INVALID_API_KEY_EXPECTED_RESPONSE_BODY = "Invalid API Key: ZnMwMDAwMDAwMA==0000";
-  private static final String EXPECTED_ERROR_FORBIDDEN_MSG = "Error in the response from repository: status code - 403, response status message - Access requires permission: oai-pmh.records.collection.get";
+  private static final String EXPECTED_ERROR_FORBIDDEN_MSG = "Error in the response from repository: status code - 403, response status message - Forbidden Access requires permission: oai-pmh.records.collection.get";
   private static final String EXPECTED_ERROR_INTERNAL_SERVER_ERROR_MSG = "Error in the response from repository: status code - 500, response status message - Internal Server Error";
 
   private static OaiPmhMockOkapi mockOkapi;
@@ -610,7 +610,7 @@ class OaiPmhTest {
       .get(String.format("/oai?verb=GetRecord&metadataPrefix=marc21&identifier=recordIdForbiddenResponse&apikey=%s", API_KEY))
       .then()
       .contentType(TEXT_PLAIN)
-      .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
+      .statusCode(HttpStatus.SC_FORBIDDEN)
       .body(containsString(EXPECTED_ERROR_FORBIDDEN_MSG));
   }
 }

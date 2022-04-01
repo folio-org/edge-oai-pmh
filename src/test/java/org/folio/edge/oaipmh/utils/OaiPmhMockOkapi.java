@@ -44,6 +44,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   private static final String ERROR_MSG_FORBIDDEN = "Access requires permission: oai-pmh.records.collection.get";
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
+  private static final String FORBIDDEN_STATUS_MESSAGE = "Forbidden";
 
   private final Vertx vertx;
 
@@ -134,7 +135,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD) && paramsContainParamWithValue(requestParams, "recordIdForbiddenResponse")) {
       ctx.response()
         .setStatusCode(403)
-        .setStatusMessage(ERROR_MSG_FORBIDDEN)
+        .setStatusMessage(FORBIDDEN_STATUS_MESSAGE)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN)
         .end(ERROR_MSG_FORBIDDEN);
     }
