@@ -36,12 +36,12 @@
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
-    <jaxb2-basics.ver>0.12.0</jaxb2-basics.ver>
-    <apache.common.lang.ver>3.5</apache.common.lang.ver>
-    <guava.ver>19.0</guava.ver>
+    <jaxb2-basics.ver>1.11.1</jaxb2-basics.ver>
+    <apache.common.lang.ver>3.12.0</apache.common.lang.ver>
+    <guava.ver>31.1-jre</guava.ver>
     <jaxb.time.adaptor.ver>1.1.3</jaxb.time.adaptor.ver>
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
-    <jaxb-core.version>2.3.0.1</jaxb-core.version>
+    <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.7.7</mod-configuration-client.version>
     <edge.common.version>4.3.0</edge.common.version>
     <vertx-stack-depchain.version>4.3.1</vertx-stack-depchain.version>
@@ -49,7 +49,7 @@
     <junit.version>4.13.2</junit.version>
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
-    <lombok.version>1.18.12</lombok.version>
+    <lombok.version>1.18.24</lombok.version>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
@@ -74,6 +74,10 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-slf4j-impl</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>edge-common</artifactId>
