@@ -46,7 +46,6 @@
     <edge.common.version>4.3.0</edge.common.version>
     <vertx-stack-depchain.version>4.3.1</vertx-stack-depchain.version>
     <log4j-bom.version>2.17.2</log4j-bom.version>
-    <junit.version>4.13.2</junit.version>
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
     <lombok.version>1.18.24</lombok.version>
@@ -130,12 +129,6 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-unit</artifactId>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${junit.version}</version>
-      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
