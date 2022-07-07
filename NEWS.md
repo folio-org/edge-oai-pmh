@@ -1,4 +1,14 @@
-## 2.4.1 - Unreleased
+## 2.6.0 - Unreleased
+
+## 2.5.0 - Released
+
+This release includes minor improvements and libraries dependencies update
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.4.2...v2.5.0)
+
+### Stories
+* [EDGOAIPMH-83](https://issues.folio.org/browse/EDGOAIPMH-83) - Morning Glory 2022 R2 - Vert.x 3.5.4/v4 upgrade
+* [EDGOAIPMH-82](https://issues.folio.org/browse/EDGOAIPMH-82) - Handle missing permissions gracefully
 
 ## 2.4.0 - Released
 
