@@ -1,5 +1,15 @@
 ## 2.6.0 - Unreleased
 
+## 2.5.1 - Released
+
+This release includes bug fixes in the Vert.x dependency.
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.5.0...v2.5.1)
+
+### Bug Fixes
+
+* [EDGOAIPMH-87](https://issues.folio.org/browse/EDGOAIPMH-87) - edge-common 4.4.1 fixing disabled SSL in Vert.x WebClient
+
 ## 2.5.0 - Released
 
 This release includes minor improvements and libraries dependencies update
