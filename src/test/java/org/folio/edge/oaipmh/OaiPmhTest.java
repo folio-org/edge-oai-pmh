@@ -37,6 +37,7 @@ import static org.folio.edge.core.Constants.SYS_SECURE_STORE_PROP_FILE;
 import static org.folio.edge.core.Constants.TEXT_PLAIN;
 import static org.folio.edge.core.Constants.TEXT_XML;
 import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.REQUEST_TIMEOUT_MS;
+import static org.folio.edge.oaipmh.utils.OaiPmhMockOkapi.RETRY_AFTER_VALUE;
 import static org.hamcrest.Matchers.containsString;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -129,6 +130,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -151,6 +153,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_NOT_FOUND)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -171,6 +174,7 @@ class OaiPmhTest {
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
       .extract()
       .response();
@@ -194,6 +198,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -364,6 +369,7 @@ class OaiPmhTest {
         .contentType(TEXT_XML)
         .statusCode(HttpStatus.SC_OK)
         .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
         .header(HttpHeaders.CONTENT_ENCODING, type.name().toLowerCase())
         .extract()
         .response();
@@ -385,6 +391,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -412,6 +419,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -434,6 +442,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -483,6 +492,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -507,6 +517,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 
@@ -537,6 +548,7 @@ class OaiPmhTest {
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
       .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .header(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
       .extract()
       .response();
 

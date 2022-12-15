@@ -118,7 +118,9 @@ public class OaiPmhHandler extends Handler {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
       Optional<String> encodingHeader = ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.CONTENT_ENCODING)));
+      Optional<String> retryAfterHeader = ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.RETRY_AFTER)));
       encodingHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.CONTENT_ENCODING, value));
+      retryAfterHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.RETRY_AFTER, value));
       Buffer buffer = oaiPmhResponse.body();
       var oaipmh = readOAIPMH(buffer);
       if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {

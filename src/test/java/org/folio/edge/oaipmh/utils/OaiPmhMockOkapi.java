@@ -45,6 +45,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
   public static final long REQUEST_TIMEOUT_MS = 1000L;
   private static final String FORBIDDEN_STATUS_MESSAGE = "Forbidden";
+  public static final String RETRY_AFTER_VALUE = "18111958";
 
   private final Vertx vertx;
 
@@ -101,12 +102,14 @@ public class OaiPmhMockOkapi extends MockOkapi {
       ctx.response()
         .setStatusCode(200)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD)
       && paramsContainParamWithValue(requestParams, "oai:arXiv.org:quant-ph/02131001")) {
       ctx.response()
         .setStatusCode(404)
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+        .putHeader(HttpHeaders.RETRY_AFTER, RETRY_AFTER_VALUE)
         .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_GET_RECORDS_ERROR_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, IDENTIFY)) {
       ctx.response()
