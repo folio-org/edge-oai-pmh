@@ -1,4 +1,14 @@
-## 2.6.0 - Unreleased
+## 2.7.0 - Unreleased
+
+## 2.6.0 - Released
+
+This release includes logging improvements configuration.
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.5.1...v2.6.0)
+
+### Technical tasks
+
+* [EDGOAIPMH-91](https://issues.folio.org/browse/EDGOAIPMH-91) - Logging improvement - Configuration
 
 ## 2.5.1 - Released
 
