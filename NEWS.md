@@ -1,5 +1,13 @@
 ## 2.7.0 - Unreleased
 
+## 2.6.1 - Released
+
+This release upgrades dependencies.
+
+* [EDGOAIPMH-94](https://issues.folio.org/browse/EDGOAIPMH-94) mod-configuration-client 5.9.1, Vertx 4.3.8, apk upgrade
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.6.0...v2.6.1)
+
 ## 2.6.0 - Released
 
 This release includes logging improvements configuration.
