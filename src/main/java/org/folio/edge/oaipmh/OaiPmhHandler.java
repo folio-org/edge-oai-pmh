@@ -59,7 +59,7 @@ public class OaiPmhHandler extends Handler {
 
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
-      log.warn("Provided accept header {} is unsupported", request.headers().getAll(ACCEPT));
+      log.warn("Provided accept headers are unsupported");
       return;
     }
 
@@ -138,7 +138,6 @@ public class OaiPmhHandler extends Handler {
     } else {
       var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage() + " " + oaiPmhResponse.bodyAsString());
       log.error(message);
-      log.debug("Response ended status: {}", ctx.response().ended());
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
       }

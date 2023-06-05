@@ -25,7 +25,6 @@ public class MainVerticle extends EdgeVerticleHttp {
       reqTimeoutMs = 7200000;
     }
     log.debug("reqTimeoutMs: {}", reqTimeoutMs);
-    log.debug("okapiURL: {}", okapiURL);
 
     OaiPmhOkapiClientFactory ocf = new OaiPmhOkapiClientFactory(vertx, okapiURL, reqTimeoutMs);
     OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf);
@@ -38,8 +37,6 @@ public class MainVerticle extends EdgeVerticleHttp {
     router.route(HttpMethod.GET, "/oai/:apiKeyPath").handler(oaiPmhHandler::handle);
     router.route(HttpMethod.POST, "/oai").handler(oaiPmhHandler::handle);
     router.route(HttpMethod.POST, "/oai/:apiKeyPath").handler(oaiPmhHandler::handle);
-
-    log.debug("router routes: {}", router.getRoutes());
 
     return router;
   }
