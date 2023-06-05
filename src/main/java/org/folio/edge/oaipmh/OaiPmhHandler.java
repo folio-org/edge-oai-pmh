@@ -43,7 +43,7 @@ public class OaiPmhHandler extends Handler {
 
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
-  private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s";
+  private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s %s";
 
   private OaiPmhOkapiClient oaiPmhClient;
 
@@ -59,6 +59,7 @@ public class OaiPmhHandler extends Handler {
 
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
+      log.error("Provided accept headers are unsupported");
       return;
     }
 
@@ -70,6 +71,8 @@ public class OaiPmhHandler extends Handler {
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
     var request = ctx.request();
+    log.debug("Client request: {} {}", request.method(), request.absoluteURI());
+
     ofNullable(resumptionToken).ifPresent(token -> {
       request.params().set(RESUMPTION_TOKEN, token);
       request.params().remove(METADATA_PREFIX);
@@ -114,6 +117,7 @@ public class OaiPmhHandler extends Handler {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
     ctx.response().setStatusCode(oaiPmhResponse.statusCode());
+
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
@@ -130,7 +134,7 @@ public class OaiPmhHandler extends Handler {
         }
       }
     } else {
-      var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage() + " " + oaiPmhResponse.bodyAsString());
+      var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage(), oaiPmhResponse.bodyAsString());
       log.error(message);
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);

@@ -3,6 +3,7 @@ package org.folio.edge.oaipmh;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 
+import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.core.Constants;
 import org.folio.edge.core.EdgeVerticleHttp;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
@@ -11,6 +12,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 
+@Slf4j
 public class MainVerticle extends EdgeVerticleHttp {
 
   @Override
