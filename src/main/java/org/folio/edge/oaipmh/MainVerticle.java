@@ -24,7 +24,6 @@ public class MainVerticle extends EdgeVerticleHttp {
     if (reqTimeoutMs == Constants.DEFAULT_REQUEST_TIMEOUT_MS) {
       reqTimeoutMs = 7200000;
     }
-    log.debug("reqTimeoutMs: {}", reqTimeoutMs);
 
     OaiPmhOkapiClientFactory ocf = new OaiPmhOkapiClientFactory(vertx, okapiURL, reqTimeoutMs);
     OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf);

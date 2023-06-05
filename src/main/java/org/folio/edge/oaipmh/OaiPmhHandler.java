@@ -117,7 +117,6 @@ public class OaiPmhHandler extends Handler {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
     ctx.response().setStatusCode(oaiPmhResponse.statusCode());
-    log.debug("httpsStatusCode in handleProxyResponse: {}", httpStatusCode);
 
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
