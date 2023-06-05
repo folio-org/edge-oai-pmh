@@ -59,6 +59,7 @@ public class OaiPmhHandler extends Handler {
 
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
+      log.warn("Provided accept header {} is unsupported", request.headers().getAll(ACCEPT));
       return;
     }
 
@@ -70,6 +71,9 @@ public class OaiPmhHandler extends Handler {
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
     var request = ctx.request();
+    log.debug("Resumption token: {}", resumptionToken);
+    log.debug("Client request: {} {}", request.method(), request.absoluteURI());
+
     ofNullable(resumptionToken).ifPresent(token -> {
       request.params().set(RESUMPTION_TOKEN, token);
       request.params().remove(METADATA_PREFIX);
@@ -114,6 +118,8 @@ public class OaiPmhHandler extends Handler {
     HttpServerResponse edgeResponse = ctx.response();
     int httpStatusCode = oaiPmhResponse.statusCode();
     ctx.response().setStatusCode(oaiPmhResponse.statusCode());
+    log.debug("httpsStatusCode in handleProxyResponse: {}", httpStatusCode);
+
     if (EXPECTED_CODES.contains(httpStatusCode)) {
       edgeResponse.putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML);
       // In case the repository logic already compressed the response, lets transfer header to avoid potential doubled compression
@@ -132,6 +138,7 @@ public class OaiPmhHandler extends Handler {
     } else {
       var message = String.format(ERROR_FROM_REPOSITORY, oaiPmhResponse.statusCode(), oaiPmhResponse.statusMessage() + " " + oaiPmhResponse.bodyAsString());
       log.error(message);
+      log.debug("Response ended status: {}", ctx.response().ended());
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
       }
