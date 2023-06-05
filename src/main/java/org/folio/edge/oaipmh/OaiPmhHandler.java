@@ -59,7 +59,7 @@ public class OaiPmhHandler extends Handler {
 
     if (!supportedAcceptHeaders(request)) {
       notAcceptableResponse(ctx, request);
-      log.warn("Provided accept headers are unsupported");
+      log.error("Provided accept headers are unsupported");
       return;
     }
 
