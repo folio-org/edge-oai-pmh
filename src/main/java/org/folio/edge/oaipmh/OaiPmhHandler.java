@@ -71,7 +71,6 @@ public class OaiPmhHandler extends Handler {
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
     var request = ctx.request();
-    log.debug("Resumption token: {}", resumptionToken);
     log.debug("Client request: {} {}", request.method(), request.absoluteURI());
 
     ofNullable(resumptionToken).ifPresent(token -> {

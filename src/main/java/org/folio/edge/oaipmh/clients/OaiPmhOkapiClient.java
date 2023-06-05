@@ -53,7 +53,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
     // EDGOAIPMH-39
     headers.remove(ACCEPT);
     headers.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
-    log.debug("Url after getting Url: {}", url);
     get(
       url,
       tenant,
