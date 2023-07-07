@@ -15,8 +15,6 @@ import java.util.List;
 public class ConsortiaTenantClient extends OkapiClient {
   private static final String USER_TENANTS_ENDPOINT_LIMIT_1 = "/user-tenants?limit=1";
 
-  private ConsortiaClient consortiaClient;
-
   ConsortiaTenantClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
     super(vertx, okapiURL, tenant, timeout);
   }
@@ -33,8 +31,7 @@ public class ConsortiaTenantClient extends OkapiClient {
       return Future.succeededFuture(Collections.singletonList(tenant));
     }
     var centralTenantId = userTenants.get(0).getCentralTenantId();
-    consortiaClient = new ConsortiaClient(vertx, okapiURL, centralTenantId, reqTimeout);
-    return consortiaClient.getTenantList(tenant, headers);
+    return new ConsortiaClient(vertx, okapiURL, centralTenantId, reqTimeout).getTenantList(tenant, headers);
 
   }
 }
