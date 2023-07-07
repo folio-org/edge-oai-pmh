@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A JSON schema for the Tenant",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Tenant identifier",
+      "type": "string"
+    },
+    "code": {
+      "description": "Tenant code",
+      "type": "string"
+    },
+    "name": {
+      "description": "Tenant name",
+      "type": "string"
+    },
+    "isCentral": {
+      "description": "Central tenant flag",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "code",
+    "name",
+    "isCentral"
+  ]
+}

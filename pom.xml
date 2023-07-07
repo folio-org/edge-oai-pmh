@@ -29,6 +29,7 @@
   </licenses>
 
   <properties>
+    <raml-module-builder.version>35.0.1</raml-module-builder.version>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -86,6 +87,11 @@
       <groupId>org.folio</groupId>
       <artifactId>mod-configuration-client</artifactId>
       <version>${mod-configuration-client.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>domain-models-runtime</artifactId>
+      <version>${raml-module-builder.version}</version>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
@@ -235,6 +241,20 @@
       </plugin>
 
       <plugin>
+        <groupId>org.folio</groupId>
+        <artifactId>domain-models-maven-plugin</artifactId>
+        <version>${raml-module-builder.version}</version>
+        <executions>
+          <execution>
+            <id>generate_interfaces</id>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.4</version>
@@ -285,6 +305,7 @@
         </executions>
       </plugin>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.0.1</version>
         <executions>
@@ -336,6 +357,26 @@
       </plugin>
 
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add_generated_sources_folder</id>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <phase>initialize</phase>
+            <configuration>
+              <sources>
+                <source>${project.build.directory}/generated-sources/raml-jaxrs</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
         <version>2.5.3</version>
@@ -356,6 +397,13 @@
       <url>https://repository.folio.org/repository/maven-folio</url>
     </repository>
   </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
+    </pluginRepository>
+  </pluginRepositories>
 
   <distributionManagement>
     <repository>
