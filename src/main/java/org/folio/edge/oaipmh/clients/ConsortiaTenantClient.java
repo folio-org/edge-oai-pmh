@@ -17,10 +17,6 @@ public class ConsortiaTenantClient extends OkapiClient {
 
   private ConsortiaClient consortiaClient;
 
-  public ConsortiaTenantClient(OkapiClient client) {
-    super(client);
-  }
-
   ConsortiaTenantClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
     super(vertx, okapiURL, tenant, timeout);
   }

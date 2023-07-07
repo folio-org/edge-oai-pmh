@@ -19,10 +19,6 @@ public class ConsortiaClient extends OkapiClient {
   private static final String CONSORTIA_ENDPOINT = "/consortia";
   private static final String CONSORTIA_TENANTS_ENDPOINT_TEMPLATE = "/consortia/%s/tenants";
 
-  public ConsortiaClient(OkapiClient client) {
-    super(client);
-  }
-
   ConsortiaClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
     super(vertx, okapiURL, tenant, timeout);
   }
