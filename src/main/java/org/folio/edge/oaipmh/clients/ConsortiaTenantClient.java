@@ -13,7 +13,7 @@ import java.util.List;
 
 @Slf4j
 public class ConsortiaTenantClient extends OkapiClient {
-  private static final String USER_TENANTS_ENDPOINT = "/user-tenants";
+  private static final String USER_TENANTS_ENDPOINT_LIMIT_1 = "/user-tenants?limit=1";
 
   private ConsortiaClient consortiaClient;
 
@@ -22,7 +22,7 @@ public class ConsortiaTenantClient extends OkapiClient {
   }
 
   public Future<List<String>> getConsortiaTenants(MultiMap headers) {
-    return this.get(okapiURL + USER_TENANTS_ENDPOINT, tenant, headers)
+    return this.get(okapiURL + USER_TENANTS_ENDPOINT_LIMIT_1, tenant, headers)
       .map(resp -> resp.bodyAsJson(UserTenantCollection.class))
       .compose(collection -> processUserTenants(collection, headers));
   }
