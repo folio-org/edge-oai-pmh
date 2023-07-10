@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A JSON schema for the Consortia",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Consortia identifier",
+      "$ref": "uuid.schema"
+    },
+    "name": {
+      "description": "Consortia name",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name"
+  ]
+}

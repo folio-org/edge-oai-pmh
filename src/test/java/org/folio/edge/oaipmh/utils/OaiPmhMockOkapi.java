@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import io.vertx.core.json.JsonObject;
+import lombok.SneakyThrows;
 import org.folio.edge.core.utils.test.MockOkapi;
 
 import io.vertx.core.MultiMap;
@@ -23,6 +25,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
+import org.folio.rest.jaxrs.model.UserTenant;
+import org.folio.rest.jaxrs.model.UserTenantCollection;
 
 @Slf4j
 public class OaiPmhMockOkapi extends MockOkapi {
@@ -37,6 +41,18 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/ListRecordsEmptyResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_MOCK
     = "src/test/resources/mocks/ListRecordsResponse.xml";
+  public static final String PATH_TO_EMPTY_USER_TENANTS_MOCK
+    = "src/test/resources/mocks/emptyUserTenantsCollection.json";
+  public static final String PATH_TO_EMPTY_CONSORTIA_USER_TENANTS_MOCK
+    = "src/test/resources/mocks/userTenantsCollectionForEmptyConsortia.json";
+  public static final String PATH_TO_USER_TENANTS_MOCK
+    = "src/test/resources/mocks/userTenantsCollection.json";
+  public static final String PATH_TO_CONSORTIUM_COLLECTION_MOCK
+    = "src/test/resources/mocks/consortiumCollection.json";
+  public static final String PATH_TO_EMPTY_CONSORTIUM_COLLECTION_MOCK
+    = "src/test/resources/mocks/emptyConsortiumCollection.json";
+  public static final String PATH_TO_CONSORTIA_TENANTS_MOCK
+    = "src/test/resources/mocks/consortiaTenants.json";
   private static final String GET_RECORD = "GetRecord";
   private static final String IDENTIFY = "Identify";
   private static final String LIST_RECORDS = "ListRecords";
@@ -79,6 +95,9 @@ public class OaiPmhMockOkapi extends MockOkapi {
   public Router defineRoutes() {
     Router router = super.defineRoutes();
     router.route(HttpMethod.GET, "/oai/records*").handler(this::oaiPmhHandler);
+    router.route(HttpMethod.GET, "/user-tenants").handler(this::userTenantsHandler);
+    router.route(HttpMethod.GET, "/consortia").handler(this::consortiaHandler);
+    router.route(HttpMethod.GET, "/consortia/:id/tenants").handler(this::consortiaTenantsHandler);
     return router;
   }
 
@@ -150,4 +169,42 @@ public class OaiPmhMockOkapi extends MockOkapi {
       .anyMatch(entry -> entry.getValue().equals(value));
   }
 
+  @SneakyThrows
+  private void userTenantsHandler(RoutingContext ctx) {
+    var tenantId = ctx.request().getHeader("x-okapi-tenant");
+    if ("consortia".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_USER_TENANTS_MOCK))));
+    } else if ("empty_consortia".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_EMPTY_CONSORTIA_USER_TENANTS_MOCK))));
+    } else {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_EMPTY_USER_TENANTS_MOCK))));
+    }
+  }
+
+  @SneakyThrows
+  private void consortiaHandler(RoutingContext ctx) {
+    var tenantId = ctx.request().getHeader("x-okapi-tenant");
+    if ("central".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIUM_COLLECTION_MOCK))));
+    } else {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_EMPTY_CONSORTIUM_COLLECTION_MOCK))));
+    }
+  }
+
+  @SneakyThrows
+  private void consortiaTenantsHandler(RoutingContext ctx) {
+    ctx.response()
+      .setStatusCode(200)
+      .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK))));
+  }
 }

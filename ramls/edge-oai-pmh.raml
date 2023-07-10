@@ -8,6 +8,12 @@ documentation:
     content: 'Edge API to interface with FOLIO for 3rd party harvesters to harvest metadta via OAI-PMH'
 types:
   OAI-PMH: !include schemas/OAI-PMH.xsd
+  consortium: !include schemas/consortium.json
+  consortiumCollection: !include schemas/consortiumCollection.json
+  userTenant: !include schemas/userTenant.json
+  userTenantCollection: !include schemas/userTenantCollection.json
+  tenant: !include schemas/tenant.json
+  tenantCollection: !include schemas/tenantCollection.json
 traits:
   resps: !include traits/resps.raml
   params: !include traits/params.raml

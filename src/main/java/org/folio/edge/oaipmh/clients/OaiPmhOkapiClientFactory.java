@@ -13,4 +13,8 @@ public class OaiPmhOkapiClientFactory extends OkapiClientFactory {
   public OaiPmhOkapiClient getOaiPmhOkapiClient(String tenant) {
     return new OaiPmhOkapiClient(vertx, okapiURL, tenant, reqTimeoutMs);
   }
+
+  public ConsortiaTenantClient getConsortiaTenantClient(String tenant) {
+    return new ConsortiaTenantClient(vertx, okapiURL, tenant, reqTimeoutMs);
+  }
 }

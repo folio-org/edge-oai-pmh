@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A JSON schema for the Consortium Collection",
+  "type": "object",
+  "properties": {
+    "consortia": {
+      "description": "A set of consortia",
+      "type": "array",
+      "items": {
+        "description": "List of consortia",
+        "type": "object",
+        "$ref": "consortium.json"
+      }
+    },
+    "totalRecords": {
+      "description": "Total number of consortia",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "consortia",
+    "totalRecords"
+  ]
+}

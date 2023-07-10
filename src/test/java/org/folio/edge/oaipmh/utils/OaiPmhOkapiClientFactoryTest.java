@@ -28,4 +28,11 @@ class OaiPmhOkapiClientFactoryTest {
     assertNotNull(client);
     assertEquals(reqTimeout, client.reqTimeout);
   }
+
+  @Test
+  void testGetConsortiaTenantClient() {
+    var client = ocf.getConsortiaTenantClient("tenant");
+    assertNotNull(client);
+    assertEquals(reqTimeout, client.reqTimeout);
+  }
 }
