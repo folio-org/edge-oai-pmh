@@ -1,28 +1,51 @@
 package org.folio.edge.oaipmh;
 
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.KEY_VALUE_DELIMITER;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
+import static org.folio.edge.oaipmh.utils.Constants.PARAMETER_DELIMITER;
 import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
+import static org.folio.edge.oaipmh.utils.Constants.TENANT_ID;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.ext.web.client.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.folio.edge.core.Handler;
+import org.folio.edge.core.cache.Cache;
+import org.folio.edge.core.model.ClientInfo;
 import org.folio.edge.core.security.SecureStore;
+import org.folio.edge.core.utils.ApiKeyUtils;
+import org.folio.edge.core.utils.OkapiClient;
 import org.folio.edge.core.utils.OkapiClientFactory;
+import org.folio.edge.oaipmh.clients.ConsortiaTenantClient;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
 
 import com.google.common.collect.Iterables;
@@ -34,21 +57,28 @@ import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 import org.openarchives.oai._2.ListRecordsType;
 import org.openarchives.oai._2.OAIPMH;
+import org.openarchives.oai._2.RequestType;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 @Slf4j
 public class OaiPmhHandler extends Handler {
-
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
   private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s %s";
 
   private OaiPmhOkapiClient oaiPmhClient;
+  private OkapiClient okapiClient;
+  private Cache<List<String>> tenantsCache;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
+    tenantsCache = new Cache.Builder<List<String>>()
+      .withTTL(TimeUnit.HOURS.toMillis(1))
+      .withNullValueTTL(0)
+      .withCapacity(100)
+      .build();
   }
 
   protected void handle(RoutingContext ctx) {
@@ -64,9 +94,73 @@ public class OaiPmhHandler extends Handler {
     }
 
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
-      oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-      performCall(ctx, oaiPmhClient, null);
+      this.okapiClient = okapiClient;
+      getTenants(okapiClient)
+        .thenAccept(list -> {
+          if (isEmpty(list)) {
+            notFound(ctx, "Tenants list is absent or empty");
+          }
+          if (isSingleTenantHarvesting(list)) {
+            oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+            performCall(ctx, oaiPmhClient, null);
+          } else {
+            if (isFirstRequest(request)) {
+              callToTenant(ctx, list.get(0));
+            } else {
+              var resumptionTokenParams = parseResumptionToken(request.params().get(RESUMPTION_TOKEN));
+              if (shouldStartHarvestingForNextTenant(resumptionTokenParams)) {
+                request.params().remove(RESUMPTION_TOKEN);
+                request.params().set(METADATA_PREFIX, resumptionTokenParams.get(METADATA_PREFIX));
+              }
+              callToTenant(ctx, resumptionTokenParams.get(TENANT_ID));
+            }
+          }
+        });
     });
+  }
+
+  private CompletableFuture<List<String>> getTenants(OkapiClient okapiClient) {
+    var res = tenantsCache.get(okapiClient.tenant);
+    if (isEmpty(res)) {
+      return new ConsortiaTenantClient(okapiClient).getConsortiaTenants(null)
+        .toCompletionStage().toCompletableFuture()
+        .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value);
+    }
+    return CompletableFuture.completedFuture(res);
+  }
+
+  private boolean isSingleTenantHarvesting(List<String> tenants) {
+    return tenants.size() == 1;
+  }
+
+  private boolean shouldStartHarvestingForNextTenant(Map<String, String> params) {
+    return params.size() == 2 && params.containsKey(METADATA_PREFIX) && params.containsKey(TENANT_ID);
+  }
+
+  private void callToTenant(RoutingContext ctx, String tenant) {
+    var client = ocf.getOkapiClient(tenant);
+    getToken(ctx, tenant, client)
+      .thenAccept(token -> {
+        client.setToken(token);
+        oaiPmhClient = new OaiPmhOkapiClient(client);
+        performCall(ctx, oaiPmhClient, null);
+      });
+  }
+
+  private Optional<String> getNextTenant(List<String> list, String tenant) {
+    var nextTenantIndex = list.indexOf(tenant) + 1;
+    if (list.size() > nextTenantIndex) {
+      return Optional.of(list.get(nextTenantIndex));
+    }
+    return Optional.empty();
+  }
+
+  private Map<String, String> parseResumptionToken(String resumptionToken) {
+    var decodedToken = new String(Base64.getUrlDecoder().decode(resumptionToken),
+      StandardCharsets.UTF_8);
+    return URLEncodedUtils
+      .parse(decodedToken, UTF_8, '&').stream()
+      .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
   }
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
@@ -127,6 +221,28 @@ public class OaiPmhHandler extends Handler {
       var oaipmh = readOAIPMH(buffer);
       if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {
         performCall(ctx, oaiPmhClient, oaipmh.getListRecords().getResumptionToken().getValue());
+      } else if (isLastResponse(oaipmh)) {
+        getTenants(okapiClient)
+          .thenAccept(list -> {
+            var nextTenant = getNextTenant(list, oaiPmhClient.tenant);
+            if (nextTenant.isPresent()) {
+              var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
+              if (isListRecords(oaipmh)) {
+                oaipmh.getListRecords().getResumptionToken().setValue(newResumptionToken);
+              } else {
+                oaipmh.getListIdentifiers().getResumptionToken().setValue(newResumptionToken);
+              }
+              try {
+                var stream = new ByteArrayOutputStream();
+                JAXBContext.newInstance(OAIPMH.class).createMarshaller().marshal(oaipmh, stream);
+                edgeResponse.end(BufferImpl.buffer(stream.toByteArray()));
+              } catch (JAXBException e) {
+                internalServerError(ctx, "Cannot marshall OAIPMH object");
+              }
+            } else {
+              edgeResponse.end(buffer);
+            }
+          });
       } else {
         edgeResponse.end(buffer);
         if (encodingHeader.isEmpty()) {
@@ -198,5 +314,41 @@ public class OaiPmhHandler extends Handler {
     return listRecordsType.getRecords().isEmpty()
       && nonNull(listRecordsType.getResumptionToken())
       && !listRecordsType.getResumptionToken().getValue().isEmpty();
+  }
+
+  private boolean isFirstRequest(HttpServerRequest request) {
+    return isNull(request.params().get(RESUMPTION_TOKEN));
+  }
+
+  private CompletableFuture<String> getToken(RoutingContext ctx, String tenant, OkapiClient client) {
+    var key = keyHelper.getApiKey(ctx);
+    ClientInfo clientInfo;
+    try {
+      clientInfo = ApiKeyUtils.parseApiKey(key);
+    } catch (ApiKeyUtils.MalformedApiKeyException e) {
+      return CompletableFuture.failedFuture(e);
+    }
+    return iuHelper.getToken(client, clientInfo.salt, tenant, clientInfo.username);
+  }
+
+  private boolean isLastResponse(OAIPMH oaipmh) {
+    return (nonNull(oaipmh.getListRecords()) && (isNull(oaipmh.getListRecords().getResumptionToken()) || oaipmh.getListRecords().getResumptionToken().getValue().isEmpty()))
+      || (nonNull(oaipmh.getListIdentifiers()) && (isNull(oaipmh.getListIdentifiers().getResumptionToken()) || oaipmh.getListIdentifiers().getResumptionToken().getValue().isEmpty()));
+  }
+
+  private String fetchMetadataPrefix(RequestType requestType) {
+    if (nonNull(requestType.getMetadataPrefix())) {
+      return requestType.getMetadataPrefix();
+    } else if (nonNull(requestType.getResumptionToken())) {
+      return parseResumptionToken(requestType.getResumptionToken()).get(METADATA_PREFIX);
+    }
+    return EMPTY;
+  }
+
+  private String toResumptionToken(String tenantId, String metadataPrefix) {
+    var token = String.join(KEY_VALUE_DELIMITER, TENANT_ID, tenantId)
+      + PARAMETER_DELIMITER
+      + String.join(KEY_VALUE_DELIMITER, METADATA_PREFIX, metadataPrefix);
+    return Base64.getUrlEncoder().encodeToString(token.getBytes()).split("=")[0];
   }
 }

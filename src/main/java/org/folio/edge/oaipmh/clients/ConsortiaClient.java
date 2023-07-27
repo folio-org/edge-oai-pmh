@@ -1,10 +1,11 @@
 package org.folio.edge.oaipmh.clients;
 
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.rest.jaxrs.model.ConsortiumCollection;
 import org.folio.rest.jaxrs.model.Tenant;
@@ -31,13 +32,16 @@ public class ConsortiaClient extends OkapiClient {
 
   private Future<List<String>> processConsortiaCollection(ConsortiumCollection collection, String initialTenant, MultiMap headers) {
     var consortia = collection.getConsortia();
-    if (ObjectUtils.isEmpty(consortia)) {
+    if (isEmpty(consortia)) {
       return Future.succeededFuture(Collections.singletonList(initialTenant));
     }
     var consortiaId = consortia.get(0).getId();
     return get(okapiURL + String.format(CONSORTIA_TENANTS_ENDPOINT_TEMPLATE, consortiaId), tenant, headers)
       .map(resp -> resp.bodyAsJson(TenantCollection.class))
       .map(TenantCollection::getTenants)
-      .map(tenants -> tenants.stream().map(Tenant::getId).collect(Collectors.toList()));
+      .map(tenants -> tenants.stream()
+        .filter(t -> !t.getIsCentral())
+        .map(Tenant::getId)
+        .collect(Collectors.toList()));
   }
 }

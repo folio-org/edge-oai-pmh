@@ -70,6 +70,10 @@ class OaiPmhTest {
 
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(ApiKeyUtils.parseApiKey(API_KEY).tenantId);
+    knownTenants.add("central");
+    knownTenants.add("tenant1");
+    knownTenants.add("tenant2");
+    knownTenants.add("tenant3");
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
     System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
@@ -613,5 +617,105 @@ class OaiPmhTest {
       .contentType(TEXT_PLAIN)
       .statusCode(HttpStatus.SC_FORBIDDEN)
       .body(containsString(EXPECTED_ERROR_FORBIDDEN_MSG));
+  }
+
+  @Test
+  void shouldStartHarvestingForFirstConsortiaTenantOnFirstCall() {
+    log.info("=== Test successful ListRecords for the first tenant on first call ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_CONSORTIA_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&metadataPrefix=oai_dc&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  void shouldTriggerHarvestingForNextConsortiaTenantWhenPreviousHasFinished() {
+    log.info("=== Test successful ListRecords for the next tenant when previous has finished ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_CONSORTIA_MOCK2);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDI&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  void shouldContinueHarvestingForCurrentConsortiaTenantIfResumptionTokenIsPresent() {
+    log.info("=== Test successful ListRecords for current tenant when resumption token is present ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_CONSORTIA_MOCK3);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDMmcGFyYW09cGFyYW0&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  void shouldAddResumptionTokenForLastResponseWhenNextTenantIsPresent() {
+    log.info("=== Test successful add resumption token if next tenant is present ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_TOKEN_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDQmcGFyYW09cGFyYW0&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  void shouldReturnResponseWhenNextTenantIsNotPresent() {
+    log.info("=== Test successful return response if next tenant is not present ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDImcGFyYW09cGFyYW0&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
   }
 }
