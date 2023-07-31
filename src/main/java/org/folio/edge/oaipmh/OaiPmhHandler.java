@@ -159,7 +159,7 @@ public class OaiPmhHandler extends Handler {
     var decodedToken = new String(Base64.getUrlDecoder().decode(resumptionToken),
       StandardCharsets.UTF_8);
     return URLEncodedUtils
-      .parse(decodedToken, UTF_8, '&').stream()
+      .parse(decodedToken, UTF_8, PARAMETER_DELIMITER).stream()
       .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
   }
 
