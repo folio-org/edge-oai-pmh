@@ -24,6 +24,7 @@ import java.util.Objects;
 class ConsortiaTenantClientTest {
 
   private static final String TENANT_DIKU = "diku";
+  private static final String TENANT_CENTRAL = "central";
   private static final String TENANT_CONSORTIA = "consortia";
   private static final String TENANT_EMPTY_CONSORTIA = "empty_consortia";
   private static final int REQUEST_TIMEOUT = 3000;
@@ -71,9 +72,15 @@ class ConsortiaTenantClientTest {
   }
 
   @Test
-  void shouldReturnTenantListWhenCentralTenantIdIsPresent(VertxTestContext context) {
-    var expectedList = List.of("central", "tenant1", "tenant2");
+  void shouldReturnSingleTenantIfTenantIsNotCentral(VertxTestContext context) {
+    var expectedList = Collections.singletonList(TENANT_CONSORTIA);
     processRequest(context, TENANT_CONSORTIA, MultiMap.caseInsensitiveMultiMap(), expectedList);
+  }
+
+  @Test
+  void shouldReturnTenantListWithoutCentralIfTenantIsCentral(VertxTestContext context) {
+    var expectedList = List.of("tenant1", "tenant2");
+    processRequest(context, TENANT_CENTRAL, MultiMap.caseInsensitiveMultiMap(), expectedList);
   }
 
   private void processRequest(VertxTestContext context, String tenant, MultiMap headers, List<String> expectedList) {

@@ -41,6 +41,14 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/ListRecordsEmptyResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_MOCK
     = "src/test/resources/mocks/ListRecordsResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_CONSORTIA_MOCK
+    = "src/test/resources/mocks/ListRecordsConsortiaResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_CONSORTIA_MOCK2
+    = "src/test/resources/mocks/ListRecordsConsortiaResponse2.xml";
+  public static final String PATH_TO_LIST_RECORDS_CONSORTIA_MOCK3
+    = "src/test/resources/mocks/ListRecordsConsortiaResponse3.xml";
+  public static final String PATH_TO_LIST_RECORDS_WITH_TOKEN_MOCK
+    = "src/test/resources/mocks/ListRecordsWithTokenResponse.xml";
   public static final String PATH_TO_EMPTY_USER_TENANTS_MOCK
     = "src/test/resources/mocks/emptyUserTenantsCollection.json";
   public static final String PATH_TO_EMPTY_CONSORTIA_USER_TENANTS_MOCK
@@ -138,17 +146,36 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_PLAIN);
       log.debug("Starting OKAPI exception...");
       throw new NullPointerException("NPE OKAPI mock emulation");
-    } else if (paramsContainVerbWithName(requestParams, LIST_RECORDS)
-      && paramsContainParamWithValue(requestParams, "test_resumption_token")) {
-      ctx.response()
-        .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_MOCK)));
     } else if (paramsContainVerbWithName(requestParams, LIST_RECORDS)) {
-      ctx.response()
-        .setStatusCode(200)
-        .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-        .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_EMPTY_MOCK)));
+      var tenantId = ctx.request().getHeader("x-okapi-tenant");
+      if (paramsContainParamWithValue(requestParams, "test_resumption_token")
+        || tenantId.equals("tenant4")
+        || (tenantId.equals("tenant2") && paramsContainParamWithValue(requestParams, "bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDImcGFyYW09cGFyYW0"))) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_MOCK)));
+      } else if (tenantId.equals("tenant1")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CONSORTIA_MOCK)));
+      } else if (tenantId.equals("tenant2")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CONSORTIA_MOCK2)));
+      } else if (tenantId.equals("tenant3")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CONSORTIA_MOCK3)));
+      } else {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_EMPTY_MOCK)));
+      }
     } else if (path.contains("TimeoutException")) {
       vertx.setTimer(REQUEST_TIMEOUT_MS + 1L, event -> log.debug("OKAPI client should throw TimeoutException"));
     } else if (paramsContainVerbWithName(requestParams, GET_RECORD) && paramsContainParamWithValue(requestParams, "recordIdForbiddenResponse")) {
@@ -172,7 +199,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   @SneakyThrows
   private void userTenantsHandler(RoutingContext ctx) {
     var tenantId = ctx.request().getHeader("x-okapi-tenant");
-    if ("consortia".equals(tenantId)) {
+    if ("central".equals(tenantId)) {
       ctx.response()
         .setStatusCode(200)
         .end(new String(Files.readAllBytes(Path.of(PATH_TO_USER_TENANTS_MOCK))));
