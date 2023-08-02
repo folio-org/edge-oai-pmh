@@ -58,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openarchives.oai._2.ListRecordsType;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.ResumptionTokenType;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -228,9 +229,9 @@ public class OaiPmhHandler extends Handler {
             if (nextTenant.isPresent()) {
               var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
               if (isListRecords(oaipmh)) {
-                oaipmh.getListRecords().getResumptionToken().setValue(newResumptionToken);
+                oaipmh.getListRecords().setResumptionToken(new ResumptionTokenType().withValue(newResumptionToken));
               } else {
-                oaipmh.getListIdentifiers().getResumptionToken().setValue(newResumptionToken);
+                oaipmh.getListIdentifiers().setResumptionToken(new ResumptionTokenType().withValue(newResumptionToken));
               }
               try {
                 var stream = new ByteArrayOutputStream();

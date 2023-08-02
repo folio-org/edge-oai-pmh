@@ -1,5 +1,6 @@
 package org.folio.edge.oaipmh.clients;
 
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 import io.vertx.core.Future;
@@ -34,7 +35,7 @@ public class ConsortiaTenantClient extends OkapiClient {
     var userTenants = userTenantCollection.getUserTenants();
     if (isNotEmpty(userTenants)) {
       var centralTenantId = userTenants.get(0).getCentralTenantId();
-      if (centralTenantId.equals(tenant)) {
+      if (nonNull(tenant) && nonNull(centralTenantId) && tenant.equals(centralTenantId)) {
         var consortiaClient = new ConsortiaClient(vertx, okapiURL, centralTenantId, reqTimeout);
         consortiaClient.setToken(getToken());
         return consortiaClient.getTenantList(tenant, headers);
