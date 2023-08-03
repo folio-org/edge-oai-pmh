@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -125,7 +126,8 @@ public class OaiPmhHandler extends Handler {
     if (isEmpty(res)) {
       return new ConsortiaTenantClient(okapiClient).getConsortiaTenants(null)
         .toCompletionStage().toCompletableFuture()
-        .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value);
+        .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value)
+        .exceptionally(throwable -> Collections.emptyList());
     }
     return CompletableFuture.completedFuture(res);
   }
