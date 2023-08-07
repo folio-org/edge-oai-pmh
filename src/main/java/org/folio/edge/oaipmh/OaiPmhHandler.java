@@ -231,9 +231,11 @@ public class OaiPmhHandler extends Handler {
             if (nextTenant.isPresent()) {
               var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
               if (isListRecords(oaipmh)) {
-                oaipmh.getListRecords().setResumptionToken(new ResumptionTokenType().withValue(newResumptionToken));
+                var listRecords = oaipmh.getListRecords();
+                listRecords.setResumptionToken(listRecords.getResumptionToken().withValue(newResumptionToken));
               } else {
-                oaipmh.getListIdentifiers().setResumptionToken(new ResumptionTokenType().withValue(newResumptionToken));
+                var listIdentifiers = oaipmh.getListIdentifiers();
+                listIdentifiers.setResumptionToken(listIdentifiers.getResumptionToken().withValue(newResumptionToken));
               }
               try {
                 var stream = new ByteArrayOutputStream();
