@@ -11,6 +11,7 @@ import org.folio.rest.jaxrs.model.UserTenantCollection;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 public class ConsortiaTenantClient extends OkapiClient {
@@ -34,7 +35,7 @@ public class ConsortiaTenantClient extends OkapiClient {
     var userTenants = userTenantCollection.getUserTenants();
     if (isNotEmpty(userTenants)) {
       var centralTenantId = userTenants.get(0).getCentralTenantId();
-      if (centralTenantId.equals(tenant)) {
+      if (Objects.equals(tenant, centralTenantId)) {
         var consortiaClient = new ConsortiaClient(vertx, okapiURL, centralTenantId, reqTimeout);
         consortiaClient.setToken(getToken());
         return consortiaClient.getTenantList(tenant, headers);

@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.openarchives.oai._2.ListRecordsType;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.RequestType;
+import org.openarchives.oai._2.ResumptionTokenType;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -124,7 +126,8 @@ public class OaiPmhHandler extends Handler {
     if (isEmpty(res)) {
       return new ConsortiaTenantClient(okapiClient).getConsortiaTenants(null)
         .toCompletionStage().toCompletableFuture()
-        .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value);
+        .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value)
+        .exceptionally(throwable -> Collections.emptyList());
     }
     return CompletableFuture.completedFuture(res);
   }
@@ -228,9 +231,11 @@ public class OaiPmhHandler extends Handler {
             if (nextTenant.isPresent()) {
               var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
               if (isListRecords(oaipmh)) {
-                oaipmh.getListRecords().getResumptionToken().setValue(newResumptionToken);
+                var listRecords = oaipmh.getListRecords();
+                listRecords.setResumptionToken(listRecords.getResumptionToken().withValue(newResumptionToken));
               } else {
-                oaipmh.getListIdentifiers().getResumptionToken().setValue(newResumptionToken);
+                var listIdentifiers = oaipmh.getListIdentifiers();
+                listIdentifiers.setResumptionToken(listIdentifiers.getResumptionToken().withValue(newResumptionToken));
               }
               try {
                 var stream = new ByteArrayOutputStream();
