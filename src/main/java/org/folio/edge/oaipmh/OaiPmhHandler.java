@@ -127,7 +127,7 @@ public class OaiPmhHandler extends Handler {
       return new ConsortiaTenantClient(okapiClient).getConsortiaTenants(null)
         .toCompletionStage().toCompletableFuture()
         .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value)
-        .exceptionally(throwable -> Collections.emptyList());
+        .exceptionally(throwable -> Collections.singletonList(okapiClient.tenant));
     }
     return CompletableFuture.completedFuture(res);
   }
