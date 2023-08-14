@@ -16,8 +16,10 @@ The following schemas used:
 ### Required Permissions
 Institutional users should be granted the following permissions in order to use this edge API:
 - `oai-pmh.all`
+
 In case when multi-tenant harvesting is needed, institutional users should be granted additional permission:
 - `user-tenants.collection.get`
+
 Additionally, edge system users within each tenant must have same `username`.
 
 ### Configuration
