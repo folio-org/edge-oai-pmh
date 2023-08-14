@@ -20,7 +20,18 @@ Institutional users should be granted the following permissions in order to use 
 In case when multi-tenant harvesting is needed, institutional users should be granted additional permission:
 - `user-tenants.collection.get`
 
-Additionally, edge system users within each tenant must have same `username`.
+Additionally, edge system users within each tenant must have same `username`, for example:
+```
+secureStore.type=Ephemeral
+# a comma separated list of tenants
+tenants=central_tenant,tenant1,tenant2
+#######################################################
+# For each tenant, the institutional user password...
+#######################################################
+central_tenant=edge-user,password
+tenant1=edge-user,password1
+tenant2=edge-user,password2
+```
 
 ### Configuration
 Please refer to the [Configuration](https://github.com/folio-org/edge-common/blob/master/README.md#configuration) section in the [edge-common](https://github.com/folio-org/edge-common/blob/master/README.md) documentation to see all available system properties and their default values.
