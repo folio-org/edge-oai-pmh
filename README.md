@@ -16,8 +16,9 @@ The following schemas used:
 ### Required Permissions
 Institutional users should be granted the following permissions in order to use this edge API:
 - `oai-pmh.all`
-In case when multi-tenant harvesting is needed, institutional users within each tenant must have same `username` and granted additional permission:
+In case when multi-tenant harvesting is needed, institutional users should be granted additional permission:
 - `user-tenants.collection.get`
+Additionally, edge system users within each tenant must have same `username`.
 
 ### Configuration
 Please refer to the [Configuration](https://github.com/folio-org/edge-common/blob/master/README.md#configuration) section in the [edge-common](https://github.com/folio-org/edge-common/blob/master/README.md) documentation to see all available system properties and their default values.
