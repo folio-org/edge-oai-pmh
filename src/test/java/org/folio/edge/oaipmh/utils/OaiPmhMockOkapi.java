@@ -39,6 +39,8 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/IdentifyResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_EMPTY_MOCK
     = "src/test/resources/mocks/ListRecordsEmptyResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_NO_TOKEN_MOCK
+    = "src/test/resources/mocks/ListRecordsNoTokenResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_MOCK
     = "src/test/resources/mocks/ListRecordsResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_CONSORTIA_MOCK
@@ -49,18 +51,26 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/ListRecordsConsortiaResponse3.xml";
   public static final String PATH_TO_LIST_RECORDS_WITH_TOKEN_MOCK
     = "src/test/resources/mocks/ListRecordsWithTokenResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_WITH_NEW_TOKEN_MOCK
+    = "src/test/resources/mocks/ListRecordsWithNewTokenResponse.xml";
   public static final String PATH_TO_EMPTY_USER_TENANTS_MOCK
     = "src/test/resources/mocks/emptyUserTenantsCollection.json";
   public static final String PATH_TO_EMPTY_CONSORTIA_USER_TENANTS_MOCK
     = "src/test/resources/mocks/userTenantsCollectionForEmptyConsortia.json";
   public static final String PATH_TO_USER_TENANTS_MOCK
     = "src/test/resources/mocks/userTenantsCollection.json";
+  public static final String PATH_TO_USER_TENANTS_MOCK2
+    = "src/test/resources/mocks/userTenantsCollection2.json";
   public static final String PATH_TO_CONSORTIUM_COLLECTION_MOCK
     = "src/test/resources/mocks/consortiumCollection.json";
+  public static final String PATH_TO_CONSORTIUM_COLLECTION_MOCK2
+    = "src/test/resources/mocks/consortiumCollection2.json";
   public static final String PATH_TO_EMPTY_CONSORTIUM_COLLECTION_MOCK
     = "src/test/resources/mocks/emptyConsortiumCollection.json";
   public static final String PATH_TO_CONSORTIA_TENANTS_MOCK
     = "src/test/resources/mocks/consortiaTenants.json";
+  public static final String PATH_TO_CONSORTIA_TENANTS_MOCK2
+    = "src/test/resources/mocks/consortiaTenants2.json";
   private static final String GET_RECORD = "GetRecord";
   private static final String IDENTIFY = "Identify";
   private static final String LIST_RECORDS = "ListRecords";
@@ -170,7 +180,12 @@ public class OaiPmhMockOkapi extends MockOkapi {
           .setStatusCode(200)
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
           .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CONSORTIA_MOCK3)));
-      } else {
+      } else if (tenantId.equals("tenant5")) {
+        ctx.response()
+          .setStatusCode(200)
+          .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_NO_TOKEN_MOCK)));
+      }else {
         ctx.response()
           .setStatusCode(200)
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
@@ -203,6 +218,10 @@ public class OaiPmhMockOkapi extends MockOkapi {
       ctx.response()
         .setStatusCode(200)
         .end(new String(Files.readAllBytes(Path.of(PATH_TO_USER_TENANTS_MOCK))));
+    } else if ("central2".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_USER_TENANTS_MOCK2))));
     } else if ("empty_consortia".equals(tenantId)) {
       ctx.response()
         .setStatusCode(200)
@@ -221,6 +240,10 @@ public class OaiPmhMockOkapi extends MockOkapi {
       ctx.response()
         .setStatusCode(200)
         .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIUM_COLLECTION_MOCK))));
+    } else if ("central2".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIUM_COLLECTION_MOCK2))));
     } else {
       ctx.response()
         .setStatusCode(200)
@@ -230,8 +253,16 @@ public class OaiPmhMockOkapi extends MockOkapi {
 
   @SneakyThrows
   private void consortiaTenantsHandler(RoutingContext ctx) {
-    ctx.response()
-      .setStatusCode(200)
-      .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK))));
+    var tenantId = ctx.request().getHeader("x-okapi-tenant");
+    if ("consortia".equals(tenantId)) {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK))));
+    } else {
+      ctx.response()
+        .setStatusCode(200)
+        .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK2))));
+    }
+
   }
 }

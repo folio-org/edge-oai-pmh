@@ -229,13 +229,17 @@ public class OaiPmhHandler extends Handler {
           .thenAccept(list -> {
             var nextTenant = getNextTenant(list, oaiPmhClient.tenant);
             if (nextTenant.isPresent()) {
-              var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
+              var newResumptionTokenValue = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
               if (isListRecords(oaipmh)) {
                 var listRecords = oaipmh.getListRecords();
-                listRecords.setResumptionToken(listRecords.getResumptionToken().withValue(newResumptionToken));
+                listRecords.setResumptionToken(isNull(listRecords.getResumptionToken()) ?
+                  new ResumptionTokenType().withValue(newResumptionTokenValue) :
+                  listRecords.getResumptionToken().withValue(newResumptionTokenValue));
               } else {
                 var listIdentifiers = oaipmh.getListIdentifiers();
-                listIdentifiers.setResumptionToken(listIdentifiers.getResumptionToken().withValue(newResumptionToken));
+                listIdentifiers.setResumptionToken(isNull(listIdentifiers.getResumptionToken()) ?
+                  new ResumptionTokenType().withValue(newResumptionTokenValue) :
+                  listIdentifiers.getResumptionToken().withValue(newResumptionTokenValue));
               }
               try {
                 var stream = new ByteArrayOutputStream();

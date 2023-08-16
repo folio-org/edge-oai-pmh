@@ -74,6 +74,7 @@ class OaiPmhTest {
     knownTenants.add("tenant1");
     knownTenants.add("tenant2");
     knownTenants.add("tenant3");
+    knownTenants.add("tenant5");
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
     System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
@@ -688,6 +689,26 @@ class OaiPmhTest {
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDQmcGFyYW09cGFyYW0&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @Test
+  void shouldAddNewResumptionTokenIfNotPresentForLastResponseWhenNextTenantIsPresent() {
+    log.info("=== Test successful add new resumption token if next tenant is present ===");
+
+    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_NEW_TOKEN_MOCK);
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=ListRecords&metadataPrefix=oai_dc&apiKey=%s", ApiKeyUtils.generateApiKey(10, "central2", "user")))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
