@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import io.restassured.RestAssured;
@@ -680,15 +681,19 @@ class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
-  void shouldAddResumptionTokenForLastResponseWhenNextTenantIsPresent() {
+  @ParameterizedTest
+  @CsvSource({"ListRecords,0", "ListIdentifiers,1"})
+  void shouldAddResumptionTokenForLastResponseWhenNextTenantIsPresent(String verb, int mockIndex) {
     log.info("=== Test successful add resumption token if next tenant is present ===");
 
-    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_TOKEN_MOCK);
+    var pathsToMockFiles = List.of(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_TOKEN_MOCK,
+      OaiPmhMockOkapi.PATH_TO_LIST_IDENTIFIERS_WITH_TOKEN_MOCK);
+
+    Path expectedMockPath = Paths.get(pathsToMockFiles.get(mockIndex));
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured
-      .get(String.format("/oai?verb=ListRecords&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDQmcGFyYW09cGFyYW0&apikey=%s", ApiKeyUtils.generateApiKey(10, "central", "user")))
+      .get(String.format("/oai?verb=%s&resumptionToken=bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDQmcGFyYW09cGFyYW0&apikey=%s", verb, ApiKeyUtils.generateApiKey(10, "central", "user")))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
@@ -700,15 +705,19 @@ class OaiPmhTest {
     assertEquals(expectedMockBody, actualBody);
   }
 
-  @Test
-  void shouldAddNewResumptionTokenIfNotPresentForLastResponseWhenNextTenantIsPresent() {
+  @ParameterizedTest
+  @CsvSource({"ListRecords,0", "ListIdentifiers,1"})
+  void shouldAddNewResumptionTokenIfNotPresentForLastResponseWhenNextTenantIsPresent(String verb, int mockIndex) {
     log.info("=== Test successful add new resumption token if next tenant is present ===");
 
-    Path expectedMockPath = Paths.get(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_NEW_TOKEN_MOCK);
+    var pathsToMockFiles = List.of(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_WITH_NEW_TOKEN_MOCK,
+      OaiPmhMockOkapi.PATH_TO_LIST_IDENTIFIERS_WITH_NEW_TOKEN_MOCK);
+
+    Path expectedMockPath = Paths.get(pathsToMockFiles.get(mockIndex));
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured
-      .get(String.format("/oai?verb=ListRecords&metadataPrefix=oai_dc&apiKey=%s", ApiKeyUtils.generateApiKey(10, "central2", "user")))
+      .get(String.format("/oai?verb=%s&metadataPrefix=oai_dc&apiKey=%s", verb, ApiKeyUtils.generateApiKey(10, "central2", "user")))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
