@@ -229,18 +229,7 @@ public class OaiPmhHandler extends Handler {
           .thenAccept(list -> {
             var nextTenant = getNextTenant(list, oaiPmhClient.tenant);
             if (nextTenant.isPresent()) {
-              var newResumptionTokenValue = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
-              if (isListRecords(oaipmh)) {
-                var listRecords = oaipmh.getListRecords();
-                listRecords.setResumptionToken(isNull(listRecords.getResumptionToken()) ?
-                  new ResumptionTokenType().withValue(newResumptionTokenValue) :
-                  listRecords.getResumptionToken().withValue(newResumptionTokenValue));
-              } else {
-                var listIdentifiers = oaipmh.getListIdentifiers();
-                listIdentifiers.setResumptionToken(isNull(listIdentifiers.getResumptionToken()) ?
-                  new ResumptionTokenType().withValue(newResumptionTokenValue) :
-                  listIdentifiers.getResumptionToken().withValue(newResumptionTokenValue));
-              }
+              updateResumptionTokenValue(oaipmh, nextTenant.get());
               try {
                 var stream = new ByteArrayOutputStream();
                 JAXBContext.newInstance(OAIPMH.class).createMarshaller().marshal(oaipmh, stream);
@@ -264,6 +253,21 @@ public class OaiPmhHandler extends Handler {
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
       }
+    }
+  }
+
+  private void updateResumptionTokenValue(OAIPMH oaipmh, String nextTenant) {
+    var newResumptionTokenValue = toResumptionToken(nextTenant, fetchMetadataPrefix(oaipmh.getRequest()));
+    if (isListRecords(oaipmh)) {
+      var listRecords = oaipmh.getListRecords();
+      listRecords.setResumptionToken(isNull(listRecords.getResumptionToken()) ?
+        new ResumptionTokenType().withValue(newResumptionTokenValue) :
+        listRecords.getResumptionToken().withValue(newResumptionTokenValue));
+    } else {
+      var listIdentifiers = oaipmh.getListIdentifiers();
+      listIdentifiers.setResumptionToken(isNull(listIdentifiers.getResumptionToken()) ?
+        new ResumptionTokenType().withValue(newResumptionTokenValue) :
+        listIdentifiers.getResumptionToken().withValue(newResumptionTokenValue));
     }
   }
 
