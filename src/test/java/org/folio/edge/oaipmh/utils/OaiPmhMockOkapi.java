@@ -254,7 +254,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
   @SneakyThrows
   private void consortiaTenantsHandler(RoutingContext ctx) {
     var tenantId = ctx.request().getHeader("x-okapi-tenant");
-    if ("consortia".equals(tenantId)) {
+    if ("central".equals(tenantId)) {
       ctx.response()
         .setStatusCode(200)
         .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK))));
@@ -263,6 +263,5 @@ public class OaiPmhMockOkapi extends MockOkapi {
         .setStatusCode(200)
         .end(new String(Files.readAllBytes(Path.of(PATH_TO_CONSORTIA_TENANTS_MOCK2))));
     }
-
   }
 }
