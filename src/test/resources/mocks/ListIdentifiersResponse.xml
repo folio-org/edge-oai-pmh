@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<OAI-PMH xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd" xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:marc="http://www.loc.gov/MARC21/slim" xmlns:oai-identifier="http://www.openarchives.org/OAI/2.0/oai-identifier" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <responseDate>2023-08-17T14:25:16Z</responseDate>
+    <request verb="ListIdentifiers" metadataPrefix="oai_dc">http://folio.org/oai</request>
+    <ListIdentifiers>
+        <header>
+            <identifier>oai:folio.org:university/02424421-e96c-43c9-b990-0194e61e91e7</identifier>
+            <datestamp>2023-08-16T12:40:24Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/434ba58c-89b1-4803-83a6-46c9bea95c8f</identifier>
+            <datestamp>2023-08-16T12:40:07Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/543e1509-60dc-4b54-a9f2-b5b8d9b8cf08</identifier>
+            <datestamp>2023-08-16T12:39:30Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/b5b5bd34-9fa2-4adb-9804-4c35bb8532e0</identifier>
+            <datestamp>2023-08-17T14:01:24Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/c8088dda-4d43-46b4-9671-6a1796ad51b1</identifier>
+            <datestamp>2023-08-17T11:12:27Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/bb255883-b121-4cf8-b856-69134157d127</identifier>
+            <datestamp>2023-08-16T10:34:09Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/cbd33358-6563-4efc-8dc6-4c74de9a418f</identifier>
+            <datestamp>2023-08-16T12:39:52Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/b95321fc-43c9-4930-9268-7efeec88f9b9</identifier>
+            <datestamp>2023-08-17T14:20:55Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/e1def7fb-34d0-407e-b696-0b60bc3d1e86</identifier>
+            <datestamp>2023-08-15T15:26:47Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <header>
+            <identifier>oai:folio.org:university/e0149d1e-3e91-412d-905d-f2fb9f0c43f0</identifier>
+            <datestamp>2023-08-16T12:39:10Z</datestamp>
+            <setSpec>all</setSpec>
+        </header>
+        <resumptionToken completeListSize="62" cursor="62"></resumptionToken>
+    </ListIdentifiers>
+</OAI-PMH>

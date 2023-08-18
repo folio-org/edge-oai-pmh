@@ -30,6 +30,6 @@
         </oai_dc:dc>
             </metadata>
         </record>
-        <resumptionToken completeListSize="62" cursor="62">dGVuYW50SWQ9dGVuYW50MSZtZXRhZGF0YVByZWZpeD1vYWlfZGM</resumptionToken>
+        <resumptionToken>dGVuYW50SWQ9dGVuYW50NiZtZXRhZGF0YVByZWZpeD1vYWlfZGM</resumptionToken>
     </ListRecords>
 </OAI-PMH>

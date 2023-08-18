@@ -20,8 +20,6 @@ import static org.folio.edge.oaipmh.utils.Constants.PARAMETER_DELIMITER;
 import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
 import static org.folio.edge.oaipmh.utils.Constants.TENANT_ID;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -56,13 +54,11 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
+import org.folio.edge.oaipmh.utils.ResponseConverter;
 import org.openarchives.oai._2.ListRecordsType;
 import org.openarchives.oai._2.OAIPMH;
 import org.openarchives.oai._2.RequestType;
 import org.openarchives.oai._2.ResumptionTokenType;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 
 @Slf4j
 public class OaiPmhHandler extends Handler {
@@ -221,7 +217,7 @@ public class OaiPmhHandler extends Handler {
       Optional<String> encodingHeader = ofNullable(oaiPmhResponse.getHeader(String.valueOf(HttpHeaders.CONTENT_ENCODING)));
       encodingHeader.ifPresent(value -> edgeResponse.putHeader(HttpHeaders.CONTENT_ENCODING, value));
       Buffer buffer = oaiPmhResponse.body();
-      var oaipmh = readOAIPMH(buffer);
+      var oaipmh = ResponseConverter.getInstance().toOaiPmh(buffer.toString());
       if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {
         performCall(ctx, oaiPmhClient, oaipmh.getListRecords().getResumptionToken().getValue());
       } else if (isLastResponse(oaipmh)) {
@@ -229,21 +225,8 @@ public class OaiPmhHandler extends Handler {
           .thenAccept(list -> {
             var nextTenant = getNextTenant(list, oaiPmhClient.tenant);
             if (nextTenant.isPresent()) {
-              var newResumptionToken = toResumptionToken(nextTenant.get(), fetchMetadataPrefix(oaipmh.getRequest()));
-              if (isListRecords(oaipmh)) {
-                var listRecords = oaipmh.getListRecords();
-                listRecords.setResumptionToken(listRecords.getResumptionToken().withValue(newResumptionToken));
-              } else {
-                var listIdentifiers = oaipmh.getListIdentifiers();
-                listIdentifiers.setResumptionToken(listIdentifiers.getResumptionToken().withValue(newResumptionToken));
-              }
-              try {
-                var stream = new ByteArrayOutputStream();
-                JAXBContext.newInstance(OAIPMH.class).createMarshaller().marshal(oaipmh, stream);
-                edgeResponse.end(BufferImpl.buffer(stream.toByteArray()));
-              } catch (JAXBException e) {
-                internalServerError(ctx, "Cannot marshall OAIPMH object");
-              }
+              updateResumptionTokenValue(oaipmh, nextTenant.get());
+              edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance().convertToString(oaipmh)));
             } else {
               edgeResponse.end(buffer);
             }
@@ -260,6 +243,21 @@ public class OaiPmhHandler extends Handler {
       if (!ctx.response().ended()) {
         ctx.response().setStatusCode(oaiPmhResponse.statusCode()).putHeader(HttpHeaders.CONTENT_TYPE, "text/plain").end(message);
       }
+    }
+  }
+
+  private void updateResumptionTokenValue(OAIPMH oaipmh, String nextTenant) {
+    var newResumptionTokenValue = toResumptionToken(nextTenant, fetchMetadataPrefix(oaipmh.getRequest()));
+    if (isListRecords(oaipmh)) {
+      var listRecords = oaipmh.getListRecords();
+      listRecords.setResumptionToken(isNull(listRecords.getResumptionToken()) ?
+        new ResumptionTokenType().withValue(newResumptionTokenValue) :
+        listRecords.getResumptionToken().withValue(newResumptionTokenValue));
+    } else {
+      var listIdentifiers = oaipmh.getListIdentifiers();
+      listIdentifiers.setResumptionToken(isNull(listIdentifiers.getResumptionToken()) ?
+        new ResumptionTokenType().withValue(newResumptionTokenValue) :
+        listIdentifiers.getResumptionToken().withValue(newResumptionTokenValue));
     }
   }
 
@@ -299,16 +297,6 @@ public class OaiPmhHandler extends Handler {
       .orElse("");
     notAcceptable(ctx,
       "Accept header must be \"text/xml\" for this request, but it is " + "\"" + unsupportedType + "\"" + ", can not send */*");
-  }
-
-  private OAIPMH readOAIPMH(Buffer buffer) {
-    try {
-      return (OAIPMH) JAXBContext.newInstance(OAIPMH.class)
-        .createUnmarshaller()
-        .unmarshal(new ByteArrayInputStream(buffer.getBytes()));
-    } catch (JAXBException e) {
-      return new OAIPMH();
-    }
   }
 
   private boolean isListRecords(OAIPMH oaipmh) {

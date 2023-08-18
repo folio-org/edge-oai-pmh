@@ -1,0 +1,23 @@
+{
+  "tenants": [
+    {
+      "id": "central2",
+      "code": "CTN2",
+      "name": "Central tenant2",
+      "isCentral": true
+    },
+    {
+      "id": "tenant5",
+      "code": "TN5",
+      "name": "Tenant 5",
+      "isCentral": false
+    },
+    {
+      "id": "tenant6",
+      "code": "TN6",
+      "name": "Tenant 6",
+      "isCentral": false
+    }
+  ],
+  "totalRecords": 3
+}
