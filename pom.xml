@@ -29,20 +29,19 @@
   </licenses>
 
   <properties>
-    <raml-module-builder.version>35.0.1</raml-module-builder.version>
     <java.version>17</java.version>
+    <raml-module-builder.version>35.0.6</raml-module-builder.version>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <maven.jaxb2.plugin.ver>0.15.3</maven.jaxb2.plugin.ver>
+    <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
     <jaxb2-basics.ver>1.11.1</jaxb2-basics.ver>
     <apache.common.lang.ver>3.12.0</apache.common.lang.ver>
     <guava.ver>31.1-jre</guava.ver>
     <jaxb.time.adaptor.ver>1.1.3</jaxb.time.adaptor.ver>
-    <jaxb-api.version>2.3.1</jaxb-api.version>
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.9.1</mod-configuration-client.version>
@@ -107,11 +106,6 @@
     </dependency>
 
     <!-- Jaxb dependencies -->
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <version>${jaxb-api.version}</version>
-    </dependency>
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
       <artifactId>jaxb-impl</artifactId>
@@ -203,6 +197,13 @@
         <groupId>org.jvnet.jaxb2.maven2</groupId>
         <artifactId>maven-jaxb2-plugin</artifactId>
         <version>${maven.jaxb2.plugin.ver}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.5</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
@@ -264,7 +265,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.2</version>
+        <version>2.4</version>
         <executions>
           <execution>
             <phase>package</phase>
