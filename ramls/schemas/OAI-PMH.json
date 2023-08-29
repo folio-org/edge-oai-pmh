@@ -1,0 +1,307 @@
+{
+    "$schema": "https://json-schema.org/draft-04/schema#",
+    "id": "http://www.openarchives.org/OAI/2.0/#",
+    "definitions": {
+        "requestType": {
+            "type": "object",
+            "properties": {
+                "Value": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "verb": {"$ref": "#/definitions/verbType"},
+                "identifier": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "metadataPrefix": {"type": "string"},
+                "from": {"type": "string"},
+                "until": {"type": "string"},
+                "set": {"type": "string"},
+                "resumptionToken": {"type": "string"}
+            }
+        },
+        "OAIPMHerrorType": {
+            "type": "object",
+            "required": ["code"],
+            "properties": {
+                "Value": {"type": "string"},
+                "code": {"$ref": "#/definitions/OAIPMHerrorcodeType"}
+            }
+        },
+        "descriptionType": {
+            "type": "object",
+            "required": ["Any"],
+            "properties": {
+                "Any": {"type": "object"}
+            }
+        },
+        "IdentifyType": {
+            "type": "object",
+            "required": [
+                "repositoryName",
+                "baseURL",
+                "protocolVersion",
+                "adminEmail",
+                "earliestDatestamp",
+                "deletedRecord",
+                "granularity"
+            ],
+            "properties": {
+                "repositoryName": {"type": "string"},
+                "baseURL": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "protocolVersion": {
+                    "type": "string",
+                    "enum": ["2.0"]
+                },
+                "adminEmail": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 1
+                },
+                "earliestDatestamp": {"type": "string"},
+                "deletedRecord": {"$ref": "#/definitions/deletedRecordType"},
+                "granularity": {"$ref": "#/definitions/granularityType"},
+                "compression": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 0
+                },
+                "description": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/descriptionType"},
+                    "minItems": 0
+                }
+            }
+        },
+        "metadataFormatType": {
+            "type": "object",
+            "required": [
+                "metadataPrefix",
+                "schema",
+                "metadataNamespace"
+            ],
+            "properties": {
+                "metadataPrefix": {"type": "string"},
+                "schema": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "metadataNamespace": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        "ListMetadataFormatsType": {
+            "type": "object",
+            "required": ["metadataFormat"],
+            "properties": {
+                "metadataFormat": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/metadataFormatType"},
+                    "minItems": 1
+                }
+            }
+        },
+        "setType": {
+            "type": "object",
+            "required": [
+                "setSpec",
+                "setName"
+            ],
+            "properties": {
+                "setSpec": {"type": "string"},
+                "setName": {"type": "string"},
+                "setDescription": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/descriptionType"},
+                    "minItems": 0
+                }
+            }
+        },
+        "resumptionTokenType": {
+            "type": "object",
+            "properties": {
+                "Value": {"type": "string"},
+                "expirationDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "completeListSize": {"type": "integer"},
+                "cursor": {"type": "integer"}
+            }
+        },
+        "ListSetsType": {
+            "type": "object",
+            "required": ["set"],
+            "properties": {
+                "set": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/setType"},
+                    "minItems": 1
+                },
+                "resumptionToken": {"$ref": "#/definitions/resumptionTokenType"}
+            }
+        },
+        "headerType": {
+            "type": "object",
+            "required": [
+                "identifier",
+                "datestamp"
+            ],
+            "properties": {
+                "identifier": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "datestamp": {"type": "string"},
+                "setSpec": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "minItems": 0
+                },
+                "status": {"$ref": "#/definitions/statusType"}
+            }
+        },
+        "metadataType": {
+            "type": "object",
+            "required": ["Any"],
+            "properties": {
+                "Any": {"type": "object"}
+            }
+        },
+        "aboutType": {
+            "type": "object",
+            "required": ["Any"],
+            "properties": {
+                "Any": {"type": "object"}
+            }
+        },
+        "recordType": {
+            "type": "object",
+            "required": ["header"],
+            "properties": {
+                "header": {"$ref": "#/definitions/headerType"},
+                "metadata": {"$ref": "#/definitions/metadataType"},
+                "about": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/aboutType"},
+                    "minItems": 0
+                }
+            }
+        },
+        "GetRecordType": {
+            "type": "object",
+            "required": ["record"],
+            "properties": {
+                "record": {"$ref": "#/definitions/recordType"}
+            }
+        },
+        "ListIdentifiersType": {
+            "type": "object",
+            "required": ["header"],
+            "properties": {
+                "header": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/headerType"},
+                    "minItems": 1
+                },
+                "resumptionToken": {"$ref": "#/definitions/resumptionTokenType"}
+            }
+        },
+        "ListRecordsType": {
+            "type": "object",
+            "required": ["record"],
+            "properties": {
+                "record": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/recordType"},
+                    "minItems": 1
+                },
+                "resumptionToken": {"$ref": "#/definitions/resumptionTokenType"}
+            }
+        },
+        "OAIPMHtype": {
+            "type": "object",
+            "required": [
+                "responseDate",
+                "request",
+                "error",
+                "Identify",
+                "ListMetadataFormats",
+                "ListSets",
+                "GetRecord",
+                "ListIdentifiers",
+                "ListRecords"
+            ],
+            "properties": {
+                "responseDate": {
+                    "type": "string",
+                    "format": "date-time"
+                },
+                "request": {"$ref": "#/definitions/requestType"},
+                "error": {
+                    "type": "array",
+                    "items": {"$ref": "#/definitions/OAIPMHerrorType"},
+                    "minItems": 1
+                },
+                "Identify": {"$ref": "#/definitions/IdentifyType"},
+                "ListMetadataFormats": {"$ref": "#/definitions/ListMetadataFormatsType"},
+                "ListSets": {"$ref": "#/definitions/ListSetsType"},
+                "GetRecord": {"$ref": "#/definitions/GetRecordType"},
+                "ListIdentifiers": {"$ref": "#/definitions/ListIdentifiersType"},
+                "ListRecords": {"$ref": "#/definitions/ListRecordsType"}
+            }
+        },
+        "verbType": {
+            "type": "string",
+            "enum": [
+                "Identify",
+                "ListMetadataFormats",
+                "ListSets",
+                "GetRecord",
+                "ListIdentifiers",
+                "ListRecords"
+            ]
+        },
+        "OAIPMHerrorcodeType": {
+            "type": "string",
+            "enum": [
+                "cannotDisseminateFormat",
+                "idDoesNotExist",
+                "badArgument",
+                "badVerb",
+                "noMetadataFormats",
+                "noRecordsMatch",
+                "badResumptionToken",
+                "noSetHierarchy"
+            ]
+        },
+        "deletedRecordType": {
+            "type": "string",
+            "enum": [
+                "no",
+                "persistent",
+                "transient"
+            ]
+        },
+        "granularityType": {
+            "type": "string",
+            "enum": [
+                "YYYY-MM-DD",
+                "YYYY-MM-DDThh:mm:ssZ"
+            ]
+        },
+        "statusType": {
+            "type": "string",
+            "enum": ["deleted"]
+        }
+    },
+    "properties": {
+        "OAI-PMH": {"$ref": "#/definitions/OAIPMHtype"}
+    }
+}
