@@ -7,11 +7,6 @@ USER root
 RUN apk upgrade --no-cache
 USER folio
 
-# Install latest patch versions of packages: https://pythonspeed.com/articles/security-updates-in-docker/
-USER root
-RUN apk upgrade --no-cache
-USER folio
-
 ENV VERTICLE_FILE edge-oai-pmh-fat.jar
 
 # Set the location of the verticles
