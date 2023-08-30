@@ -213,6 +213,7 @@
           <schemaDirectory>ramls/schemas</schemaDirectory>
           <schemaIncludes>
             <include>OAI-PMH.xsd</include>
+            <include>oai_dc.xsd</include>
           </schemaIncludes>
           <bindingDirectory>ramls/schemas</bindingDirectory>
           <bindingIncludes>
