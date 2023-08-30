@@ -29,9 +29,8 @@
   </licenses>
 
   <properties>
-    <raml-module-builder.version>35.0.1</raml-module-builder.version>
-    <maven.compiler.source>11</maven.compiler.source>
-    <maven.compiler.target>11</maven.compiler.target>
+    <java.version>17</java.version>
+    <raml-module-builder.version>35.0.6</raml-module-builder.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
@@ -166,8 +165,7 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.1</version>
           <configuration>
-            <source>${maven.compiler.source}</source>
-            <target>${maven.compiler.target}</target>
+            <release>17</release>
             <encoding>UTF-8</encoding>
           </configuration>
         </plugin>
@@ -196,6 +194,13 @@
         <groupId>org.jvnet.jaxb2.maven2</groupId>
         <artifactId>maven-jaxb2-plugin</artifactId>
         <version>${maven.jaxb2.plugin.ver}</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.5</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
