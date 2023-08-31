@@ -42,6 +42,10 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/ListRecordsNoTokenResponse.xml";
   public static final String PATH_TO_LIST_IDENTIFIERS_NO_TOKEN_MOCK
     = "src/test/resources/mocks/ListIdentifiersNoTokenResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_ERROR_MOCK
+    = "src/test/resources/mocks/ListRecordsErrorResponse.xml";
+  public static final String PATH_TO_LIST_IDENTIFIERS_ERROR_MOCK
+    = "src/test/resources/mocks/ListIdentifiersErrorResponse.xml";
   public static final String PATH_TO_LIST_RECORDS_MOCK
     = "src/test/resources/mocks/ListRecordsResponse.xml";
   public static final String PATH_TO_LIST_IDENTIFIERS_MOCK
@@ -60,6 +64,10 @@ public class OaiPmhMockOkapi extends MockOkapi {
     = "src/test/resources/mocks/ListRecordsWithNewTokenResponse.xml";
   public static final String PATH_TO_LIST_IDENTIFIERS_WITH_NEW_TOKEN_MOCK
     = "src/test/resources/mocks/ListIdentifiersWithNewTokenResponse.xml";
+  public static final String PATH_TO_LIST_RECORDS_TOKEN_WITH_DATES_MOCK
+    = "src/test/resources/mocks/ListRecordsTokenWithDatesResponse.xml";
+  public static final String PATH_TO_LIST_IDENTIFIERS_TOKEN_WITH_DATES_MOCK
+    = "src/test/resources/mocks/ListIdentifiersTokenWithDatesResponse.xml";
   public static final String PATH_TO_EMPTY_USER_TENANTS_MOCK
     = "src/test/resources/mocks/emptyUserTenantsCollection.json";
   public static final String PATH_TO_EMPTY_CONSORTIA_USER_TENANTS_MOCK
@@ -189,11 +197,23 @@ public class OaiPmhMockOkapi extends MockOkapi {
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
           .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_CONSORTIA_MOCK3)));
       } else if (tenantId.equals("tenant5")) {
+        if (paramsContainParamWithValue(requestParams, "2023-08-30")) {
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+            .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_ERROR_MOCK)));
+        } else {
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+            .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_NO_TOKEN_MOCK)));
+        }
+      } else if (tenantId.equals("tenant6") && paramsContainParamWithValue(requestParams, "2023-08-30")) {
         ctx.response()
           .setStatusCode(200)
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_NO_TOKEN_MOCK)));
-      }else {
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_RECORDS_TOKEN_WITH_DATES_MOCK)));
+      } else {
         ctx.response()
           .setStatusCode(200)
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
@@ -202,10 +222,22 @@ public class OaiPmhMockOkapi extends MockOkapi {
     } else if (paramsContainVerbWithName(requestParams, LIST_IDENTIFIERS)) {
       var tenantId = ctx.request().getHeader("x-okapi-tenant");
       if (tenantId.equals("tenant5")) {
+        if (paramsContainParamWithValue(requestParams, "2023-08-30")) {
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+            .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_IDENTIFIERS_ERROR_MOCK)));
+        } else {
+          ctx.response()
+            .setStatusCode(200)
+            .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+            .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_IDENTIFIERS_NO_TOKEN_MOCK)));
+        }
+      } else if (tenantId.equals("tenant6") && paramsContainParamWithValue(requestParams, "2023-08-30")) {
         ctx.response()
           .setStatusCode(200)
           .putHeader(HttpHeaders.CONTENT_TYPE, TEXT_XML)
-          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_IDENTIFIERS_NO_TOKEN_MOCK)));
+          .end(getOaiPmhResponseAsXml(Paths.get(PATH_TO_LIST_IDENTIFIERS_TOKEN_WITH_DATES_MOCK)));
       } else if (tenantId.equals("tenant4")) {
         ctx.response()
           .setStatusCode(200)

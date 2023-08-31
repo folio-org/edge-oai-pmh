@@ -12,6 +12,7 @@ import org.folio.edge.core.utils.test.TestUtils;
 import org.folio.edge.oaipmh.utils.OaiPmhMockOkapi;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -718,6 +719,30 @@ class OaiPmhTest {
 
     final Response resp = RestAssured
       .get(String.format("/oai?verb=%s&metadataPrefix=oai_dc&apiKey=%s", verb, ApiKeyUtils.generateApiKey(10, "central2", "user")))
+      .then()
+      .contentType(TEXT_XML)
+      .statusCode(HttpStatus.SC_OK)
+      .header(HttpHeaders.CONTENT_TYPE, TEXT_XML)
+      .extract()
+      .response();
+
+    String actualBody = resp.body().asString();
+    assertEquals(expectedMockBody, actualBody);
+  }
+
+  @ParameterizedTest
+  @CsvSource({"ListRecords,0", "ListIdentifiers,1"})
+  void shouldContinueHarvestingOnErrorResponseWhenNextTenantIsPresent(String verb, int mockIndex) {
+    log.info("=== Test successful continue harvesting on error response if next tenant is present ===");
+
+    var pathsToMockFiles = List.of(OaiPmhMockOkapi.PATH_TO_LIST_RECORDS_TOKEN_WITH_DATES_MOCK,
+      OaiPmhMockOkapi.PATH_TO_LIST_IDENTIFIERS_TOKEN_WITH_DATES_MOCK);
+
+    Path expectedMockPath = Paths.get(pathsToMockFiles.get(mockIndex));
+    String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
+
+    final Response resp = RestAssured
+      .get(String.format("/oai?verb=%s&metadataPrefix=oai_dc&apiKey=%s&from=2023-08-30&until=2023-08-31", verb, ApiKeyUtils.generateApiKey(10, "central2", "user")))
       .then()
       .contentType(TEXT_XML)
       .statusCode(HttpStatus.SC_OK)
