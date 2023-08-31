@@ -10,26 +10,17 @@
         body:
           text/xml:
             #schema: OAI-PMH
-            example:
-              strict: false
-              value: !include ../examples/bad_verb_error.sample
 
       '401':
         description: 'Access Denied'
         body:
           text/xml:
             #schema: OAI-PMH
-            example:
-              strict: false
-              value: !include ../examples/resumption_token_error.sample
       '404':
         description: 'Not found'
         body:
           text/xml:
             #schema: OAI-PMH
-            example:
-              strict: false
-              value: !include ../examples/no_records_error.sample
       '406':
         description: 'Not Acceptable'
         body:
@@ -39,9 +30,6 @@
         body:
           text/xml:
             #schema: OAI-PMH
-            example:
-              strict: false
-              value: !include ../examples/no_metadata_format_error.sample
       '500':
         description: 'Internal Server Error'
         body:
@@ -51,6 +39,3 @@
         body:
           text/xml:
             #schema: OAI-PMH
-            example:
-              strict: false
-              value: !include ../examples/bad_verb_error.sample
