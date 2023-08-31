@@ -34,6 +34,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
+    <glassfish.jaxb.runtime.ver>2.3.5</glassfish.jaxb.runtime.ver>
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
     <jaxb2-basics.ver>1.11.1</jaxb2-basics.ver>
@@ -198,7 +199,7 @@
           <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
-            <version>2.3.5</version>
+            <version>${glassfish.jaxb.runtime.ver}</version>
           </dependency>
         </dependencies>
         <executions>
