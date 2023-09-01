@@ -49,7 +49,7 @@ public class ResumptionTokenUtils {
     return Base64.getUrlEncoder().encodeToString(token.getBytes()).split(KEY_VALUE_DELIMITER)[0];
   }
 
-  private static String fetchMetadataPrefix(RequestType requestType) {
+  public static String fetchMetadataPrefix(RequestType requestType) {
     if (nonNull(requestType.getMetadataPrefix())) {
       return requestType.getMetadataPrefix();
     } else if (nonNull(requestType.getResumptionToken())) {
@@ -58,7 +58,7 @@ public class ResumptionTokenUtils {
     return null;
   }
 
-  private static String fetchFrom(RequestType requestType) {
+  public static String fetchFrom(RequestType requestType) {
     if (nonNull(requestType.getFrom())) {
       return requestType.getFrom();
     } else if (nonNull(requestType.getResumptionToken())) {
@@ -67,7 +67,7 @@ public class ResumptionTokenUtils {
     return null;
   }
 
-  private static String fetchUntil(RequestType requestType) {
+  public static String fetchUntil(RequestType requestType) {
     if (nonNull(requestType.getUntil())) {
       return requestType.getUntil();
     } else if (nonNull(requestType.getResumptionToken())) {
