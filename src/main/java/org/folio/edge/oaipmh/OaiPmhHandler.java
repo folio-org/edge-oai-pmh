@@ -1,27 +1,28 @@
 package org.folio.edge.oaipmh;
 
 import static io.vertx.core.http.HttpHeaders.ACCEPT;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toMap;
 import static org.apache.commons.lang3.ObjectUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
+import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
-import static org.folio.edge.oaipmh.utils.Constants.KEY_VALUE_DELIMITER;
+import static org.folio.edge.oaipmh.utils.Constants.FROM;
+import static org.folio.edge.oaipmh.utils.Constants.LIST_IDENTIFIERS;
+import static org.folio.edge.oaipmh.utils.Constants.LIST_RECORDS;
 import static org.folio.edge.oaipmh.utils.Constants.METADATA_PREFIX;
-import static org.folio.edge.oaipmh.utils.Constants.PARAMETER_DELIMITER;
 import static org.folio.edge.oaipmh.utils.Constants.RESUMPTION_TOKEN;
 import static org.folio.edge.oaipmh.utils.Constants.TENANT_ID;
+import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
+import static org.folio.edge.oaipmh.utils.Constants.VERB;
+import static org.folio.edge.oaipmh.utils.ResumptionTokenUtils.buildNewResumptionToken;
+import static org.folio.edge.oaipmh.utils.ResumptionTokenUtils.parseResumptionToken;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +36,6 @@ import java.util.regex.Pattern;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.ext.web.client.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.cache.Cache;
 import org.folio.edge.core.model.ClientInfo;
@@ -57,7 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.oaipmh.utils.ResponseConverter;
 import org.openarchives.oai._2.ListRecordsType;
 import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.RequestType;
 import org.openarchives.oai._2.ResumptionTokenType;
 
 @Slf4j
@@ -93,28 +91,27 @@ public class OaiPmhHandler extends Handler {
 
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
       this.okapiClient = okapiClient;
-      getTenants(okapiClient)
-        .thenAccept(list -> {
-          if (isEmpty(list)) {
-            notFound(ctx, "Tenants list is absent or empty");
-          }
-          if (isSingleTenantHarvesting(list)) {
-            oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-            performCall(ctx, oaiPmhClient, null);
-          } else {
-            if (isFirstRequest(request)) {
-              callToTenant(ctx, list.get(0));
+      if (isListRequest(ctx)) {
+        getTenants(okapiClient)
+          .thenAccept(list -> {
+            if (isEmpty(list)) {
+              notFound(ctx, "Tenants list is absent or empty");
+            } else if (isSingleTenantHarvesting(list)) {
+              oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+              performCall(ctx, oaiPmhClient, null);
             } else {
-              var resumptionTokenParams = parseResumptionToken(request.params().get(RESUMPTION_TOKEN));
-              if (shouldStartHarvestingForNextTenant(resumptionTokenParams)) {
-                request.params().remove(RESUMPTION_TOKEN);
-                request.params().set(METADATA_PREFIX, resumptionTokenParams.get(METADATA_PREFIX));
-              }
-              callToTenant(ctx, resumptionTokenParams.get(TENANT_ID));
+              performMultiTenantHarvesting(ctx, list.get(0));
             }
-          }
-        });
+          });
+      } else {
+        oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
+        performCall(ctx, oaiPmhClient, null);
+      }
     });
+  }
+
+  private boolean isListRequest(RoutingContext ctx) {
+    return Set.of(LIST_RECORDS, LIST_IDENTIFIERS).contains(ctx.request().getParam(VERB));
   }
 
   private CompletableFuture<List<String>> getTenants(OkapiClient okapiClient) {
@@ -133,7 +130,26 @@ public class OaiPmhHandler extends Handler {
   }
 
   private boolean shouldStartHarvestingForNextTenant(Map<String, String> params) {
-    return params.size() == 2 && params.containsKey(METADATA_PREFIX) && params.containsKey(TENANT_ID);
+    return (params.containsKey(METADATA_PREFIX) && params.containsKey(TENANT_ID))
+      && (params.size() == 2
+        || (params.size() == 3 && (params.containsKey(FROM) || params.containsKey(UNTIL)))
+        || (params.size() == 4 && params.containsKey(FROM) && params.containsKey(UNTIL)));
+  }
+
+  private void performMultiTenantHarvesting(RoutingContext ctx, String tenantId) {
+    var request = ctx.request();
+    if (isFirstRequest(request)) {
+      callToTenant(ctx, tenantId);
+    } else {
+      var resumptionTokenParams = parseResumptionToken(request.params().get(RESUMPTION_TOKEN));
+      if (shouldStartHarvestingForNextTenant(resumptionTokenParams)) {
+        request.params().remove(RESUMPTION_TOKEN);
+        request.params().set(METADATA_PREFIX, resumptionTokenParams.get(METADATA_PREFIX));
+        ofNullable(resumptionTokenParams.get(FROM)).ifPresent(value -> request.params().set(FROM, value));
+        ofNullable(resumptionTokenParams.get(UNTIL)).ifPresent(value -> request.params().set(UNTIL, value));
+      }
+      callToTenant(ctx, resumptionTokenParams.get(TENANT_ID));
+    }
   }
 
   private void callToTenant(RoutingContext ctx, String tenant) {
@@ -152,14 +168,6 @@ public class OaiPmhHandler extends Handler {
       return Optional.of(list.get(nextTenantIndex));
     }
     return Optional.empty();
-  }
-
-  private Map<String, String> parseResumptionToken(String resumptionToken) {
-    var decodedToken = new String(Base64.getUrlDecoder().decode(resumptionToken),
-      StandardCharsets.UTF_8);
-    return URLEncodedUtils
-      .parse(decodedToken, UTF_8, PARAMETER_DELIMITER).stream()
-      .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
   }
 
   private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
@@ -221,16 +229,9 @@ public class OaiPmhHandler extends Handler {
       if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {
         performCall(ctx, oaiPmhClient, oaipmh.getListRecords().getResumptionToken().getValue());
       } else if (isLastResponse(oaipmh)) {
-        getTenants(okapiClient)
-          .thenAccept(list -> {
-            var nextTenant = getNextTenant(list, oaiPmhClient.tenant);
-            if (nextTenant.isPresent()) {
-              updateResumptionTokenValue(oaipmh, nextTenant.get());
-              edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance().convertToString(oaipmh)));
-            } else {
-              edgeResponse.end(buffer);
-            }
-          });
+        processLastResponse(edgeResponse, oaipmh, buffer);
+      } else if (isListRequest(ctx) && isErrorResponse(oaipmh)) {
+        processErrorResponse(ctx, edgeResponse, buffer);
       } else {
         edgeResponse.end(buffer);
         if (encodingHeader.isEmpty()) {
@@ -246,8 +247,36 @@ public class OaiPmhHandler extends Handler {
     }
   }
 
+  private void processLastResponse(HttpServerResponse edgeResponse, OAIPMH oaipmh, Buffer buffer) {
+    getNextTenant(okapiClient, oaiPmhClient.tenant)
+      .thenAccept(optionalNextTenant -> {
+        if (optionalNextTenant.isPresent()) {
+          updateResumptionTokenValue(oaipmh, optionalNextTenant.get());
+          edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance().convertToString(oaipmh)));
+        } else {
+          edgeResponse.end(buffer);
+        }
+      });
+  }
+
+  private void processErrorResponse(RoutingContext ctx, HttpServerResponse edgeResponse, Buffer buffer) {
+    getNextTenant(okapiClient, oaiPmhClient.tenant)
+      .thenAccept(optionalNextTenant -> {
+        if (optionalNextTenant.isPresent()) {
+          callToTenant(ctx, optionalNextTenant.get());
+        } else {
+          edgeResponse.end(buffer);
+        }
+      });
+  }
+
+  private CompletableFuture<Optional<String>> getNextTenant(OkapiClient okapiClient, String tenantId) {
+    return getTenants(okapiClient)
+      .thenApply(list -> getNextTenant(list, tenantId));
+  }
+
   private void updateResumptionTokenValue(OAIPMH oaipmh, String nextTenant) {
-    var newResumptionTokenValue = toResumptionToken(nextTenant, fetchMetadataPrefix(oaipmh.getRequest()));
+    var newResumptionTokenValue = buildNewResumptionToken(oaipmh, nextTenant);
     if (isListRecords(oaipmh)) {
       var listRecords = oaipmh.getListRecords();
       listRecords.setResumptionToken(isNull(listRecords.getResumptionToken()) ?
@@ -329,19 +358,7 @@ public class OaiPmhHandler extends Handler {
       || (nonNull(oaipmh.getListIdentifiers()) && (isNull(oaipmh.getListIdentifiers().getResumptionToken()) || oaipmh.getListIdentifiers().getResumptionToken().getValue().isEmpty()));
   }
 
-  private String fetchMetadataPrefix(RequestType requestType) {
-    if (nonNull(requestType.getMetadataPrefix())) {
-      return requestType.getMetadataPrefix();
-    } else if (nonNull(requestType.getResumptionToken())) {
-      return parseResumptionToken(requestType.getResumptionToken()).get(METADATA_PREFIX);
-    }
-    return EMPTY;
-  }
-
-  private String toResumptionToken(String tenantId, String metadataPrefix) {
-    var token = String.join(KEY_VALUE_DELIMITER, TENANT_ID, tenantId)
-      + PARAMETER_DELIMITER
-      + String.join(KEY_VALUE_DELIMITER, METADATA_PREFIX, metadataPrefix);
-    return Base64.getUrlEncoder().encodeToString(token.getBytes()).split("=")[0];
+  private boolean isErrorResponse(OAIPMH oaipmh) {
+    return isNotEmpty(oaipmh.getErrors());
   }
 }
