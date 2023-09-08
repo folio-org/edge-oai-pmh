@@ -174,7 +174,7 @@ public class OaiPmhMockOkapi extends MockOkapi {
       throw new NullPointerException("NPE OKAPI mock emulation");
     } else if (paramsContainVerbWithName(requestParams, LIST_RECORDS)) {
       var tenantId = ctx.request().getHeader("x-okapi-tenant");
-      if (paramsContainParamWithValue(requestParams, "test_resumption_token")
+      if (paramsContainParamWithValue(requestParams, "bWV0YXRkYXRhUHJlZml4PW9haV9kYyZ0ZW5hbnRJZD1kaWt1")
         || tenantId.equals("tenant4")
         || (tenantId.equals("tenant2") && paramsContainParamWithValue(requestParams, "bWV0YWRhdGFQcmVmaXg9b2FpX2RjJnRlbmFudElkPXRlbmFudDImcGFyYW09cGFyYW0"))) {
         ctx.response()

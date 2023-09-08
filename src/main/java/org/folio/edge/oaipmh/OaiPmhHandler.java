@@ -12,6 +12,7 @@ import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_SERVICE_UNAVAILABLE;
 import static org.apache.http.HttpStatus.SC_UNPROCESSABLE_ENTITY;
 import static org.folio.edge.core.Constants.TEXT_XML;
+import static org.folio.edge.oaipmh.utils.Constants.CENTRAL_TENANT_ID;
 import static org.folio.edge.oaipmh.utils.Constants.FROM;
 import static org.folio.edge.oaipmh.utils.Constants.LIST_IDENTIFIERS;
 import static org.folio.edge.oaipmh.utils.Constants.LIST_RECORDS;
@@ -33,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Pattern;
 
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.ext.web.client.HttpResponse;
@@ -64,14 +66,18 @@ public class OaiPmhHandler extends Handler {
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
   private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s %s";
 
-  private OaiPmhOkapiClient oaiPmhClient;
-  private OkapiClient okapiClient;
   private Cache<List<String>> tenantsCache;
+  private Cache<OkapiClient> clientCache;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
     tenantsCache = new Cache.Builder<List<String>>()
       .withTTL(TimeUnit.HOURS.toMillis(1))
+      .withNullValueTTL(0)
+      .withCapacity(100)
+      .build();
+    clientCache = new Cache.Builder<OkapiClient>()
+      .withTTL(TimeUnit.MINUTES.toMillis(10))
       .withNullValueTTL(0)
       .withCapacity(100)
       .build();
@@ -90,22 +96,24 @@ public class OaiPmhHandler extends Handler {
     }
 
     handleCommon(ctx, new String[0], new String[0] , (okapiClient, params) -> {
-      this.okapiClient = okapiClient;
       if (isListRequest(ctx)) {
         getTenants(okapiClient)
           .thenAccept(list -> {
             if (isEmpty(list)) {
               notFound(ctx, "Tenants list is absent or empty");
             } else if (isSingleTenantHarvesting(list)) {
-              oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-              performCall(ctx, oaiPmhClient, null);
+              new OaiPmhOkapiClient(okapiClient).call(request.params(), request.headers(),
+                response -> handleProxyResponse(ctx, response),
+                throwable -> oaiPmhFailureHandler(ctx, throwable));
             } else {
+              ctx.request().params().set(CENTRAL_TENANT_ID, okapiClient.tenant);
               performMultiTenantHarvesting(ctx, list.get(0));
             }
           });
       } else {
-        oaiPmhClient = new OaiPmhOkapiClient(okapiClient);
-        performCall(ctx, oaiPmhClient, null);
+        new OaiPmhOkapiClient(okapiClient).call(request.params(), request.headers(),
+          response -> handleProxyResponse(ctx, response),
+          throwable -> oaiPmhFailureHandler(ctx, throwable));
       }
     });
   }
@@ -139,6 +147,7 @@ public class OaiPmhHandler extends Handler {
   private void performMultiTenantHarvesting(RoutingContext ctx, String tenantId) {
     var request = ctx.request();
     if (isFirstRequest(request)) {
+      ctx.request().params().set(TENANT_ID, tenantId);
       callToTenant(ctx, tenantId);
     } else {
       var resumptionTokenParams = parseResumptionToken(request.params().get(RESUMPTION_TOKEN));
@@ -148,39 +157,44 @@ public class OaiPmhHandler extends Handler {
         ofNullable(resumptionTokenParams.get(FROM)).ifPresent(value -> request.params().set(FROM, value));
         ofNullable(resumptionTokenParams.get(UNTIL)).ifPresent(value -> request.params().set(UNTIL, value));
       }
-      callToTenant(ctx, resumptionTokenParams.get(TENANT_ID));
+      var nextTenantId = resumptionTokenParams.get(TENANT_ID);
+      ctx.request().params().set(TENANT_ID, nextTenantId);
+      callToTenant(ctx, nextTenantId);
     }
   }
 
   private void callToTenant(RoutingContext ctx, String tenant) {
-    var client = ocf.getOkapiClient(tenant);
-    getToken(ctx, tenant, client)
-      .thenAccept(token -> {
-        client.setToken(token);
-        oaiPmhClient = new OaiPmhOkapiClient(client);
-        performCall(ctx, oaiPmhClient, null);
-      });
+    var request = ctx.request();
+    getClient(ctx, tenant)
+      .thenAccept(client -> new OaiPmhOkapiClient(client).call(request.params(), request.headers(),
+        response -> handleProxyResponse(ctx, response),
+        throwable -> oaiPmhFailureHandler(ctx, throwable)));
   }
 
-  private Optional<String> getNextTenant(List<String> list, String tenant) {
-    var nextTenantIndex = list.indexOf(tenant) + 1;
+  private CompletableFuture<OkapiClient> getClient(RoutingContext ctx, String tenant) {
+    var client = clientCache.get(tenant);
+    if (isNull(client)) {
+      log.info("Okapi client for tenant {} is not present in cache, creating new one", tenant);
+      var newClient = ocf.getOkapiClient(tenant);
+      return getToken(ctx, tenant, newClient)
+        .thenApply(token -> {
+          newClient.setToken(token);
+          clientCache.put(tenant, newClient);
+          return newClient;
+        });
+    }
+    log.info("Using cached okapi client for tenant {}", tenant);
+    return CompletableFuture.completedFuture(client);
+  }
+
+  private Optional<String> getNextTenant(List<String> list, String currentTenantId) {
+    log.info("Tenants list: {}", list);
+    var nextTenantIndex = list.indexOf(currentTenantId) + 1;
     if (list.size() > nextTenantIndex) {
+      log.info("Next tenant: {}", list.get(nextTenantIndex));
       return Optional.of(list.get(nextTenantIndex));
     }
     return Optional.empty();
-  }
-
-  private void performCall(RoutingContext ctx, OaiPmhOkapiClient client, String resumptionToken) {
-    var request = ctx.request();
-    log.debug("Client request: {} {}", request.method(), request.absoluteURI());
-
-    ofNullable(resumptionToken).ifPresent(token -> {
-      request.params().set(RESUMPTION_TOKEN, token);
-      request.params().remove(METADATA_PREFIX);
-    });
-    client.call(request.params(), request.headers(),
-      response -> handleProxyResponse(ctx, response),
-      throwable -> oaiPmhFailureHandler(ctx, throwable));
   }
 
   /**
@@ -227,9 +241,10 @@ public class OaiPmhHandler extends Handler {
       Buffer buffer = oaiPmhResponse.body();
       var oaipmh = ResponseConverter.getInstance().toOaiPmh(buffer.toString());
       if (isListRecords(oaipmh) && isResumptionTokenOnly(oaipmh.getListRecords())) {
-        performCall(ctx, oaiPmhClient, oaipmh.getListRecords().getResumptionToken().getValue());
+        processEmptyListResponse(ctx, oaipmh);
       } else if (isLastResponse(oaipmh)) {
-        processLastResponse(edgeResponse, oaipmh, buffer);
+        log.info("Processing last response for list verb...");
+        processLastResponse(ctx, edgeResponse, oaipmh, buffer);
       } else if (isListRequest(ctx) && isErrorResponse(oaipmh)) {
         processErrorResponse(ctx, edgeResponse, buffer);
       } else {
@@ -247,32 +262,59 @@ public class OaiPmhHandler extends Handler {
     }
   }
 
-  private void processLastResponse(HttpServerResponse edgeResponse, OAIPMH oaipmh, Buffer buffer) {
-    getNextTenant(okapiClient, oaiPmhClient.tenant)
-      .thenAccept(optionalNextTenant -> {
-        if (optionalNextTenant.isPresent()) {
-          updateResumptionTokenValue(oaipmh, optionalNextTenant.get());
-          edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance().convertToString(oaipmh)));
-        } else {
-          edgeResponse.end(buffer);
-        }
-      });
+  private void processEmptyListResponse(RoutingContext ctx, OAIPMH oaipmh) {
+    var request = ctx.request();
+    var resumptionToken = oaipmh.getListRecords().getResumptionToken().getValue();
+    request.params().set(RESUMPTION_TOKEN, resumptionToken);
+    request.params().remove(METADATA_PREFIX);
+    callToTenant(ctx, parseResumptionToken(resumptionToken).get(TENANT_ID));
+  }
+
+  private void processLastResponse(RoutingContext ctx, HttpServerResponse edgeResponse, OAIPMH oaipmh, Buffer buffer) {
+    var requestParams = ctx.request().params();
+    log.info("Last response, central tenant={}, current tenant={}", requestParams.get(CENTRAL_TENANT_ID), requestParams.get(TENANT_ID));
+    if (isMultiTenantHarvesting(requestParams)) {
+      getNextTenant(ctx, requestParams.get(CENTRAL_TENANT_ID), requestParams.get(TENANT_ID))
+        .thenAccept(optionalNextTenant -> {
+          if (optionalNextTenant.isPresent()) {
+            updateResumptionTokenValue(oaipmh, optionalNextTenant.get());
+            edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance().convertToString(oaipmh)));
+          } else {
+            edgeResponse.end(buffer);
+          }
+        });
+    } else {
+      edgeResponse.end(buffer);
+    }
   }
 
   private void processErrorResponse(RoutingContext ctx, HttpServerResponse edgeResponse, Buffer buffer) {
-    getNextTenant(okapiClient, oaiPmhClient.tenant)
-      .thenAccept(optionalNextTenant -> {
-        if (optionalNextTenant.isPresent()) {
-          callToTenant(ctx, optionalNextTenant.get());
-        } else {
-          edgeResponse.end(buffer);
-        }
-      });
+    var requestParams = ctx.request().params();
+    log.info("Error response, central tenant={}, current tenant={}", requestParams.get(CENTRAL_TENANT_ID), requestParams.get(TENANT_ID));
+    if (isMultiTenantHarvesting(requestParams)) {
+      getNextTenant(ctx, requestParams.get(CENTRAL_TENANT_ID), requestParams.get(TENANT_ID))
+        .thenAccept(optionalNextTenant -> {
+          if (optionalNextTenant.isPresent()) {
+            var nextTenant = optionalNextTenant.get();
+            requestParams.set(TENANT_ID, nextTenant);
+            callToTenant(ctx, nextTenant);
+          } else {
+            edgeResponse.end(buffer);
+          }
+        });
+    } else {
+      edgeResponse.end(buffer);
+    }
   }
 
-  private CompletableFuture<Optional<String>> getNextTenant(OkapiClient okapiClient, String tenantId) {
-    return getTenants(okapiClient)
-      .thenApply(list -> getNextTenant(list, tenantId));
+  private boolean isMultiTenantHarvesting(MultiMap requestParams) {
+    return nonNull(requestParams.get(CENTRAL_TENANT_ID)) && nonNull(requestParams.get(TENANT_ID));
+  }
+
+  private CompletableFuture<Optional<String>> getNextTenant(RoutingContext ctx, String initialTenantId, String currentTenantId) {
+    return getClient(ctx, initialTenantId)
+      .thenCompose(this::getTenants)
+      .thenApply(list -> getNextTenant(list, currentTenantId));
   }
 
   private void updateResumptionTokenValue(OAIPMH oaipmh, String nextTenant) {
@@ -343,14 +385,8 @@ public class OaiPmhHandler extends Handler {
   }
 
   private CompletableFuture<String> getToken(RoutingContext ctx, String tenant, OkapiClient client) {
-    var key = keyHelper.getApiKey(ctx);
-    ClientInfo clientInfo;
-    try {
-      clientInfo = ApiKeyUtils.parseApiKey(key);
-    } catch (ApiKeyUtils.MalformedApiKeyException e) {
-      return CompletableFuture.failedFuture(e);
-    }
-    return iuHelper.getToken(client, clientInfo.salt, tenant, clientInfo.username);
+    return getClientInfo(ctx)
+      .thenCompose(clientInfo -> iuHelper.getToken(client, clientInfo.salt, tenant, clientInfo.username));
   }
 
   private boolean isLastResponse(OAIPMH oaipmh) {
@@ -360,5 +396,16 @@ public class OaiPmhHandler extends Handler {
 
   private boolean isErrorResponse(OAIPMH oaipmh) {
     return isNotEmpty(oaipmh.getErrors());
+  }
+
+  private CompletableFuture<ClientInfo> getClientInfo(RoutingContext ctx) {
+    var key = keyHelper.getApiKey(ctx);
+    ClientInfo clientInfo;
+    try {
+      clientInfo = ApiKeyUtils.parseApiKey(key);
+    } catch (ApiKeyUtils.MalformedApiKeyException e) {
+      return CompletableFuture.failedFuture(e);
+    }
+    return CompletableFuture.completedFuture(clientInfo);
   }
 }
