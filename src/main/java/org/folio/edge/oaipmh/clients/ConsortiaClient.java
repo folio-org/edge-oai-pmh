@@ -13,7 +13,6 @@ import org.folio.rest.jaxrs.model.TenantCollection;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class ConsortiaClient extends OkapiClient {
@@ -42,6 +41,6 @@ public class ConsortiaClient extends OkapiClient {
       .map(tenants -> tenants.stream()
         .filter(t -> !t.getIsCentral())
         .map(Tenant::getId)
-        .collect(Collectors.toList()));
+        .sorted().toList());
   }
 }
