@@ -1,8 +1,10 @@
 package org.folio.edge.oaipmh;
 
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 
+import io.vertx.core.json.jackson.DatabindCodec;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.core.Constants;
 import org.folio.edge.core.EdgeVerticleHttp;
@@ -24,6 +26,8 @@ public class MainVerticle extends EdgeVerticleHttp {
     if (reqTimeoutMs == Constants.DEFAULT_REQUEST_TIMEOUT_MS) {
       reqTimeoutMs = 7200000;
     }
+
+    DatabindCodec.mapper().configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     OaiPmhOkapiClientFactory ocf = new OaiPmhOkapiClientFactory(vertx, okapiURL, reqTimeoutMs);
     OaiPmhHandler oaiPmhHandler = new OaiPmhHandler(secureStore, ocf);
