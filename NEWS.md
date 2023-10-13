@@ -1,4 +1,19 @@
-## 2.7.0 - Unreleased
+## 2.8.0 - Unreleased
+
+## 2.7.0 - Released
+
+This release includes harvesting across tenants, ConsortiaTenant API Client, updates to Java 17
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.6.1...v2.7.0)
+
+### Technical tasks
+* [EDGOAIPMH-101](https://issues.folio.org/browse/EDGOAIPMH-101) - Update to Java 17 edge-oai-pmh
+* [EDGOAIPMH-100](https://issues.folio.org/browse/EDGOAIPMH-100) - ConsortiaTenant API Client
+* [EDGOAIPMH-99](https://issues.folio.org/browse/EDGOAIPMH-99) - Harvesting Across Tenants Orchestrator
+* [EDGOAIPMH-81](https://issues.folio.org/browse/EDGOAIPMH-81) - Logging improvement
+
+### Bug fixes
+* [EDGOAIPMH-104](https://issues.folio.org/browse/EDGOAIPMH-104) - Issues related to Cross tenant incremental harvest
 
 ## 2.6.1 - Released
 
