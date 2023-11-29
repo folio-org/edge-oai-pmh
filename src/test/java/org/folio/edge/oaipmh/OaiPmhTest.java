@@ -73,10 +73,13 @@ class OaiPmhTest {
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(ApiKeyUtils.parseApiKey(API_KEY).tenantId);
     knownTenants.add("central");
+    knownTenants.add("central2");
     knownTenants.add("tenant1");
     knownTenants.add("tenant2");
     knownTenants.add("tenant3");
+    knownTenants.add("tenant4");
     knownTenants.add("tenant5");
+    knownTenants.add("tenant6");
 
     System.setProperty(SYS_PORT, String.valueOf(serverPort));
     System.setProperty(SYS_OKAPI_URL, "http://localhost:" + okapiPort);
