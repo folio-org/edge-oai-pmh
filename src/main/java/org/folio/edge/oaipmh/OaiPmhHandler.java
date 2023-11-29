@@ -67,17 +67,11 @@ public class OaiPmhHandler extends Handler {
   private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s %s";
 
   private Cache<List<String>> tenantsCache;
-  private Cache<OkapiClient> clientCache;
 
   public OaiPmhHandler(SecureStore secureStore, OkapiClientFactory ocf) {
     super(secureStore, ocf);
     tenantsCache = new Cache.Builder<List<String>>()
       .withTTL(TimeUnit.HOURS.toMillis(1))
-      .withNullValueTTL(0)
-      .withCapacity(100)
-      .build();
-    clientCache = new Cache.Builder<OkapiClient>()
-      .withTTL(TimeUnit.MINUTES.toMillis(10))
       .withNullValueTTL(0)
       .withCapacity(100)
       .build();
@@ -172,22 +166,6 @@ public class OaiPmhHandler extends Handler {
       .thenAccept(client -> new OaiPmhOkapiClient(client).call(request.params(), request.headers(),
         response -> handleProxyResponse(ctx, response),
         throwable -> oaiPmhFailureHandler(ctx, throwable)));
-  }
-
-  private CompletableFuture<OkapiClient> getClient(RoutingContext ctx, String tenant) {
-    var client = clientCache.get(tenant);
-    if (isNull(client)) {
-      log.info("Okapi client for tenant {} is not present in cache, creating new one", tenant);
-      var newClient = ocf.getOkapiClient(tenant);
-      return getToken(ctx, tenant, newClient)
-        .thenApply(token -> {
-          newClient.setToken(token);
-          clientCache.put(tenant, newClient);
-          return newClient;
-        });
-    }
-    log.info("Using cached okapi client for tenant {}", tenant);
-    return CompletableFuture.completedFuture(client);
   }
 
   private Optional<String> getNextTenant(List<String> list, String currentTenantId) {
@@ -387,11 +365,6 @@ public class OaiPmhHandler extends Handler {
     return isNull(request.params().get(RESUMPTION_TOKEN));
   }
 
-  private CompletableFuture<String> getToken(RoutingContext ctx, String tenant, OkapiClient client) {
-    return getClientInfo(ctx)
-      .thenCompose(clientInfo -> iuHelper.getToken(client, clientInfo.salt, tenant, clientInfo.username));
-  }
-
   private boolean isLastResponse(OAIPMH oaipmh) {
     return (nonNull(oaipmh.getListRecords()) && (isNull(oaipmh.getListRecords().getResumptionToken()) || oaipmh.getListRecords().getResumptionToken().getValue().isEmpty()))
       || (nonNull(oaipmh.getListIdentifiers()) && (isNull(oaipmh.getListIdentifiers().getResumptionToken()) || oaipmh.getListIdentifiers().getResumptionToken().getValue().isEmpty()));
@@ -401,7 +374,7 @@ public class OaiPmhHandler extends Handler {
     return isNotEmpty(oaipmh.getErrors());
   }
 
-  private CompletableFuture<ClientInfo> getClientInfo(RoutingContext ctx) {
+  private CompletableFuture<OkapiClient> getClient(RoutingContext ctx, String tenantId) {
     var key = keyHelper.getApiKey(ctx);
     ClientInfo clientInfo;
     try {
@@ -409,6 +382,8 @@ public class OaiPmhHandler extends Handler {
     } catch (ApiKeyUtils.MalformedApiKeyException e) {
       return CompletableFuture.failedFuture(e);
     }
-    return CompletableFuture.completedFuture(clientInfo);
+    final OkapiClient client = ocf.getOkapiClient(tenantId);
+    return iuHelper.fetchToken(client, clientInfo.salt, tenantId, clientInfo.username)
+      .map(token -> client).toCompletionStage().toCompletableFuture();
   }
 }

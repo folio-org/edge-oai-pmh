@@ -38,6 +38,9 @@ class ConsortiaTenantClientTest {
 
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(TENANT_DIKU);
+    knownTenants.add(TENANT_CENTRAL);
+    knownTenants.add(TENANT_CONSORTIA);
+    knownTenants.add(TENANT_EMPTY_CONSORTIA);
 
     factory = new OaiPmhOkapiClientFactory(vertx, "http://localhost:" + okapiPort, REQUEST_TIMEOUT);
 
