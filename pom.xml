@@ -30,7 +30,7 @@
 
   <properties>
     <java.version>17</java.version>
-    <raml-module-builder.version>35.0.6</raml-module-builder.version>
+    <raml-module-builder.version>35.1.1</raml-module-builder.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
@@ -45,8 +45,8 @@
     <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.9.1</mod-configuration-client.version>
     <edge.common.version>4.5.2</edge.common.version>
-    <vertx-stack-depchain.version>4.3.8</vertx-stack-depchain.version>
-    <log4j-bom.version>2.17.2</log4j-bom.version>
+    <vertx-stack-depchain.version>4.4.6</vertx-stack-depchain.version>
+    <log4j-bom.version>2.20.0</log4j-bom.version>
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
     <lombok.version>1.18.24</lombok.version>
@@ -57,18 +57,18 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-stack-depchain</artifactId>
-        <version>${vertx-stack-depchain.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
         <groupId>org.apache.logging.log4j</groupId>
         <artifactId>log4j-bom</artifactId>
         <version>${log4j-bom.version}</version>
         <scope>import</scope>
         <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>io.vertx</groupId>
+        <artifactId>vertx-stack-depchain</artifactId>
+        <version>${vertx-stack-depchain.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
