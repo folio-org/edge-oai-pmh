@@ -1,5 +1,17 @@
 ## 2.8.0 - Unreleased
 
+## 2.7.1 - Released
+
+This release contains dependency updates
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.7.0...v2.7.1)
+
+### Technical tasks
+* [EDGOAIPMH-107](https://issues.folio.org/browse/EDGOAIPMH-107) - Update edge-common version
+
+### Bug fixes
+* [EDGOAIPMH-108](https://issues.folio.org/browse/EDGOAIPMH-108) - RMB 35.1.1, Vert.x 4.4.6 fixing Netty/Jackson DoS
+
 ## 2.7.0 - Released
 
 This release includes harvesting across tenants, ConsortiaTenant API Client, updates to Java 17
