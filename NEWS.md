@@ -1,5 +1,14 @@
 ## 2.8.0 - Unreleased
 
+## 2.7.2 - Released
+
+This release contains update for retrieving tenants limit
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.7.1...v2.7.2)
+
+### Bug fixes
+* [EDGOAIPMH-110](https://issues.folio.org/browse/EDGOAIPMH-110) - Retrieving tenants limit issue
+
 ## 2.7.1 - Released
 
 This release contains dependency updates
