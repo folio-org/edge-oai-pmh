@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class ConsortiaClient extends OkapiClient {
   private static final String CONSORTIA_ENDPOINT = "/consortia";
-  private static final String CONSORTIA_TENANTS_ENDPOINT_TEMPLATE = "/consortia/%s/tenants";
+  private static final String CONSORTIA_TENANTS_ENDPOINT_TEMPLATE = "/consortia/%s/tenants?limit=";
 
   ConsortiaClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
     super(vertx, okapiURL, tenant, timeout);
@@ -35,7 +35,7 @@ public class ConsortiaClient extends OkapiClient {
       return Future.succeededFuture(Collections.singletonList(initialTenant));
     }
     var consortiaId = consortia.get(0).getId();
-    return get(okapiURL + String.format(CONSORTIA_TENANTS_ENDPOINT_TEMPLATE, consortiaId), tenant, headers)
+    return get(okapiURL + String.format(CONSORTIA_TENANTS_ENDPOINT_TEMPLATE + Integer.MAX_VALUE, consortiaId), tenant, headers)
       .map(resp -> resp.bodyAsJson(TenantCollection.class))
       .map(TenantCollection::getTenants)
       .map(tenants -> tenants.stream()
