@@ -38,15 +38,14 @@
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
     <jaxb2-basics.ver>1.11.1</jaxb2-basics.ver>
-    <apache.common.lang.ver>3.12.0</apache.common.lang.ver>
     <guava.ver>31.1-jre</guava.ver>
     <jaxb.time.adaptor.ver>1.1.3</jaxb.time.adaptor.ver>
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
-    <mod-configuration-client.version>5.9.1</mod-configuration-client.version>
-    <edge.common.version>4.5.2</edge.common.version>
-    <vertx-stack-depchain.version>4.4.6</vertx-stack-depchain.version>
-    <log4j-bom.version>2.20.0</log4j-bom.version>
+    <mod-configuration-client.version>5.9.2</mod-configuration-client.version>
+    <edge.common.version>4.5.3</edge.common.version>
+    <vertx-stack-depchain.version>4.5.4</vertx-stack-depchain.version>
+    <log4j-bom.version>2.23.0</log4j-bom.version>
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
     <lombok.version>1.18.24</lombok.version>
@@ -97,11 +96,6 @@
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
       <version>${guava.ver}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${apache.common.lang.ver}</version>
     </dependency>
 
     <!-- Jaxb dependencies -->
