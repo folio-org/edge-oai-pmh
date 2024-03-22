@@ -43,7 +43,7 @@
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.9.2</mod-configuration-client.version>
-    <edge.common.version>4.5.3</edge.common.version>
+    <edge.common.version>4.6.0</edge.common.version>
     <vertx-stack-depchain.version>4.5.4</vertx-stack-depchain.version>
     <log4j-bom.version>2.23.0</log4j-bom.version>
     <mockito-core.version>4.6.1</mockito-core.version>
