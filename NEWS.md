@@ -1,6 +1,12 @@
-## 2.9.0 - Unreleased
+## 2.10.0 - Unreleased
 
-## 2.8.0 - Unreleased
+## 2.9.0 - Released
+
+This release includes only edge-common upgrade
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.8.0...v2.9.0)
+
+## 2.8.0 - Released
 
 This release includes updates to RAML Module Builder, fixes for retrieving tenants limit
 
