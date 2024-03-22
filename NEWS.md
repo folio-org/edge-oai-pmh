@@ -1,4 +1,37 @@
+## 2.9.0 - Unreleased
+
 ## 2.8.0 - Unreleased
+
+This release includes updates to RAML Module Builder, fixes for retrieving tenants limit
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.7.2...v2.8.0)
+
+### Technical tasks
+* [EDGOAIPMH-114](https://issues.folio.org/browse/EDGOAIPMH-114) - Upgrade RAML Module Builder
+
+### Bug Fixes
+* [EDGOAIPMH-110](https://issues.folio.org/browse/EDGOAIPMH-110) - Retrieving tenants limit issue
+
+## 2.7.2 - Unreleased
+
+This release contains update for retrieving tenants limit
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.7.1...v2.7.2)
+
+### Bug fixes
+* [EDGOAIPMH-110](https://issues.folio.org/browse/EDGOAIPMH-110) - Retrieving tenants limit issue
+
+## 2.7.1 - Unreleased
+
+This release contains dependency updates
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.7.0...v2.7.1)
+
+### Technical tasks
+* [EDGOAIPMH-107](https://issues.folio.org/browse/EDGOAIPMH-107) - Update edge-common version
+
+### Bug fixes
+* [EDGOAIPMH-108](https://issues.folio.org/browse/EDGOAIPMH-108) - RMB 35.1.1, Vert.x 4.4.6 fixing Netty/Jackson DoS
 
 ## 2.7.0 - Released
 
