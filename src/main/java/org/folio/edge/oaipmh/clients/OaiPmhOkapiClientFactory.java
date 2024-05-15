@@ -1,13 +1,20 @@
 package org.folio.edge.oaipmh.clients;
 
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_PASSWORD;
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_PATH;
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_PROVIDER;
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_TYPE;
+import static org.folio.edge.core.Constants.SYS_KEY_ALIAS;
+import static org.folio.edge.core.Constants.SYS_KEY_ALIAS_PASSWORD;
+import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
+import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.folio.edge.core.Constants;
 import org.folio.edge.core.utils.OkapiClientFactory;
-
-import static org.folio.edge.core.Constants.*;
 
 public class OaiPmhOkapiClientFactory extends OkapiClientFactory {
   private static final Logger logger = LogManager.getLogger();
