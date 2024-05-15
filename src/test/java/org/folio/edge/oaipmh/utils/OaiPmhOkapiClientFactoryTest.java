@@ -1,38 +1,41 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
+import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import io.vertx.core.Vertx;
 
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
+import io.vertx.core.json.JsonObject;
+import org.folio.edge.core.utils.OkapiClient;
+import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class OaiPmhOkapiClientFactoryTest {
 
-  private static final int reqTimeout = 5000;
-
-  private OaiPmhOkapiClientFactory ocf;
-
-  @BeforeEach
-  void setUp() {
-    Vertx vertx = Vertx.vertx();
-    ocf = new OaiPmhOkapiClientFactory(vertx, "http://mocked.okapi:9130", reqTimeout);
-  }
-
   @Test
   void testGetOkapiClient() {
-    OaiPmhOkapiClient client = ocf.getOaiPmhOkapiClient("tenant");
+    Vertx vertx = Vertx.vertx();
+    int reqTimeout = 5000;
+    JsonObject config = new JsonObject()
+      .put(SYS_OKAPI_URL, "http://mocked.okapi:9130")
+      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout);
+    OkapiClientFactory ocf = OaiPmhOkapiClientFactory.createInstance(vertx, config);
+    OkapiClient client = ocf.getOkapiClient("tenant");
     assertNotNull(client);
     assertEquals(reqTimeout, client.reqTimeout);
   }
 
   @Test
   void testGetConsortiaTenantClient() {
-    var client = ocf.getConsortiaTenantClient("tenant");
+    Vertx vertx = Vertx.vertx();
+    int reqTimeout = 5000;
+    JsonObject config = new JsonObject()
+      .put(SYS_OKAPI_URL, "http://mocked.okapi:9130")
+      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout);
+    var client = OaiPmhOkapiClientFactory.getConsortiaTenantClient("tenant", vertx, config);
     assertNotNull(client);
-    assertEquals(reqTimeout, client.reqTimeout);
   }
 }

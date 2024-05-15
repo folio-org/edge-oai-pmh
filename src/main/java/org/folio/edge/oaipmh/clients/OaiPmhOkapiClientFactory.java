@@ -1,20 +1,43 @@
 package org.folio.edge.oaipmh.clients;
 
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_PASSWORD;
+import static org.folio.edge.core.Constants.SYS_KEYSTORE_PATH;
+import static org.folio.edge.core.Constants.SYS_KEY_ALIAS;
+import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
+import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
+
+import io.vertx.core.json.JsonObject;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.edge.core.utils.OkapiClientFactory;
 
 import io.vertx.core.Vertx;
 
 public class OaiPmhOkapiClientFactory extends OkapiClientFactory {
+  private static final Logger logger = LogManager.getLogger();
 
-  public OaiPmhOkapiClientFactory(Vertx vertx, String okapiURL, int reqTimeoutMs) {
+  private OaiPmhOkapiClientFactory(Vertx vertx, String okapiURL, int reqTimeoutMs) {
     super(vertx, okapiURL, reqTimeoutMs);
   }
 
-  public OaiPmhOkapiClient getOaiPmhOkapiClient(String tenant) {
-    return new OaiPmhOkapiClient(vertx, okapiURL, tenant, reqTimeoutMs);
+  public static OkapiClientFactory createInstance(Vertx vertx, JsonObject config) {
+    String okapiUrl = config.getString(SYS_OKAPI_URL);
+    Integer requestTimeout = config.getInteger(SYS_REQUEST_TIMEOUT_MS);
+    String keystorePath = config.getString(SYS_KEYSTORE_PATH);
+    String keystorePassword = config.getString(SYS_KEYSTORE_PASSWORD);
+    String keyAlias = config.getString(SYS_KEY_ALIAS);
+    if (StringUtils.isNotBlank(keystorePath) && StringUtils.isNotBlank(keystorePassword)) {
+      logger.info("Creating OkapiClientFactory with Enhance HTTP Endpoint Security and TLS mode enabled");
+      return new OkapiClientFactory(vertx, okapiUrl, requestTimeout, keystorePath, keystorePassword, keyAlias);
+    } else {
+      return new OkapiClientFactory(vertx, okapiUrl,  requestTimeout);
+    }
   }
 
-  public ConsortiaTenantClient getConsortiaTenantClient(String tenant) {
-    return new ConsortiaTenantClient(vertx, okapiURL, tenant, reqTimeoutMs);
+  public static ConsortiaTenantClient getConsortiaTenantClient(String tenant, Vertx vertx, JsonObject config) {
+    String okapiUrl = config.getString(SYS_OKAPI_URL);
+    Integer requestTimeout = config.getInteger(SYS_REQUEST_TIMEOUT_MS);
+    return new ConsortiaTenantClient(vertx, okapiUrl, tenant, requestTimeout);
   }
 }
