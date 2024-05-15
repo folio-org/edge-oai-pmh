@@ -1,7 +1,6 @@
 package org.folio.edge.oaipmh.utils;
 
-import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
-import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
+import static org.folio.edge.core.Constants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -21,7 +20,8 @@ class OaiPmhOkapiClientFactoryTest {
     int reqTimeout = 5000;
     JsonObject config = new JsonObject()
       .put(SYS_OKAPI_URL, "http://mocked.okapi:9130")
-      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout);
+      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout)
+      .put(SYS_SSL_ENABLED, false);
     OkapiClientFactory ocf = OaiPmhOkapiClientFactory.createInstance(vertx, config);
     OkapiClient client = ocf.getOkapiClient("tenant");
     assertNotNull(client);
@@ -34,7 +34,8 @@ class OaiPmhOkapiClientFactoryTest {
     int reqTimeout = 5000;
     JsonObject config = new JsonObject()
       .put(SYS_OKAPI_URL, "http://mocked.okapi:9130")
-      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout);
+      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout)
+      .put(SYS_SSL_ENABLED, false);
     var client = OaiPmhOkapiClientFactory.getConsortiaTenantClient("tenant", vertx, config);
     assertNotNull(client);
   }
