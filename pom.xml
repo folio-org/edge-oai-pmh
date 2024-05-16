@@ -49,6 +49,7 @@
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
     <lombok.version>1.18.24</lombok.version>
+    <bc-fips.version>1.0.2.5</bc-fips.version>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
@@ -148,6 +149,12 @@
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <!-- Library provides the basic cryptographic functionality complying with FIPS -->
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bc-fips</artifactId>
+      <version>${bc-fips.version}</version>
     </dependency>
   </dependencies>
 
