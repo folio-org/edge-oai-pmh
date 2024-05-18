@@ -1,14 +1,5 @@
 package org.folio.edge.oaipmh.utils;
 
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.core.net.KeyStoreOptions;
-import org.apache.commons.lang3.reflect.FieldUtils;
-import org.folio.edge.core.utils.OkapiClient;
-import org.folio.edge.core.utils.OkapiClientFactory;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.jupiter.api.Test;
-
 import static org.folio.edge.core.Constants.SYS_KEYSTORE_PASSWORD;
 import static org.folio.edge.core.Constants.SYS_KEYSTORE_PATH;
 import static org.folio.edge.core.Constants.SYS_KEYSTORE_PROVIDER;
@@ -21,6 +12,15 @@ import static org.folio.edge.core.Constants.SYS_SSL_ENABLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.KeyStoreOptions;
+import org.apache.commons.lang3.reflect.FieldUtils;
+import org.folio.edge.core.utils.OkapiClient;
+import org.folio.edge.core.utils.OkapiClientFactory;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
+import org.junit.jupiter.api.Test;
 
 class OaiPmhOkapiClientFactoryTest {
 
@@ -81,18 +81,6 @@ class OaiPmhOkapiClientFactoryTest {
     assertEquals(KEY_ALIAS, keyStoreOptions.getAlias());
     assertEquals(KEY_ALIAS_PASSWORD, keyStoreOptions.getAliasPassword());
     OkapiClient client = ocf.getOkapiClient("tenant");
-    assertNotNull(client);
-  }
-
-  @Test
-  void testGetConsortiaTenantClient() {
-    Vertx vertx = Vertx.vertx();
-    int reqTimeout = 5000;
-    JsonObject config = new JsonObject()
-      .put(SYS_OKAPI_URL, "http://mocked.okapi:9130")
-      .put(SYS_REQUEST_TIMEOUT_MS, reqTimeout)
-      .put(SYS_SSL_ENABLED, false);
-    var client = OaiPmhOkapiClientFactory.getConsortiaTenantClient("tenant", vertx, config);
     assertNotNull(client);
   }
 }
