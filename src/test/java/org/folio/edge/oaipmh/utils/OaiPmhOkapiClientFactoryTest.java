@@ -34,7 +34,7 @@ class OaiPmhOkapiClientFactoryTest {
   private static final String KEY_ALIAS_PASSWORD = "some_key_alias_password";
 
   @Test
-  public void testCreateInstanceOkapiClientFactory() throws IllegalAccessException {
+  void testCreateInstanceOkapiClientFactory() throws IllegalAccessException {
     Vertx vertx = Vertx.vertx();
     JsonObject config = new JsonObject()
       .put(SYS_OKAPI_URL, OKAPI_URL)
@@ -54,7 +54,7 @@ class OaiPmhOkapiClientFactoryTest {
   }
 
   @Test
-  public void testGetSecuredOkapiClientFactory() throws IllegalAccessException {
+  void testGetSecuredOkapiClientFactory() throws IllegalAccessException {
     Vertx vertx = Vertx.vertx();
     JsonObject config = new JsonObject()
       .put(SYS_OKAPI_URL, OKAPI_URL)
