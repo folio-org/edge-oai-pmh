@@ -49,13 +49,8 @@
     <mockito-core.version>4.6.1</mockito-core.version>
     <rest-assured.version>5.1.0</rest-assured.version>
     <lombok.version>1.18.24</lombok.version>
-    <bc-fips.version>1.0.2.5</bc-fips.version>
-    <bcpkix-fips.version>1.0.7</bcpkix-fips.version>
-    <bctls-fips.version>1.0.19</bctls-fips.version>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
-    <sonar.exclusions>src/main/java/org/folio/edge/oaipmh/OaiPmhLauncher.java</sonar.exclusions>
-
   </properties>
 
   <dependencyManagement>
@@ -153,22 +148,6 @@
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <!-- Libraries provide the basic cryptographic functionality complying with FIPS -->
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bc-fips</artifactId>
-      <version>${bc-fips.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-fips</artifactId>
-      <version>${bcpkix-fips.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.bouncycastle</groupId>
-      <artifactId>bctls-fips</artifactId>
-      <version>${bctls-fips.version}</version>
     </dependency>
   </dependencies>
 
@@ -289,7 +268,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <Main-Class>org.folio.edge.oaipmh.OaiPmhLauncher</Main-Class>
+                    <Main-Class>io.vertx.core.Launcher</Main-Class>
                     <Main-Verticle>${exec.mainClass}</Main-Verticle>
                   </manifestEntries>
                 </transformer>

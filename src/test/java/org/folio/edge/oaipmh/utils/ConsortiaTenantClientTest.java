@@ -2,7 +2,7 @@ package org.folio.edge.oaipmh.utils;
 
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
-import static org.folio.edge.core.Constants.SYS_SSL_ENABLED;
+import static org.folio.edge.core.Constants.SYS_WEB_CLIENT_SSL_ENABLED;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -11,9 +11,9 @@ import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.core.utils.OkapiClientFactory;
+import org.folio.edge.core.utils.OkapiClientFactoryInitializer;
 import org.folio.edge.core.utils.test.TestUtils;
 import org.folio.edge.oaipmh.clients.ConsortiaTenantClient;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ class ConsortiaTenantClientTest {
     knownTenants.add(TENANT_CONSORTIA);
     knownTenants.add(TENANT_EMPTY_CONSORTIA);
 
-    factory = OaiPmhOkapiClientFactory.createInstance(vertx, getCommonConfig(okapiPort));
+    factory = OkapiClientFactoryInitializer.createInstance(vertx, getCommonConfig(okapiPort));
 
     mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
     mockOkapi.start(context);
@@ -110,6 +110,6 @@ class ConsortiaTenantClientTest {
     return new JsonObject()
       .put(SYS_OKAPI_URL, "http://localhost:" + okapiPort)
       .put(SYS_REQUEST_TIMEOUT_MS, REQUEST_TIMEOUT)
-      .put(SYS_SSL_ENABLED, false);
+      .put(SYS_WEB_CLIENT_SSL_ENABLED, false);
   }
 }
