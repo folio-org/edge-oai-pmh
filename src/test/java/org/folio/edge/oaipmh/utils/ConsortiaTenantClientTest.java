@@ -1,12 +1,19 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
+import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
+import static org.folio.edge.core.Constants.SYS_WEB_CLIENT_SSL_ENABLED;
+
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
+import org.folio.edge.core.utils.OkapiClientFactory;
+import org.folio.edge.core.utils.OkapiClientFactoryInitializer;
 import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
+import org.folio.edge.oaipmh.clients.ConsortiaTenantClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +36,7 @@ class ConsortiaTenantClientTest {
   private static final String TENANT_EMPTY_CONSORTIA = "empty_consortia";
   private static final int REQUEST_TIMEOUT = 3000;
 
-  private OaiPmhOkapiClientFactory factory;
+  private OkapiClientFactory factory;
   private OaiPmhMockOkapi mockOkapi;
 
   @BeforeEach
@@ -42,7 +49,7 @@ class ConsortiaTenantClientTest {
     knownTenants.add(TENANT_CONSORTIA);
     knownTenants.add(TENANT_EMPTY_CONSORTIA);
 
-    factory = new OaiPmhOkapiClientFactory(vertx, "http://localhost:" + okapiPort, REQUEST_TIMEOUT);
+    factory = OkapiClientFactoryInitializer.createInstance(vertx, getCommonConfig(okapiPort));
 
     mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
     mockOkapi.start(context);
@@ -87,7 +94,7 @@ class ConsortiaTenantClientTest {
   }
 
   private void processRequest(VertxTestContext context, String tenant, MultiMap headers, List<String> expectedList) {
-    var client = factory.getConsortiaTenantClient(tenant);
+    var client = new ConsortiaTenantClient(factory.getOkapiClient(tenant));
     client.login("admin", "password")
       .thenCompose(v -> client.getConsortiaTenants(headers).toCompletionStage())
       .thenAccept(list -> {
@@ -97,5 +104,12 @@ class ConsortiaTenantClientTest {
           context.failNow("Values does not match");
         }
       });
+  }
+
+  private JsonObject getCommonConfig(int okapiPort) {
+    return new JsonObject()
+      .put(SYS_OKAPI_URL, "http://localhost:" + okapiPort)
+      .put(SYS_REQUEST_TIMEOUT_MS, REQUEST_TIMEOUT)
+      .put(SYS_WEB_CLIENT_SSL_ENABLED, false);
   }
 }
