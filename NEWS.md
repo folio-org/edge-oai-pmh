@@ -1,5 +1,15 @@
 ## 2.10.0 - Unreleased
 
+## 2.9.1 - Released
+
+This release includes TLS support
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.9.0...v2.9.1)
+
+### Technical tasks
+* [EDGOAIPMH-116](https://folio-org.atlassian.net/browse/EDGOAIPMH-116) - Enhance WebClient TLS Configuration for Secure Connections to OKAPI
+* [EDGOAIPMH-117](https://folio-org.atlassian.net/browse/EDGOAIPMH-117) - Enhance HTTP Endpoint Security with TLS and FIPS-140-2 Compliant Cryptography
+
 ## 2.9.0 - Released
 
 This release includes only edge-common upgrade
