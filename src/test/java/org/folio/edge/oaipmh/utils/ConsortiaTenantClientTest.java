@@ -1,8 +1,8 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.folio.edge.core.Constants.FOLIO_CLIENT_TLS_ENABLED;
 import static org.folio.edge.core.Constants.SYS_OKAPI_URL;
 import static org.folio.edge.core.Constants.SYS_REQUEST_TIMEOUT_MS;
-import static org.folio.edge.core.Constants.SYS_WEB_CLIENT_SSL_ENABLED;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
@@ -110,6 +110,6 @@ class ConsortiaTenantClientTest {
     return new JsonObject()
       .put(SYS_OKAPI_URL, "http://localhost:" + okapiPort)
       .put(SYS_REQUEST_TIMEOUT_MS, REQUEST_TIMEOUT)
-      .put(SYS_WEB_CLIENT_SSL_ENABLED, false);
+      .put(FOLIO_CLIENT_TLS_ENABLED, false);
   }
 }
