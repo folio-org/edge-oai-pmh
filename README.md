@@ -41,11 +41,16 @@ specified as VM option.
 
 ### System Properties
 
-| Property                                             | Default | Description                                                                                 |
-|------------------------------------------------------|---------|---------------------------------------------------------------------------------------------|
-| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_TYPE`     | `NA`    | (Required). Set the type of the keystore. Common types include `JKS`, `PKCS12`, and `BCFKS` |
-| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_PATH`     | `NA`    | (Required). Set the location of the keystore file in the local file system                  |
-| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_PASSWORD` | `NA`    | (Required). Set the password for the keystore                                               |  
+| Property               | Default           | Description                                                             |
+|------------------------|-------------------|-------------------------------------------------------------------------|
+| `port`                 | `8081`            | Server port to listen on                                                |
+| `okapi_url`            | *required*        | Where to find Okapi (URL)                                               |
+| `request_timeout_ms`   | `30000`           | Request Timeout                                                         |
+| `log_level`            | `INFO`            | Log4j Log Level                                                         |
+| `token_cache_capacity` | `100`             | Max token cache size                                                    |
+| `token_cache_ttl_ms`   | `100`             | How long to cache JWTs, in milliseconds (ms)                            |
+| `secure_store`         | `Ephemeral`       | Type of secure store to use.  Valid: `Ephemeral`, `AwsSsm`, `Vault`     |
+| `secure_store_props`   | `NA`              | Path to a properties file specifying secure store configuration         |
 
 ### System Properties for TLS configuration for Http server
 
@@ -53,15 +58,11 @@ To configure Transport Layer Security (TLS) for HTTP server in edge module, the 
 should be used.
 Parameters marked as Required are required only in case when ssl_enabled is set to true.
 
-| Property                         | Default | Description                                                                                 |
-|----------------------------------|---------|---------------------------------------------------------------------------------------------|
-| `http-server.ssl_enabled`        | `false` | Set whether SSL/TLS is enabled for Vertx Http Server                                        |
-| `http-server.keystore_type`      | `NA`    | (Required). Set the type of the keystore. Common types include `JKS`, `PKCS12`, and `BCFKS` |
-| `http-server.keystore_provider`  | `NA`    | Set the provider name of the key store                                                      |
-| `http-server.keystore_path`      | `NA`    | (Required). Set the location of the keystore file in the local file system                  |
-| `http-server.keystore_password`  | `NA`    | (Required). Set the password for the keystore                                               |
-| `http-server.key_alias`          | `NA`    | Set the alias of the key within the keystore.                                               |
-| `http-server.key_alias_password` | `NA`    | Point to a password of `key_alias` if it is protected                                       |
+| Property                                             | Default           | Description                                                                                 |
+|------------------------------------------------------|-------------------|---------------------------------------------------------------------------------------------|
+| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_TYPE`     | `NA`              | (Required). Set the type of the keystore. Common types include `JKS`, `PKCS12`, and `BCFKS` |
+| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_PATH`     | `NA`              | (Required). Set the location of the keystore file in the local file system                  |
+| `SPRING_SSL_BUNDLE_JKS_WEB_SERVER_KEYSTORE_PASSWORD` | `NA`              | (Required). Set the password for the keystore                                               |
 
 ### System Properties for TLS configuration for Web Client
 
