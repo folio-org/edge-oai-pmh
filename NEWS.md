@@ -9,6 +9,7 @@ This release includes TLS support
 ### Technical tasks
 * [EDGOAIPMH-116](https://folio-org.atlassian.net/browse/EDGOAIPMH-116) - Enhance WebClient TLS Configuration for Secure Connections to OKAPI
 * [EDGOAIPMH-117](https://folio-org.atlassian.net/browse/EDGOAIPMH-117) - Enhance HTTP Endpoint Security with TLS and FIPS-140-2 Compliant Cryptography
+* [EDGOAIPMH-118](https://folio-org.atlassian.net/browse/EDGOAIPMH-118) - Vert.x 4.5.7 fixing netty-codec-http form POST OOM CVE-2024-29025
 
 ## 2.9.0 - Released
 
