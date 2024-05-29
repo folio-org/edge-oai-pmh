@@ -1,26 +1,26 @@
 package org.folio.edge.oaipmh.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.http.HttpStatus;
-import org.folio.edge.core.utils.test.TestUtils;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
-import org.folio.edge.oaipmh.clients.OaiPmhOkapiClientFactory;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.openarchives.oai._2.VerbType;
 
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.http.HttpStatus;
+import org.folio.edge.core.utils.OkapiClientFactory;
+import org.folio.edge.core.utils.test.TestUtils;
+import org.folio.edge.oaipmh.clients.OaiPmhOkapiClient;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.openarchives.oai._2.VerbType;
 
 @Slf4j
 @ExtendWith(VertxExtension.class)
@@ -40,9 +40,8 @@ class OaiPmhOkapiClientTest {
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(TENANT);
 
-    client = new OaiPmhOkapiClientFactory(vertx,
-      "http://localhost:" + okapiPort, REQUEST_TIMEOUT)
-      .getOaiPmhOkapiClient(TENANT);
+    client = new OaiPmhOkapiClient(new OkapiClientFactory(Vertx.vertx(),
+      "http://localhost:" + okapiPort, REQUEST_TIMEOUT).getOkapiClient(TENANT));
 
     mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
     mockOkapi.start(context);
