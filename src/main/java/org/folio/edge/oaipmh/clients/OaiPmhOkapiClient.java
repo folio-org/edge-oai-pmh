@@ -11,7 +11,6 @@ import org.folio.edge.core.utils.OkapiClient;
 
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,11 +20,6 @@ public class OaiPmhOkapiClient extends OkapiClient {
 
   public OaiPmhOkapiClient(OkapiClient client) {
     super(client);
-    fixDefaultHeaders();
-  }
-
-  OaiPmhOkapiClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
-    super(vertx, okapiURL, tenant, timeout);
     fixDefaultHeaders();
   }
 

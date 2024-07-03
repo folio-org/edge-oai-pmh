@@ -6,6 +6,17 @@ This release includes only edge-common upgrade
 
 [Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.9.1...v2.9.2)
 
+## 2.9.1 - Released
+
+This release includes TLS support
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.9.0...v2.9.1)
+
+### Technical tasks
+* [EDGOAIPMH-118](https://folio-org.atlassian.net/browse/EDGOAIPMH-118) - Vert.x 4.5.7 fixing netty-codec-http form POST OOM CVE-2024-29025
+* [EDGOAIPMH-117](https://folio-org.atlassian.net/browse/EDGOAIPMH-117) - Enhance HTTP Endpoint Security with TLS and FIPS-140-2 Compliant Cryptography
+* [EDGOAIPMH-116](https://folio-org.atlassian.net/browse/EDGOAIPMH-116) - Enhance WebClient TLS Configuration for Secure Connections to OKAPI
+
 ## 2.9.0 - Released
 
 This release includes only edge-common upgrade
