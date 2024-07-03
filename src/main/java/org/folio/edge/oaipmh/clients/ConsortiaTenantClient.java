@@ -4,7 +4,6 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
@@ -16,13 +15,11 @@ import java.util.Objects;
 @Slf4j
 public class ConsortiaTenantClient extends OkapiClient {
   private static final String USER_TENANTS_ENDPOINT_LIMIT_1 = "/user-tenants?limit=1";
+  private final OkapiClient okapiClient;
 
   public ConsortiaTenantClient(OkapiClient client) {
     super(client);
-  }
-
-  ConsortiaTenantClient(Vertx vertx, String okapiURL, String tenant, int timeout) {
-    super(vertx, okapiURL, tenant, timeout);
+    okapiClient = client;
   }
 
   public Future<List<String>> getConsortiaTenants(MultiMap headers) {
@@ -36,7 +33,7 @@ public class ConsortiaTenantClient extends OkapiClient {
     if (isNotEmpty(userTenants)) {
       var centralTenantId = userTenants.get(0).getCentralTenantId();
       if (Objects.equals(tenant, centralTenantId)) {
-        var consortiaClient = new ConsortiaClient(vertx, okapiURL, centralTenantId, reqTimeout);
+        var consortiaClient = new ConsortiaClient(okapiClient);
         consortiaClient.setToken(getToken());
         return consortiaClient.getTenantList(tenant, headers);
       }
