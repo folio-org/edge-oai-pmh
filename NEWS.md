@@ -1,5 +1,14 @@
 ## 2.9.0 - Unreleased
 
+## 2.8.1 - Unreleased
+
+This release contains dependency updates
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.8.0...v2.8.1)
+
+### Technical tasks
+* [EDGOAIPMH-120](https://issues.folio.org/browse/EDGOAIPMH-120) - edge-common 4.7.1: AwsParamStore to support FIPS-approved crypto modules
+
 ## 2.8.0 - Unreleased
 
 This release includes updates to RAML Module Builder, fixes for retrieving tenants limit
