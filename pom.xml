@@ -30,7 +30,7 @@
 
   <properties>
     <java.version>17</java.version>
-    <raml-module-builder.version>35.2.0</raml-module-builder.version>
+    <raml-module-builder.version>35.3.0</raml-module-builder.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
