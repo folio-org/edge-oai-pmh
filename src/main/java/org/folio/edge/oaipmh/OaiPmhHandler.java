@@ -38,6 +38,8 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.ext.web.client.HttpResponse;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.edge.core.Handler;
 import org.folio.edge.core.cache.Cache;
 import org.folio.edge.core.model.ClientInfo;
@@ -62,6 +64,7 @@ import org.openarchives.oai._2.ResumptionTokenType;
 
 @Slf4j
 public class OaiPmhHandler extends Handler {
+  private static final Logger logger = LogManager.getLogger(OaiPmhHandler.class);
   /** Expected valid http status codes to be returned by repository logic */
   private static final Set<Integer> EXPECTED_CODES = Set.of(SC_OK, SC_BAD_REQUEST, SC_NOT_FOUND, SC_UNPROCESSABLE_ENTITY, SC_SERVICE_UNAVAILABLE);
   private static final String ERROR_FROM_REPOSITORY = "Error in the response from repository: status code - %s, response status message - %s %s";
@@ -101,6 +104,7 @@ public class OaiPmhHandler extends Handler {
                 throwable -> oaiPmhFailureHandler(ctx, throwable));
             } else {
               ctx.request().params().set(CENTRAL_TENANT_ID, okapiClient.tenant);
+              logger.info("handle:: centralTenantId: {}, tenants: {}", okapiClient.tenant, list);
               performMultiTenantHarvesting(ctx, list.get(0));
             }
           });
@@ -123,7 +127,7 @@ public class OaiPmhHandler extends Handler {
         .toCompletionStage().toCompletableFuture()
         .thenApply(l -> tenantsCache.put(okapiClient.tenant, l).value)
         .exceptionally(throwable -> {
-          log.info("Returning current tenant instead of tenants list, reason: {}", throwable.getMessage());
+          logger.info("Returning current tenant instead of tenants list, reason: {}", throwable.getMessage());
           return Collections.singletonList(okapiClient.tenant);
         });
     }
@@ -145,8 +149,10 @@ public class OaiPmhHandler extends Handler {
     var request = ctx.request();
     if (isFirstRequest(request)) {
       ctx.request().params().set(TENANT_ID, tenantId);
+      logger.info("performMultiTenantHarvesting:: firstRequest, tenantId: {}", tenantId);
       callToTenant(ctx, tenantId);
     } else {
+      logger.info("performMultiTenantHarvesting:: RESUMPTION_TOKEN: {}", request.params().get(RESUMPTION_TOKEN));
       var resumptionTokenParams = parseResumptionToken(request.params().get(RESUMPTION_TOKEN));
       if (shouldStartHarvestingForNextTenant(resumptionTokenParams)) {
         request.params().remove(RESUMPTION_TOKEN);
@@ -162,6 +168,7 @@ public class OaiPmhHandler extends Handler {
 
   private void callToTenant(RoutingContext ctx, String tenant) {
     var request = ctx.request();
+    logger.info("callToTenant:: tenant: {}, ", tenant);
     getClient(ctx, tenant)
       .thenAccept(client -> new OaiPmhOkapiClient(client).call(request.params(), request.headers(),
         response -> handleProxyResponse(ctx, response),
@@ -169,10 +176,10 @@ public class OaiPmhHandler extends Handler {
   }
 
   private Optional<String> getNextTenant(List<String> list, String currentTenantId) {
-    log.info("Tenants list: {}", list);
+    logger.info("Tenants list: {}", list);
     var nextTenantIndex = list.indexOf(currentTenantId) + 1;
     if (list.size() > nextTenantIndex) {
-      log.info("Next tenant: {}", list.get(nextTenantIndex));
+      logger.info("Next tenant: {}", list.get(nextTenantIndex));
       return Optional.of(list.get(nextTenantIndex));
     }
     return Optional.empty();
@@ -379,11 +386,17 @@ public class OaiPmhHandler extends Handler {
     ClientInfo clientInfo;
     try {
       clientInfo = ApiKeyUtils.parseApiKey(key);
+      logger.info("getClient:: tenantId: {}, apiKey: {}", tenantId, key);
     } catch (ApiKeyUtils.MalformedApiKeyException e) {
       return CompletableFuture.failedFuture(e);
     }
     final OkapiClient client = ocf.getOkapiClient(tenantId);
+    logger.info("getClient:: clientInfo.salt: {}, tenantId: {}, username: {}", clientInfo.salt, tenantId, clientInfo.username);
     return iuHelper.fetchToken(client, clientInfo.salt, tenantId, clientInfo.username)
-      .map(token -> client).toCompletionStage().toCompletableFuture();
+      .map(token -> client).toCompletionStage().toCompletableFuture()
+      .exceptionally(t -> {
+        logger.info("getClient:: fetchToken error...", t);
+        return null;
+      });
   }
 }

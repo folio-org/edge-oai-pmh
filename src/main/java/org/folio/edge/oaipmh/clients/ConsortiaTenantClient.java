@@ -5,6 +5,8 @@ import static org.apache.commons.lang3.ObjectUtils.isNotEmpty;
 import io.vertx.core.Future;
 import io.vertx.core.MultiMap;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.folio.edge.core.utils.OkapiClient;
 import org.folio.rest.jaxrs.model.UserTenantCollection;
 
@@ -14,6 +16,7 @@ import java.util.Objects;
 
 @Slf4j
 public class ConsortiaTenantClient extends OkapiClient {
+  private static final Logger logger = LogManager.getLogger(ConsortiaTenantClient.class);
   private static final String USER_TENANTS_ENDPOINT_LIMIT_1 = "/user-tenants?limit=1";
   private final OkapiClient okapiClient;
 
@@ -32,6 +35,7 @@ public class ConsortiaTenantClient extends OkapiClient {
     var userTenants = userTenantCollection.getUserTenants();
     if (isNotEmpty(userTenants)) {
       var centralTenantId = userTenants.get(0).getCentralTenantId();
+      logger.info("processUserTenants:: centralTenantId: {}, tenant: {}", centralTenantId, tenant);
       if (Objects.equals(tenant, centralTenantId)) {
         var consortiaClient = new ConsortiaClient(okapiClient);
         consortiaClient.setToken(getToken());
