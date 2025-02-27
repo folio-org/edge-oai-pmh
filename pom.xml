@@ -40,7 +40,7 @@
     <jaxb2.fluent.api.plugin.ver>3.0</jaxb2.fluent.api.plugin.ver>
     <jaxb2.basics.annotate.plugin.ver>1.1.0</jaxb2.basics.annotate.plugin.ver>
     <jaxb2-basics.ver>1.11.1</jaxb2-basics.ver>
-    <guava.ver>31.1-jre</guava.ver>
+    <guava.ver>33.4.0-jre</guava.ver>
     <jaxb.time.adaptor.ver>1.1.3</jaxb.time.adaptor.ver>
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
@@ -48,9 +48,9 @@
     <edge.common.version>4.8.0</edge.common.version>
     <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <vertx-stack-depchain.version>4.5.7</vertx-stack-depchain.version>
-    <log4j-bom.version>2.23.0</log4j-bom.version>
-    <mockito-core.version>4.6.1</mockito-core.version>
-    <rest-assured.version>5.1.0</rest-assured.version>
+    <log4j-bom.version>3.0.0-beta3</log4j-bom.version>
+    <mockito-core.version>5.15.2</mockito-core.version>
+    <rest-assured.version>5.5.1</rest-assured.version>
     <lombok.version>1.18.36</lombok.version>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
@@ -402,6 +402,24 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>versions-maven-plugin</artifactId>
+        <version>2.16.1</version>
+        <executions>
+          <execution>
+            <id>display-dependency</id>
+            <phase>package</phase>
+            <goals>
+              <goal>display-dependency-updates</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <generateBackupPoms>false</generateBackupPoms>
+        </configuration>
       </plugin>
     </plugins>
   </build>
