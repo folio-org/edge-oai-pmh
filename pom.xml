@@ -48,7 +48,7 @@
     <edge.common.version>4.8.0</edge.common.version>
     <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <vertx-stack-depchain.version>4.5.7</vertx-stack-depchain.version>
-    <log4j-bom.version>3.0.0-beta3</log4j-bom.version>
+    <log4j-bom.version>2.23.1</log4j-bom.version>
     <mockito-core.version>5.15.2</mockito-core.version>
     <rest-assured.version>5.5.1</rest-assured.version>
     <lombok.version>1.18.36</lombok.version>
