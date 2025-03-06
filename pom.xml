@@ -45,13 +45,14 @@
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.9.2</mod-configuration-client.version>
-    <edge.common.version>4.8.0</edge.common.version>
+    <edge.common.version>4.9.0-SNAPSHOT</edge.common.version>
     <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <vertx-stack-depchain.version>4.5.7</vertx-stack-depchain.version>
     <log4j-bom.version>2.23.1</log4j-bom.version>
     <mockito-core.version>5.15.2</mockito-core.version>
     <rest-assured.version>5.5.1</rest-assured.version>
     <lombok.version>1.18.36</lombok.version>
+    <apache.httpclient.version>4.5.14</apache.httpclient.version>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
@@ -151,6 +152,12 @@
       <artifactId>lombok</artifactId>
       <version>${lombok.version}</version>
       <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${apache.httpclient.version}</version>
     </dependency>
   </dependencies>
 
