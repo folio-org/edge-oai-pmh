@@ -32,7 +32,7 @@
     <java.version>21</java.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
-    <raml-module-builder.version>35.3.0</raml-module-builder.version>
+    <raml-module-builder.version>35.4.0</raml-module-builder.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <maven.jaxb2.plugin.ver>0.14.0</maven.jaxb2.plugin.ver>
@@ -45,7 +45,7 @@
     <jaxb-impl.version>2.3.6</jaxb-impl.version>
     <jaxb-core.version>4.0.0</jaxb-core.version>
     <mod-configuration-client.version>5.9.2</mod-configuration-client.version>
-    <edge.common.version>4.9.0-SNAPSHOT</edge.common.version>
+    <edge.common.version>4.9.0</edge.common.version>
     <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
     <vertx-stack-depchain.version>4.5.7</vertx-stack-depchain.version>
     <log4j-bom.version>2.23.1</log4j-bom.version>
