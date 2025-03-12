@@ -9,6 +9,15 @@ This release contains upgrade to Java 21 and dependencies upgrading
 ### Technical tasks
 * [EDGOAIPMH-128](https://folio-org.atlassian.net/browse/EDGOAIPMH-128) - Update to edge-oai-pmh Java 21
 
+## 2.10.1 - Released
+
+This release contains upgrade to Java 21 and dependencies upgrading
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.10.0...v2.10.1)
+
+### Technical tasks
+* [EDGOAIPMH-128](https://folio-org.atlassian.net/browse/EDGOAIPMH-128) - Update to edge-oai-pmh Java 21
+
 ## 2.10.0 - Released
 
 This release includes rmb upgrades
