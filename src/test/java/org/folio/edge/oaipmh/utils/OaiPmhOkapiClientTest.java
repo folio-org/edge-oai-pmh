@@ -2,14 +2,13 @@ package org.folio.edge.oaipmh.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-
 import io.vertx.core.MultiMap;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.folio.edge.core.utils.OkapiClientFactory;
@@ -65,11 +64,6 @@ class OaiPmhOkapiClientTest {
   void testGetRecord(VertxTestContext context) {
     log.info("=== Test successful OAI-PMH Request ===");
 
-    String expectedBody
-      = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
-      Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK)
-    );
-
     // Request parameters
     MultiMap parameters = MultiMap.caseInsensitiveMultiMap();
     parameters.add(Constants.VERB, VerbType.GET_RECORD.value());
@@ -79,17 +73,17 @@ class OaiPmhOkapiClientTest {
     // Request headers - empty
     MultiMap headers = MultiMap.caseInsensitiveMultiMap();
 
+    String expectedBody
+          = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
+          Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_MOCK)
+    );
+
     processRequest(context, parameters, headers, HttpStatus.SC_OK, expectedBody);
   }
 
   @Test
   void testGetRecordError(VertxTestContext context) {
     log.info("=== Test error GetRecord OAI-PMH request ===");
-
-    String expectedBody
-      = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
-      Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK)
-    );
 
     // Request parameters with unknown identifier
     MultiMap parameters = MultiMap.caseInsensitiveMultiMap();
@@ -100,6 +94,11 @@ class OaiPmhOkapiClientTest {
     // Request headers - empty
     MultiMap headers = MultiMap.caseInsensitiveMultiMap();
 
+    String expectedBody
+          = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
+          Paths.get(OaiPmhMockOkapi.PATH_TO_GET_RECORDS_ERROR_MOCK)
+    );
+
     processRequest(context, parameters, headers, HttpStatus.SC_NOT_FOUND, expectedBody);
   }
 
@@ -108,8 +107,8 @@ class OaiPmhOkapiClientTest {
     log.info("=== Test Identify OAI-PMH request ===");
 
     String expectedBody
-      = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
-      Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK)
+        = OaiPmhMockOkapi.getOaiPmhResponseAsXml(
+        Paths.get(OaiPmhMockOkapi.PATH_TO_IDENTIFY_MOCK)
     );
 
     // Request parameters with unknown identifier
@@ -123,18 +122,17 @@ class OaiPmhOkapiClientTest {
   }
 
   private void processRequest(VertxTestContext context, MultiMap parameters, MultiMap headers,
-    int expectedHttpStatusCode, String expected) {
+      int expectedHttpStatusCode, String expected) {
     client.login("admin", "password")
-      .thenAcceptAsync(v -> client.call(parameters, headers,
-        response -> {
-          assertEquals(expectedHttpStatusCode, response.statusCode());
-          String body = response.bodyAsString();
-          log.info("oai-pmh-mod response body: " + body);
-          assertEquals(expected, body);
-          context.completeNow();
-        },
-        t -> context.failNow(t.getMessage())
-        )
-      );
+          .thenAcceptAsync(v -> client.call(parameters, headers,
+                response -> {
+              assertEquals(expectedHttpStatusCode, response.statusCode());
+              String body = response.bodyAsString();
+              log.info("oai-pmh-mod response body: " + body);
+              assertEquals(expected, body);
+              context.completeNow();
+            },
+                      t -> context.failNow(t.getMessage())
+        ));
   }
 }
