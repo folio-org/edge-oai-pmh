@@ -137,7 +137,7 @@ class OaiPmhTest {
     String expectedMockBody = OaiPmhMockOkapi.getOaiPmhResponseAsXml(expectedMockPath);
 
     final Response resp = RestAssured
-          .get(String.format("/oai?verb=GetRecord &identifier=oai:arXiv.org:quant-ph/"
+          .get(String.format("/oai?verb=GetRecord&identifier=oai:arXiv.org:quant-ph/"
                 + "02131001&metadataPrefix=oai_dc&apikey=%s", API_KEY));
     resp.then()
           .contentType(TEXT_XML)
