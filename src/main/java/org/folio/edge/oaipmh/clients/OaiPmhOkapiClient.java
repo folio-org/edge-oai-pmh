@@ -5,13 +5,12 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_LENGTH;
 import static java.util.stream.Collectors.joining;
 import static org.folio.edge.oaipmh.utils.Constants.MOD_OAI_PMH_ACCEPTED_TYPES;
 
-import io.vertx.core.buffer.Buffer;
-import io.vertx.ext.web.client.HttpResponse;
-import org.folio.edge.core.utils.OkapiClient;
-
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.ext.web.client.HttpResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.folio.edge.core.utils.OkapiClient;
 
 @Slf4j
 public class OaiPmhOkapiClient extends OkapiClient {
@@ -32,34 +31,35 @@ public class OaiPmhOkapiClient extends OkapiClient {
   }
 
   /**
-   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from mod-oai-pmh
+   * This method calls OAI-PMH-MOD to retrieve response for 'verb' from mod-oai-pmh.
    *
    * @param parameters multimap of HTTP GET parameters
-   * @param headers multimap of HTTP GET headers
+   * @param headers    multimap of HTTP GET headers
    */
   public void call(MultiMap parameters, MultiMap headers,
-    Handler<HttpResponse<Buffer>> responseHandler,
-    Handler<Throwable> exceptionHandler) {
-    String url = getUrl(parameters);
-    // "Content-Length" header appearing from POST request to edge-oai-pmh API should be removed as unnecessary
+                   Handler<HttpResponse<Buffer>> responseHandler,
+                   Handler<Throwable> exceptionHandler) {
+    // "Content-Length" header appearing from POST request to edge-oai-pmh API
+    // should be removed as unnecessary
     // for GET request to mod-oai-pmh
     headers.remove(CONTENT_LENGTH);
     // EDGOAIPMH-39
     headers.remove(ACCEPT);
     headers.add(ACCEPT, MOD_OAI_PMH_ACCEPTED_TYPES);
+    String url = getUrl(parameters);
     get(
-      url,
-      tenant,
-      headers,
-      responseHandler,
-      exceptionHandler);
+          url,
+          tenant,
+          headers,
+          responseHandler,
+          exceptionHandler);
   }
 
   private String getParametersAsString(MultiMap parameters) {
     return parameters.entries().stream()
-      .filter(e -> !e.getKey().equals("apiKeyPath"))
-      .map(e -> e.getKey() + "=" + e.getValue())
-      .collect(joining("&"));
+          .filter(e -> !e.getKey().equals("apiKeyPath"))
+          .map(e -> e.getKey() + "=" + e.getValue())
+          .collect(joining("&"));
   }
 
   /**
@@ -69,7 +69,7 @@ public class OaiPmhOkapiClient extends OkapiClient {
    */
   private String getUrl(MultiMap parameters) {
     String params = getParametersAsString(parameters);
-    if(params.length() > 0) {
+    if (!params.isEmpty()) {
       return String.format("%s%s?%s", okapiURL, OAI_PMH_ENDPOINT, params);
     } else {
       return String.format("%s%s", okapiURL, OAI_PMH_ENDPOINT);

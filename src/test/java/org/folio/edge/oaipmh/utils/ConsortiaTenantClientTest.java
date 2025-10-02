@@ -9,6 +9,10 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.folio.edge.core.utils.OkapiClientFactory;
 import org.folio.edge.core.utils.OkapiClientFactoryInitializer;
@@ -19,11 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @ExtendWith(VertxExtension.class)
@@ -37,21 +36,19 @@ class ConsortiaTenantClientTest {
   private static final int REQUEST_TIMEOUT = 3000;
 
   private OkapiClientFactory factory;
-  private OaiPmhMockOkapi mockOkapi;
 
   @BeforeEach
   void setUp(Vertx vertx, VertxTestContext context) {
-    int okapiPort = TestUtils.getPort();
-
     List<String> knownTenants = new ArrayList<>();
     knownTenants.add(TENANT_DIKU);
     knownTenants.add(TENANT_CENTRAL);
     knownTenants.add(TENANT_CONSORTIA);
     knownTenants.add(TENANT_EMPTY_CONSORTIA);
 
+    int okapiPort = TestUtils.getPort();
     factory = OkapiClientFactoryInitializer.createInstance(vertx, getCommonConfig(okapiPort));
 
-    mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
+    OaiPmhMockOkapi mockOkapi = new OaiPmhMockOkapi(vertx, okapiPort, knownTenants);
     mockOkapi.start(context);
   }
 
@@ -78,7 +75,8 @@ class ConsortiaTenantClientTest {
   @Test
   void shouldReturnSingleTenantIfConsortiaResponseIsEmpty(VertxTestContext context) {
     var expectedList = Collections.singletonList(TENANT_EMPTY_CONSORTIA);
-    processRequest(context, TENANT_EMPTY_CONSORTIA, MultiMap.caseInsensitiveMultiMap(), expectedList);
+    processRequest(context, TENANT_EMPTY_CONSORTIA, MultiMap.caseInsensitiveMultiMap(),
+          expectedList);
   }
 
   @Test
@@ -93,17 +91,18 @@ class ConsortiaTenantClientTest {
     processRequest(context, TENANT_CENTRAL, MultiMap.caseInsensitiveMultiMap(), expectedList);
   }
 
-  private void processRequest(VertxTestContext context, String tenant, MultiMap headers, List<String> expectedList) {
+  private void processRequest(VertxTestContext context, String tenant, MultiMap headers,
+                              List<String> expectedList) {
     var client = new ConsortiaTenantClient(factory.getOkapiClient(tenant));
     client.login("admin", "password")
-      .thenCompose(v -> client.getConsortiaTenants(headers).toCompletionStage())
-      .thenAccept(list -> {
-        if (Objects.equals(expectedList, list)) {
-          context.completeNow();
-        } else {
-          context.failNow("Values does not match");
-        }
-      });
+        .thenCompose(v -> client.getConsortiaTenants(headers).toCompletionStage())
+        .thenAccept(list -> {
+          if (Objects.equals(expectedList, list)) {
+            context.completeNow();
+          } else {
+            context.failNow("Values does not match");
+          }
+        });
   }
 
   private JsonObject getCommonConfig(int okapiPort) {

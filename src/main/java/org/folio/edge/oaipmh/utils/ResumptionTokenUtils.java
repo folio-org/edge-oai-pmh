@@ -11,17 +11,16 @@ import static org.folio.edge.oaipmh.utils.Constants.PARAMETER_DELIMITER;
 import static org.folio.edge.oaipmh.utils.Constants.TENANT_ID;
 import static org.folio.edge.oaipmh.utils.Constants.UNTIL;
 
-import lombok.experimental.UtilityClass;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.utils.URLEncodedUtils;
-import org.openarchives.oai._2.OAIPMH;
-import org.openarchives.oai._2.RequestType;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import lombok.experimental.UtilityClass;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.openarchives.oai._2.OAIPMH;
+import org.openarchives.oai._2.RequestType;
 
 @UtilityClass
 public class ResumptionTokenUtils {
@@ -36,16 +35,16 @@ public class ResumptionTokenUtils {
 
   public static Map<String, String> parseResumptionToken(String resumptionToken) {
     var decodedToken = new String(Base64.getUrlDecoder().decode(resumptionToken),
-      StandardCharsets.UTF_8);
+          StandardCharsets.UTF_8);
     return URLEncodedUtils
-      .parse(decodedToken, UTF_8, PARAMETER_DELIMITER).stream()
-      .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
+          .parse(decodedToken, UTF_8, PARAMETER_DELIMITER).stream()
+          .collect(toMap(NameValuePair::getName, NameValuePair::getValue));
   }
 
   private static String toResumptionToken(Map<String, String> params) {
     var token = params.entrySet().stream()
-      .map(e -> String.join(KEY_VALUE_DELIMITER, e.getKey(), e.getValue()))
-      .collect(Collectors.joining(PARAMETER_DELIMITER.toString()));
+          .map(e -> String.join(KEY_VALUE_DELIMITER, e.getKey(), e.getValue()))
+          .collect(Collectors.joining(PARAMETER_DELIMITER.toString()));
     return Base64.getUrlEncoder().encodeToString(token.getBytes()).split(KEY_VALUE_DELIMITER)[0];
   }
 
