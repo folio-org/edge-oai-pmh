@@ -36,7 +36,8 @@ public class ConfigurationSettingsClient extends OkapiClient {
    * @param headers HTTP headers to include in the request
    * @return Future containing the configuration settings collection
    */
-  public Future<ConfigurationSettingsCollection> getConfigurationSettingsByName(String name, MultiMap headers) {
+  public Future<ConfigurationSettingsCollection> getConfigurationSettingsByName(String name,
+                                                                                MultiMap headers) {
     String url = String.format("%s%s?name=%s", okapiURL, CONFIGURATION_SETTINGS_ENDPOINT, name);
     return get(url, tenant, headers)
           .map(resp -> resp.bodyAsJson(ConfigurationSettingsCollection.class));
