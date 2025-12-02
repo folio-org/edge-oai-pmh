@@ -55,15 +55,15 @@ class ConsortiaTenantClientTest {
   @AfterEach
   void tearDown(Vertx vertx, VertxTestContext context) {
     log.info("Shutting down server");
-    vertx.close(res -> {
-      if (res.succeeded()) {
-        log.info("Successfully shut down edge-oai-pmh server");
-        context.completeNow();
-      } else {
-        log.error("Failed to shut down edge-oai-pmh server", res.cause());
-        context.failNow(res.cause().getMessage());
-      }
-    });
+    vertx.close()
+        .onSuccess(res -> {
+          log.info("Successfully shut down edge-oai-pmh server");
+          context.completeNow();
+        })
+        .onFailure(err -> {
+          log.error("Failed to shut down edge-oai-pmh server", err.getMessage());
+          context.failNow(err.getMessage());
+        });
   }
 
   @Test

@@ -27,7 +27,6 @@ import static org.folio.edge.oaipmh.utils.ResumptionTokenUtils.parseResumptionTo
 import com.google.common.collect.Iterables;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
@@ -264,7 +263,7 @@ public class OaiPmhHandler extends Handler {
             .thenAccept(optionalNextTenant -> {
               if (optionalNextTenant.isPresent()) {
                 updateResumptionTokenValue(oaipmh, optionalNextTenant.get());
-                edgeResponse.end(BufferImpl.buffer(ResponseConverter.getInstance()
+                edgeResponse.end(Buffer.buffer(ResponseConverter.getInstance()
                       .convertToString(oaipmh)));
               } else {
                 edgeResponse.end(buffer);
