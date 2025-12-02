@@ -99,7 +99,7 @@ class OaiPmhTest {
         mockOkapi = spy(new OaiPmhMockOkapi(vertx, okapiPort, knownTenants));
         mockOkapi.start(context);
       })
-      .onFailure(context::failNow);
+        .onFailure(context::failNow);
   }
 
   @AfterAll
