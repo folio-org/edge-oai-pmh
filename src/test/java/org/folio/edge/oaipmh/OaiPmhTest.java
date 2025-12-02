@@ -93,24 +93,27 @@ class OaiPmhTest {
     System.setProperty(SYS_RESPONSE_COMPRESSION, Boolean.toString(true));
 
     final DeploymentOptions opt = new DeploymentOptions();
-    vertx.deployVerticle(MainVerticle.class.getName(), opt, context.succeeding(id -> {
-      mockOkapi = spy(new OaiPmhMockOkapi(vertx, okapiPort, knownTenants));
-      mockOkapi.start(context);
-    }));
+    vertx
+      .deployVerticle(MainVerticle.class.getName(), opt)
+      .onSuccess(id -> {
+        mockOkapi = spy(new OaiPmhMockOkapi(vertx, okapiPort, knownTenants));
+        mockOkapi.start(context);
+      })
+        .onFailure(context::failNow);
   }
 
   @AfterAll
   static void tearDownOnce(Vertx vertx, VertxTestContext context) {
     log.info("Shutting down server");
-    vertx.close(res -> {
-      if (res.succeeded()) {
-        log.info("Successfully shut down edge-oai-pmh server");
-        context.completeNow();
-      } else {
-        log.error("Failed to shut down edge-oai-pmh server", res.cause());
-        context.failNow(res.cause().getMessage());
-      }
-    });
+    vertx.close()
+        .onSuccess(res -> {
+          log.info("Successfully shut down edge-oai-pmh server");
+          context.completeNow();
+        })
+        .onFailure(err -> {
+          log.error("Failed to shut down edge-oai-pmh server", err.getMessage());
+          context.failNow(err.getMessage());
+        });
   }
 
   @Test

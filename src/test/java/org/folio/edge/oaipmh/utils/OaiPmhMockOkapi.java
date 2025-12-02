@@ -117,11 +117,12 @@ public class OaiPmhMockOkapi extends MockOkapi {
     HttpServer server = vertx.createHttpServer(new HttpServerOptions()
           .setCompressionSupported(true));
 
-    server.requestHandler(defineRoutes())
-          .listen(okapiPort, context.succeeding(result -> {
-            log.info("The server has started.");
-            context.completeNow();
-          }));
+    server.requestHandler(defineRoutes());
+    server.listen(okapiPort)
+        .onSuccess(res -> {
+          log.info("The server has started.");
+          context.completeNow();
+        });
   }
 
   @Override
