@@ -54,6 +54,7 @@
     <lombok.version>1.18.36</lombok.version>
     <apache.httpclient.version>4.5.14</apache.httpclient.version>
     <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <vertx.launcher>io.vertx.launcher.application.VertxApplication</vertx.launcher>
     <!-- the main class -->
     <exec.mainClass>org.folio.edge.oaipmh.MainVerticle</exec.mainClass>
   </properties>
@@ -279,7 +280,7 @@
               <transformers>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <manifestEntries>
-                    <Main-Class>io.vertx.core.Launcher</Main-Class>
+                    <Main-Class>${vertx.launcher}</Main-Class>
                     <Main-Verticle>${exec.mainClass}</Main-Verticle>
                   </manifestEntries>
                 </transformer>
