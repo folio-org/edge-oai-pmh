@@ -1,5 +1,14 @@
 ## 2.12.0 - Unreleased
 
+## 2.11.1 - Released
+
+This release contains dependency upgrades fixing security vulnerabilities
+
+### Technical tasks
+* [EDGOAIPMH-137](https://folio-org.atlassian.net/browse/EDGOAIPMH-137) RMB 35.4.2, Vertx 4.5.24, log4j 2.25.3
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.11.0...v2.10.1)
+
 ## 2.11.0 - Released
 
 This release contains upgrade to Java 21 and dependencies upgrading
