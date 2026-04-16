@@ -1,4 +1,15 @@
-## 2.12.0 - Unreleased
+## 2.13.0 - Unreleased
+
+## 2.12.0 - Released
+
+This release contains upgrade to Vert.x 5.0 and check-style plugin enabling
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.11.0...v2.12.0)
+
+### Technical tasks
+* [EDGOAIPMH-138](https://folio-org.atlassian.net/browse/EDGOAIPMH-138) - Added workflow
+* [EDGOAIPMH-132](https://folio-org.atlassian.net/browse/EDGOAIPMH-132) - Upgrade module to Vert.x 5.0
+* [EDGOAIPMH-122](https://folio-org.atlassian.net/browse/EDGOAIPMH-122) - Tech Debt: enable check-style plugin
 
 ## 2.11.0 - Released
 
