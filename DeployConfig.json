@@ -1,0 +1,199 @@
+{
+  "description": "edge-oai-pmh configuration template",
+  "moduleDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for container"
+      },
+      {
+        "name": "memory",
+        "value": "1512",
+        "description": "Memory hard limit for container"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "1360",
+        "description": "Memory reservation for container"
+      }
+    ],
+    "java": [
+      {
+        "name": "xmx",
+        "value": "1440m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "512m",
+        "description": "Maximum Java metaspace size"
+      },
+      {
+        "name": "MetaspaceSize",
+        "value": "384m",
+        "description": "Initial Java metaspace size"
+      }
+    ],
+    "deployment": {
+      "isHaSupported": true,
+      "replicasRecommendedCount": 2,
+      "description": "Deployment configuration for the backend module. Adjust replicas based on expected load and HA requirements. Set to false if only single instance is supported or required."
+    },
+    "kong": {
+      "timeouts": {
+        "connect": "60s",
+        "send": "86400s",
+        "read": "86400s"
+      },
+      "description": "Extended Kong proxy timeouts required for OAI-PMH harvesting requests which can take up to 24 hours"
+    },
+    "EnvVars": [
+      {
+        "name": "JAVA_ARGS",
+        "value": null,
+        "description": "Java arguments",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "JAVA_OPTS",
+        "value": null,
+        "description": "Java options",
+        "type": "CONFIG",
+        "essential": true
+      },
+
+      {
+        "name": "OKAPI_URL",
+        "value": null,
+        "description": "Okapi URL (passed as -Dokapi_url JVM system property)",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "PORT",
+        "value": "8081",
+        "description": "HTTP server port",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "REQUEST_TIMEOUT_MS",
+        "value": "86400000",
+        "description": "Request timeout in milliseconds; set to 24 hours to accommodate long OAI-PMH harvest responses",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "LOG_LEVEL",
+        "value": "INFO",
+        "description": "Log4j log level",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "TOKEN_CACHE_CAPACITY",
+        "value": "25",
+        "description": "Maximum number of JWT tokens to keep in the token cache",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "TOKEN_CACHE_TTL_MS",
+        "value": "300000",
+        "description": "How long to cache JWTs in milliseconds",
+        "type": "FUNCTIONAL",
+        "essential": false
+      },
+      {
+        "name": "SECURE_STORE",
+        "value": "Ephemeral",
+        "description": "Type of secure store to use for institutional user credentials: Ephemeral, AwsSsm, or Vault",
+        "type": "FUNCTIONAL",
+        "essential": true
+      },
+      {
+        "name": "SECURE_STORE_PROPS",
+        "value": null,
+        "description": "Path to a properties file specifying secure store configuration",
+        "type": "FUNCTIONAL",
+        "essential": true
+      }
+    ]
+  },
+
+  "sidecarDefaults": {
+    "resources": [
+      {
+        "name": "cpu",
+        "value": "64",
+        "description": "CPU request/limit for container"
+      },
+      {
+        "name": "memory",
+        "value": "1500",
+        "description": "Memory hard limit for container"
+      },
+      {
+        "name": "memoryReservation",
+        "value": "768",
+        "description": "Memory reservation for container"
+      }
+    ],
+    "java": [
+      {
+        "name": "xms",
+        "value": "128m",
+        "description": "Initial Java heap size"
+      },
+      {
+        "name": "xmx",
+        "value": "256m",
+        "description": "Maximum Java heap size"
+      },
+      {
+        "name": "MaxMetaspaceSize",
+        "value": "128m",
+        "description": "Maximum Java metaspace size"
+      }
+    ],
+    "EnvVars": [
+      {
+        "name": "ENV",
+        "value": null,
+        "description": "Environment",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "JAVA_OPTS",
+        "value": null,
+        "description": "Additional JVM options for the sidecar process",
+        "type": "CONFIG",
+        "essential": false
+      },
+      {
+        "name": "MODULE_NAME",
+        "value": "edge-oai-pmh",
+        "description": "Name of the backend module the sidecar fronts",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_URL",
+        "value": null,
+        "description": "Internal URL (host:port) at which the edge-oai-pmh backend container is reachable from its sidecar",
+        "type": "CONFIG",
+        "essential": true
+      },
+      {
+        "name": "MODULE_VERSION",
+        "value": null,
+        "description": "Version of the edge-oai-pmh module deployed alongside this sidecar",
+        "type": "CONFIG",
+        "essential": true
+      }
+    ]
+  }
+}
