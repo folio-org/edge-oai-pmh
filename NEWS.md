@@ -1,5 +1,12 @@
 ## 2.13.0 - Unreleased
 
+## 2.12.1 - Released
+
+[Full Changelog](https://github.com/folio-org/edge-oai-pmh/compare/v2.12.0...v2.12.1)
+
+### Technical tasks
+* [EDGOAIPMH-140](https://folio-org.atlassian.net/browse/EDGOAIPMH-140) - Add DeployConfig.json to edge-oai-pmh (ADR-0013 Configuration Management)
+
 ## 2.12.0 - Released
 
 This release contains upgrade to Vert.x 5.0 and check-style plugin enabling
